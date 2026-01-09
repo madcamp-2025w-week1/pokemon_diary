@@ -39,11 +39,11 @@ lib/
 │   └── pokemon_model.dart# Pokemon Object (id, name, type, imageUrl)
 ├── services/             # [Part B] Business Logic & Data Fetching
 │   ├── db_helper.dart    # SQLite Singleton & CRUD operations
-│   ├── api_service.dart  # PokeAPI Fetching Logic
+│   ├── gacha_logic.dart  # Pokemon Choosing Logic
 │   └── sentiment_service.dart # [Part C] Emotion Analysis Logic
 ├── screens/              # [Part A] UI Pages
-│   ├── tab1_write.dart   # Diary Input & Gacha Animation
-│   ├── tab2_history.dart # Diary List View
+│   ├── tab1_draft.dart   # Diary Input & Gacha Animation
+│   ├── tab2_diary.dart   # Diary List View
 │   └── tab3_pokedex.dart # Pokemon Grid View (Gallery)
 └── widgets/              # Reusable UI Components
     ├── pokemon_image.dart# Image Caching & Silhouette Filter Logic
