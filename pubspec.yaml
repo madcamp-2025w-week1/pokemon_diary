@@ -35,6 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   sqflite: any
+  lottie: any
   path: any
   csv: any
   provider: any
@@ -68,6 +69,7 @@ flutter:
   assets:
     - assets/data/pokemon_data.csv
     - assets/images/
+    - assets/animations/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lottie/lottie.dart';
 
 import '../models/diary_model.dart';
 import '../services/api_service.dart';
@@ -14,29 +16,45 @@ class Tab1Draft extends StatefulWidget {
   State<Tab1Draft> createState() => _Tab1DraftState();
 }
 
-class _Tab1DraftState extends State<Tab1Draft> {
+class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
 
   bool _isLoading = true;
   bool _isResultMode = false;
+  
+  // 애니메이션 상태 관리
+  bool _isGachaAnimating = false;
+  bool _showLightning = false;
+  
   Diary? _todayDiary;
   String? _pokemonName;
+
+  // 점멸 효과(Blinking) 컨트롤러
+  late AnimationController _blinkController;
+  late Animation<double> _blinkAnimation;
 
   @override
   void initState() {
     super.initState();
+    
+    _blinkController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _blinkAnimation = Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
+
     _loadTodayEntry();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _blinkController.dispose();
     super.dispose();
   }
 
-  // 오늘 작성한 일기가 있는지 확인
   Future<void> _loadTodayEntry() async {
     final todayKey = _formatDate(DateTime.now());
     final diaries = await DbHelper.instance.getDiaries();
@@ -46,7 +64,6 @@ class _Tab1DraftState extends State<Tab1Draft> {
       final diary = existing.first;
       if (!mounted) return;
       
-      // 이미 일기가 있다면 포켓몬 정보 로드 후 결과 모드로 전환
       final apiService = context.read<PokemonApiService>();
       final pokemon = await apiService.getPokemonById(diary.pokemonId);
       
@@ -66,29 +83,42 @@ class _Tab1DraftState extends State<Tab1Draft> {
     }
   }
 
-  // 가챠 버튼 클릭 핸들러
   Future<void> _handleGacha() async {
     final text = _controller.text.trim();
     
-    // 유효성 검사: 10자 미만이면 스낵바 표시
     if (text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Please write at least 10 characters to analyze emotion!',
-          ),
+          content: Text('Please write at least 10 characters!'),
           backgroundColor: Colors.redAccent,
         ),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    // 1. 애니메이션 시작
+    setState(() {
+      _isGachaAnimating = true; 
+    });
+    
+    _blinkController.repeat(reverse: true);
 
-    // 로직 실행 (감정 분석 -> 포켓몬 뽑기)
     final sentiment = _sentimentService.analyzeSentiment(text);
     final pokemonId = _gachaLogic.draftRandomPokemon();
-    debugPrint('Mock sentiment: $sentiment, Pokemon ID: $pokemonId');
+    final apiService = context.read<PokemonApiService>();
+    final pokemon = await apiService.getPokemonById(pokemonId);
+
+    // [Phase 1] 회전 및 점멸 대기 (2.5초)
+    await Future.delayed(const Duration(milliseconds: 2500));
+
+    // [Phase 2] 번개 효과로 전환
+    _blinkController.stop(); 
+    setState(() {
+      _showLightning = true; 
+    });
+
+    // ★ 수정됨: 번개 시간 2.5초로 연장 (기존 1.2초)
+    await Future.delayed(const Duration(milliseconds: 2500));
 
     final diary = Diary(
       date: _formatDate(DateTime.now()),
@@ -96,20 +126,15 @@ class _Tab1DraftState extends State<Tab1Draft> {
       sentiment: sentiment,
       pokemonId: pokemonId,
     );
-
-    // DB 저장
     await DbHelper.instance.insertDiary(diary);
 
-    if (!mounted) return;
-    final apiService = context.read<PokemonApiService>();
-    final pokemon = await apiService.getPokemonById(pokemonId);
-    
     if (!mounted) return;
     setState(() {
       _todayDiary = diary;
       _pokemonName = pokemon?.englishName ?? 'Unknown';
       _isResultMode = true;
-      _isLoading = false;
+      _isGachaAnimating = false;
+      _showLightning = false;
     });
   }
 
@@ -130,16 +155,13 @@ class _Tab1DraftState extends State<Tab1Draft> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // --- [Section 1: Result Only] Top Pokemon Image ---
-                    if (_isResultMode && _todayDiary != null)
-                      Image.network(
-                        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${_todayDiary!.pokemonId}.png',
-                        height: 200,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.catching_pokemon, size: 180);
-                        },
+                    // --- [Section 1: Dynamic Top Area] ---
+                    SizedBox(
+                      height: 220,
+                      child: Center(
+                        child: _buildTopVisual(), 
                       ),
+                    ),
                     
                     if (_isResultMode && _pokemonName != null) ...[
                       const SizedBox(height: 12),
@@ -155,7 +177,7 @@ class _Tab1DraftState extends State<Tab1Draft> {
 
                     const SizedBox(height: 20),
 
-                    // --- [Section 2: Main Card (Input OR Result Text)] ---
+                    // --- [Section 2: Main Card] ---
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
@@ -171,35 +193,22 @@ class _Tab1DraftState extends State<Tab1Draft> {
                         ],
                         border: Border.all(color: Colors.black12),
                       ),
-                      // ★ 핵심 수정 사항: 결과 모드일 때와 입력 모드일 때의 child 분기 처리 ★
                       child: _isResultMode && _todayDiary != null
                           ? Stack(
                               alignment: Alignment.center,
                               children: [
-                                // 1. Background Watermark (Result Mode Only)
                                 Opacity(
-                                  opacity: 0.2, // 은은하게 20% 투명도
+                                  opacity: 0.3,
                                   child: Image.network(
-                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Pok%C3%A9_Ball_icon.svg/512px-Pok%C3%A9_Ball_icon.svg.png',
-                                    height: 200,
+                                    'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png',
+                                    height: 150,
                                     fit: BoxFit.contain,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      // 로드 실패 시 아이콘으로 대체
-                                      return const Icon(
-                                        Icons.catching_pokemon, 
-                                        size: 150, 
-                                        color: Colors.redAccent
-                                      );
-                                    },
                                   ),
                                 ),
-                                // 2. Read-only Text
                                 Text(
                                   _todayDiary!.content,
                                   style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black87,
-                                    height: 1.5,
+                                    fontSize: 16, color: Colors.black87, height: 1.5,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -207,18 +216,18 @@ class _Tab1DraftState extends State<Tab1Draft> {
                             )
                           : TextField(
                               controller: _controller,
-                              maxLines: 8, // 입력창을 넉넉하게
+                              enabled: !_isGachaAnimating,
+                              maxLines: 8,
                               minLines: 4,
                               style: const TextStyle(fontSize: 16),
                               decoration: InputDecoration(
-                                // 요청한 긴 텍스트를 hintText로 이동
                                 hintText: 'How are you feeling today? Share your thoughts to find your Pokemon companion...',
                                 hintStyle: TextStyle(
                                   color: Colors.grey.shade400,
                                   fontSize: 15,
                                   height: 1.4,
                                 ),
-                                border: InputBorder.none, // 카드 안에 깔끔하게
+                                border: InputBorder.none,
                                 contentPadding: EdgeInsets.zero,
                               ),
                             ),
@@ -226,8 +235,8 @@ class _Tab1DraftState extends State<Tab1Draft> {
                     
                     const SizedBox(height: 20),
 
-                    // --- [Section 3: Gacha Button (Input Mode Only)] ---
-                    if (!_isResultMode)
+                    // --- [Section 3: Button] ---
+                    if (!_isResultMode && !_isGachaAnimating)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -243,12 +252,16 @@ class _Tab1DraftState extends State<Tab1Draft> {
                               borderRadius: BorderRadius.circular(30),
                             ),
                             textStyle: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 18, fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                      ),
+                      )
+                    else if (_isGachaAnimating)
+                       const Text(
+                         "Analyzing your emotions...",
+                         style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500),
+                       ),
                   ],
                 ),
               ),
@@ -256,6 +269,65 @@ class _Tab1DraftState extends State<Tab1Draft> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildTopVisual() {
+    // 1. 결과 모드: 포켓몬 이미지
+    if (_isResultMode && _todayDiary != null) {
+      return Image.network(
+        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${_todayDiary!.pokemonId}.png',
+        height: 200,
+        fit: BoxFit.contain,
+      );
+    }
+    
+    // 2. 가챠 애니메이션 진행 중
+    if (_isGachaAnimating) {
+      if (_showLightning) {
+        // [Phase 2] 번개 애니메이션 (2.5초간 지속)
+        return Lottie.asset(
+          'assets/animations/Pikachu lightning.json',
+          height: 220,
+          fit: BoxFit.contain,
+        );
+      } else {
+        // [Phase 1] 회전하는 몬스터볼 + 점멸
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Lottie.asset(
+              'assets/animations/Pokeball loading animation.json',
+              height: 180,
+              fit: BoxFit.contain,
+            ),
+            AnimatedBuilder(
+              animation: _blinkAnimation,
+              builder: (context, child) {
+                return Opacity(
+                  opacity: _blinkAnimation.value,
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      }
+    }
+
+    // ★ 수정됨: [입력 모드] 정적 이미지 대신 Lottie를 멈춘 상태로 출력
+    return Lottie.asset(
+      'assets/animations/Pokeball loading animation.json',
+      height: 150, // 입력 모드일 땐 살짝 작게
+      fit: BoxFit.contain,
+      animate: false, // ★ 여기서 애니메이션을 끄면 0번 프레임(정적 이미지)으로 나옴!
     );
   }
 
