@@ -29,25 +29,30 @@
 Follow the strict `lib/` directory structure:
 ```text
 assets/
-├── assets/
-│   ├── pokemon_data.csv
+├── data/
+│   └── pokemon_data.csv  # Pre-generated Pokemon metadata
+└── images/
+    ├── logo/             # App logos
+    └── ...
 
 lib/
-├── main.dart             # Entry Point & BottomNavigationBar Setup
-├── models/               # [Part B] Data Models (Entity)
-│   ├── diary_model.dart  # Diary Object (id, content, emotion, pokemonId, date)
-│   └── pokemon_model.dart# Pokemon Object (id, name, type, imageUrl)
-├── services/             # [Part B] Business Logic & Data Fetching
-│   ├── db_helper.dart    # SQLite Singleton & CRUD operations
-│   ├── gacha_logic.dart  # Pokemon Choosing Logic
-│   └── sentiment_service.dart # [Part C] Emotion Analysis Logic
-├── screens/              # [Part A] UI Pages
-│   ├── tab1_draft.dart   # Diary Input & Gacha Animation
-│   ├── tab2_diary.dart   # Diary List View
-│   └── tab3_pokedex.dart # Pokemon Grid View (Gallery)
+├── main.dart             # App Root & Theme configuration
+├── home_screen.dart      # Main Layout with Header & BottomNavigationBar
+├── models/               # [Part B] Data Models
+│   ├── diary_model.dart  # Data structure for user's diary entries
+│   └── pokemon_model.dart# Data structure for Pokemon metadata
+├── services/             # [Part B] Services & Business Logic
+│   ├── db_helper.dart    # SQLite Database management
+│   ├── gacha_logic.dart  # Random Pokemon selection logic
+│   ├── api_service.dart  # Local CSV parsing & Image URL management
+│   └── sentiment_service.dart # [Part C] Language detection & Sentiment analysis
+├── screens/              # [Part A] Tab Views
+│   ├── tab1_draft.dart   # Diary input & Gacha animation logic
+│   ├── tab2_diary.dart   # List of historical diary entries
+│   └── tab3_pokedex.dart # Grid view for Pokemon collection
 └── widgets/              # Reusable UI Components
-    ├── pokemon_image.dart# Image Caching & Silhouette Filter Logic
-    └── emotion_badge.dart
+    ├── pokemon_image.dart# Handling static/gif images & silhouettes
+    └── emotion_badge.dart# Visual indicator for analyzed emotions
 ```
 
 ---
@@ -161,5 +166,10 @@ The system maps the English-analyzed sentiment result to specific Pokemon types:
 - **Asynchronous:** Always use `async/await` syntax. Avoid `.then()` callbacks.
 - **Sound Null Safety:** Required. Use `required` for all non-nullable model parameters.
 - **Documentation:** Provide meaningful comments for complex logic in `db_helper.dart` and `api_service.dart`.
+
+### 8.1. Debugging & Maintenance Utilities
+- **Clear Data:** Provide a `clearDatabase()` method in `db_helper.dart` for testing.
+- **Mock Seeding:** Provide a `seedMockData()` method to populate `diaries` for UI testing.
+- **Raw Query Support:** Allow executing raw SQL strings for quick debugging during the development phase.
 
 ---
