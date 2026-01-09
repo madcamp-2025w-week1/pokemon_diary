@@ -66,6 +66,12 @@ Since there is no backend, `sqflite` manages user-generated data, while a pre-ba
 
 > **⚠️ Implementation Note:** The `diaries` table will perform a logical JOIN with the local Pokemon metadata using `pokemon_id`.
 
+### 4.1. Input Validation Rules
+- **Data Type:** Use `TEXT` for `content` (flexible length in SQLite).
+- **Min Length:** 10 characters (Korean/English combined) to ensure accurate sentiment analysis.
+- **Max Length:** 1,000 characters (UI stability).
+- **Handling:** UI should show a character counter and prevent "Gacha" if the text is too short.
+
 ---
 
 ## 5. External Data & Image Strategy
@@ -103,12 +109,14 @@ Each image type is assigned to a specific UI component to balance visual appeal 
 
 ## 6. Business Logic Rules (Localization & Analysis)
 
-### 6.1. Smart Language Handling & Translation
-- **Detection:** Check the input string to determine if it's Korean or English.
-- **Branching Logic:**
-  - **If English:** Pass the raw text directly to `SentimentService`.
-  - **If Korean (or Mixed):** Use `google_translator` to convert text to English before analysis.
-- **Goal:** Optimize API calls and preserve the nuance of native English input.
+### 6.1. Smart Language Handling (Korean/English Mixed)
+- **Detection Logic:** Use a Regular Expression (Regex) to check for the presence of Korean characters (`[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]`).
+- **Processing Flow:**
+  - **Case A: Pure English** -> Pass directly to `SentimentService`. (Faster, saves API calls)
+  - **Case B: Korean only OR Mixed (KO+EN)** -> Pass the entire string to `google_translator`.
+    - *Example:* "오늘 정말 happy했어" -> (Translator) -> "I was really happy today."
+- **Reasoning:** Google Translator handles mixed-language context naturally, providing a more coherent English sentence for the sentiment analyzer than separate processing.
+- **Persistence:** Regardless of the analysis path, the **original input string** (the mixed text) must be stored in the `content` column of the `diaries` table.
 
 ### 6.2. Sentiment -> Pokemon Type Mapping
 The system maps the English-analyzed sentiment result to specific Pokemon types:
