@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'home_screen.dart';
+import 'providers/diary_provider.dart';
 import 'services/services.dart';
 
 void main() {
@@ -20,6 +21,9 @@ class PokemonDiaryApp extends StatelessWidget {
         ),
         Provider<DbHelper>(
           create: (_) => DbHelper.instance,
+        ),
+        ChangeNotifierProvider<DiaryProvider>(
+          create: (_) => DiaryProvider()..loadDiaries(),
         ),
       ],
       child: MaterialApp(
