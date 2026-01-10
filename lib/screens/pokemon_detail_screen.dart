@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart'; 
 import '../models/models.dart';
 import '../services/services.dart';
 
@@ -28,19 +29,26 @@ class PokemonDetailDialog extends StatelessWidget {
     return '${months[parsed.month - 1]} ${parsed.day}, ${parsed.year}';
   }
 
-  String _titleCase(String value) {
-    if (value.isEmpty) return value;
-    return value[0].toUpperCase() + value.substring(1).toLowerCase();
-  }
-
   Color _typeColor(PokemonType type) {
     switch (type) {
-      case PokemonType.electric: return const Color(0xFFFFD700); // GBA Yellow
-      case PokemonType.flying: return const Color(0xFF89CFF0); // GBA Blue
+      case PokemonType.electric: return const Color(0xFFFFD700);
+      case PokemonType.flying: return const Color(0xFF89CFF0);
       case PokemonType.fire: return const Color(0xFFFF6B6B);
       case PokemonType.water: return const Color(0xFF4D96FF);
       case PokemonType.grass: return const Color(0xFF78C850);
       case PokemonType.poison: return const Color(0xFFA040A0);
+      case PokemonType.bug: return const Color(0xFFA8B820);
+      case PokemonType.normal: return const Color(0xFFA8A878);
+      case PokemonType.ground: return const Color(0xFFE0C068);
+      case PokemonType.fairy: return const Color(0xFFEE99AC);
+      case PokemonType.fighting: return const Color(0xFFC03028);
+      case PokemonType.psychic: return const Color(0xFFF85888);
+      case PokemonType.rock: return const Color(0xFFB8A038);
+      case PokemonType.ghost: return const Color(0xFF705898);
+      case PokemonType.ice: return const Color(0xFF98D8D8);
+      case PokemonType.dragon: return const Color(0xFF7038F8);
+      case PokemonType.steel: return const Color(0xFFB8B8D0);
+      case PokemonType.dark: return const Color(0xFF705848);
       default: return Colors.grey;
     }
   }
@@ -50,195 +58,233 @@ class PokemonDetailDialog extends StatelessWidget {
     final isKorean = Localizations.localeOf(context).languageCode == 'ko';
     final displayName = isKorean ? pokemon.koreanName : pokemon.englishName;
     final description = isKorean ? pokemon.dexEntryKorean : pokemon.dexEntryEnglish;
-    // ★ 레트로 느낌을 위해 모두 대문자로 변환
     final title = '${displayName.toUpperCase()} #${pokemon.id.toString().padLeft(3, '0')}';
+
+    final pixelStyle = GoogleFonts.pressStart2p(
+      fontSize: 10,
+      color: const Color(0xFF2d3436),
+      height: 1.4,
+    );
+
+    const Color borderLight = Color(0xFF63c7c8);
+    const Color borderDark = Color(0xFF286a6b);
+    const Color cardBgLight = Color(0xFF86c096);
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
       child: Container(
-        // ★ 1. 레트로 스캔라인 배경 구현
+        width: double.infinity,
+        // Remove fixed height so it shrinks to content
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.black, width: 4),
-          borderRadius: BorderRadius.circular(8),
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF4FD1C5), // 밝은 청록
-              Color(0xFF38B2AC), // 어두운 청록
-            ],
-            stops: [0.5, 0.5], // 딱 절반에서 색이 바뀌는 스트라이프 효과
-            tileMode: TileMode.repeated,
-          ),
+          color: borderLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: const EdgeInsets.all(6),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Stack(
             children: [
-              // --- Header (Name) ---
-              _buildRetroContainer(
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black),
-                      onPressed: () => Navigator.of(context).pop(),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontFamily: 'Monospace', // 픽셀 폰트 느낌
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(width: 24), // 아이콘 크기만큼 공백
-                  ],
+              // 1. BASE BACKGROUND
+              Positioned.fill(child: Container(color: const Color.fromARGB(255, 79, 209, 197))),
+
+              // 2. WHITE STRIP (Extended to cover Types)
+              Positioned(
+                top: 50,
+                left: 0,
+                right: 0,
+                height: 280,
+                child: Container(
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
 
-              const SizedBox(height: 8),
-
-              // --- Main Image Box ---
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildRetroContainer(
-                  padding: const EdgeInsets.all(20),
-                  child: AspectRatio(
-                    aspectRatio: 1.3,
-                    child: CachedNetworkImage(
-                      imageUrl: pokemon.homeSpriteUrl,
-                      fit: BoxFit.contain,
-                      placeholder: (context, url) => const Center(
-                        child: CircularProgressIndicator(color: Colors.black),
-                      ),
-                    ),
+              // 3. GLOBAL STRIPES
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: StripePainter(
+                    stripeColor: Colors.black.withValues(alpha: 0.05),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 8),
-
-              // --- Types Bar ---
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: _buildRetroContainer(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildTypeChip(pokemon.type1),
-                      if (pokemon.type2 != null) ...[
-                        const SizedBox(width: 10),
-                        _buildTypeChip(pokemon.type2!),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              // --- Stats Bar ---
+              // 4. CONTENT LAYER
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                color: Colors.black.withOpacity(0.3), // 반투명 검은 배경
-                child: Text(
-                  'HEIGHT: ${pokemon.height.toStringAsFixed(1)}m | WEIGHT: ${pokemon.weight.toStringAsFixed(1)}kg',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Monospace',
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: borderDark, width: 2),
                 ),
-              ),
-
-              const SizedBox(height: 8),
-
-              // --- Description Box ---
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _buildRetroContainer(
-                  height: 100,
-                  padding: const EdgeInsets.all(12),
-                  child: SingleChildScrollView(
-                    child: Text(
-                      description.toUpperCase(), // 레트로는 대문자가 제맛
-                      style: const TextStyle(
-                        fontFamily: 'Monospace',
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        height: 1.5,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min, // ★ 수정됨: 내용물 크기만큼만 차지
+                  children: [
+                    // --- HEADER ---
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF70a0e0),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
+                            ),
+                            child: Text(
+                              "POKEDEX",
+                              style: pixelStyle.copyWith(color: Colors.white, fontSize: 10),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).pop(),
+                            child: const Icon(Icons.close, color: borderDark, size: 20),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 12),
+                    // --- SCROLLABLE CONTENT ---
+                    Flexible( // ★ 수정됨: Expanded -> Flexible로 변경하여 빈 공간 제거
+                      fit: FlexFit.loose, // ★ 내용물이 적으면 줄어듬
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // --- NAME & ID ---
+                            Text(
+                              title,
+                              style: pixelStyle.copyWith(
+                                fontSize: 16, 
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
 
-              // --- Dates Caught Title ---
-              const Padding(
-                padding: EdgeInsets.only(left: 16),
-                child: Text(
-                  'DATES CAUGHT',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Monospace',
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    shadows: [Shadow(offset: Offset(2, 2), color: Colors.black)],
-                  ),
-                ),
-              ),
-
-              // --- Dates List ---
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
-                child: FutureBuilder<List<String>>(
-                  future: _loadCatchDates(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return _buildRetroContainer(
-                        padding: const EdgeInsets.all(8),
-                        child: const Text("NO DATA", style: TextStyle(fontWeight: FontWeight.bold)),
-                      );
-                    }
-                    return SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, index) {
-                          return Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            child: _buildRetroContainer(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              child: Text(
-                                _formatDateLabel(snapshot.data![index]),
-                                style: const TextStyle(
-                                  fontFamily: 'Monospace',
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                            // --- IMAGE BOX ---
+                            Center(
+                              child: Container(
+                                width: 180,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: borderDark, width: 2),
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: CachedNetworkImage(
+                                  imageUrl: pokemon.homeSpriteUrl,
+                                  fit: BoxFit.contain,
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(color: borderDark),
+                                  ),
                                 ),
                               ),
                             ),
-                          );
-                        },
+                            const SizedBox(height: 16),
+
+                            // --- TYPES ---
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildPixelTypeChip(pokemon.type1, pixelStyle),
+                                if (pokemon.type2 != null) ...[
+                                  const SizedBox(width: 8),
+                                  _buildPixelTypeChip(pokemon.type2!, pixelStyle),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // --- STATS ---
+                            Container(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: borderDark.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'HT: ${pokemon.height.toStringAsFixed(1)}m | WT: ${pokemon.weight.toStringAsFixed(1)}kg',
+                                style: pixelStyle.copyWith(color: Colors.white, fontSize: 10),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // --- DESCRIPTION ---
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: borderDark),
+                              ),
+                              child: Text(
+                                description.toUpperCase(),
+                                style: pixelStyle.copyWith(fontSize: 10, height: 1.6),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // --- DATES CAUGHT ---
+                            Text(
+                              "DATES CAUGHT",
+                              style: pixelStyle.copyWith(color: Colors.white, fontSize: 10),
+                            ),
+                            Container(
+                              height: 2,
+                              color: Colors.white.withValues(alpha: 0.5),
+                              margin: const EdgeInsets.symmetric(vertical: 4),
+                            ),
+                            FutureBuilder<List<String>>(
+                              future: _loadCatchDates(),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Text("NO DATA", style: pixelStyle.copyWith(color: Colors.white70)),
+                                  );
+                                }
+                                return SizedBox(
+                                  height: 40,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: snapshot.data!.length,
+                                    itemBuilder: (context, index) {
+                                      return Container(
+                                        margin: const EdgeInsets.only(right: 8, top: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.9),
+                                          borderRadius: BorderRadius.circular(4),
+                                          border: Border.all(color: borderDark),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            _formatDateLabel(snapshot.data![index]),
+                                            style: pixelStyle.copyWith(fontSize: 9),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -248,45 +294,45 @@ class PokemonDetailDialog extends StatelessWidget {
     );
   }
 
-  // ★ 레트로 스타일 컨테이너 (흰색 박스 + 검은 테두리 + 그림자)
-  Widget _buildRetroContainer({required Widget child, EdgeInsets? padding, double? height}) {
+  Widget _buildPixelTypeChip(PokemonType type, TextStyle baseStyle) {
     return Container(
-      height: height,
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black, width: 2),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, offset: Offset(3, 3), blurRadius: 0),
-        ],
-      ),
-      child: child,
-    );
-  }
-
-  // ★ 타입 칩 (레트로 스타일)
-  Widget _buildTypeChip(PokemonType type) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: _typeColor(type),
-        border: Border.all(color: Colors.black, width: 1.5),
         borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1.5),
         boxShadow: const [
-          BoxShadow(color: Colors.black26, offset: Offset(2, 2), blurRadius: 0),
+          BoxShadow(color: Colors.black12, offset: Offset(2, 2)),
         ],
       ),
       child: Text(
         type.name.toUpperCase(),
-        style: const TextStyle(
+        style: baseStyle.copyWith(
           color: Colors.white,
-          fontWeight: FontWeight.w900,
-          fontFamily: 'Monospace',
-          fontSize: 12,
-          shadows: [Shadow(offset: Offset(1, 1), color: Colors.black)],
+          fontSize: 10,
+          shadows: [const Shadow(offset: Offset(1, 1), color: Colors.black26)],
         ),
       ),
     );
   }
+}
+
+// Ensure StripePainter is available (copy from trainer_card.dart if needed)
+class StripePainter extends CustomPainter {
+  final Color stripeColor;
+
+  StripePainter({required this.stripeColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = stripeColor;
+    const stripeHeight = 4.0;
+
+    for (double i = 0; i < size.height; i += stripeHeight * 2) {
+      canvas.drawRect(Rect.fromLTWH(0, i, size.width, stripeHeight), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
