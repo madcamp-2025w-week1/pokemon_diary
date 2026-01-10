@@ -3,20 +3,36 @@ import 'package:dart_sentiment/dart_sentiment.dart';
 class SentimentService {
   final _sentimentAnalyzer = Sentiment();
 
-  // emotion lexicon 
+  // emotions lexicon
+  // Electric, Flying, Fairy
   final List<String> joyWords = [
     "happy", "excited", "amazing", "love", "great", "awesome", "wonderful", 
-    "best", "yay", "fun", "enjoy", "win", "victory"
+    "best", "yay", "fun", "enjoy", "win", "victory",
+    "delighted", "cheerful", "glad", "grateful", "blessed", "fantastic", 
+    "proud", "success", "laugh", "laughing", "smile", "smiling", "optimistic",
+    "thrilled", "lucky", "perfect", "favorite", "liked", "hope", "energetic",
+    "yummy", "delicious", "party", "celebrate", "achievement"
   ];
 
+  // Water, Ghost, Ice, Poison, Ground
   final List<String> sadWords = [
     "sad", "depressed", "cry", "crying", "lonely", "tear", "miss", "grief", 
-    "bad", "sorry", "hurt", "fail", "lost"
+    "bad", "sorry", "hurt", "fail", "lost",
+    "broken", "empty", "hopeless", "tired", "exhausted", "pain", "painful",
+    "regret", "disappointed", "bummer", "awful", "terrible", "gloomy", 
+    "alone", "heartbreak", "missed", "mistake", "guilt", "guilty", "shame",
+    "unfortunate", "sick", "ill", "unhappy", "blue", "melancholy", "down", "good"
   ];
 
+  // Fire, Fighting, Dragon, Dark
   final List<String> angryWords = [
     "angry", "stress", "mad", "hate", "furious", "rage", "stupid", "annoy", 
-    "fight", "destroy", "busy", "deadline", "pressure"
+    "fight", "destroy", "busy", "deadline", "pressure",
+    "frustrated", "frustrating", "irritated", "irritating", "upset", "livid",
+    "jealous", "envy", "hated", "sucks", "worst", "damn", "idiot", "dumb",
+    "crazy", "scream", "yell", "shout", "punch", "conflict", "argument",
+    "enemy", "rude", "mean", "unfair", "betrayed", "cheated", "hostile",
+    "panic", "nervous", "anxious", "overwhelmed", "tense"
   ];
 
   // calm will be the default emotion if none of the other three apply
