@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
+import '../screens/pokemon_detail_screen.dart';
 import '../services/services.dart';
 
 class Tab3Pokedex extends StatelessWidget {
@@ -71,11 +72,9 @@ class _PokedexTile extends StatelessWidget {
         : '???';
     final nameColor = isOwned ? Colors.black87 : Colors.black38;
 
-    // ★ 최적화 포인트: CachedNetworkImage 사용
     Widget imageWidget = CachedNetworkImage(
       imageUrl: pokemon.showdownGifUrl, // GIF URL
       fit: BoxFit.contain,
-      // 로딩 중일 때 보여줄 위젯 (UX 향상)
       placeholder: (context, url) => Center(
         child: SizedBox(
           width: 20, 
@@ -83,13 +82,9 @@ class _PokedexTile extends StatelessWidget {
           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey[300]),
         ),
       ),
-      // 에러 났을 때 보여줄 위젯
       errorWidget: (context, url, error) => const Icon(Icons.error),
-      // 페이드인 효과로 부드럽게 뜨게 함
-      fadeInDuration: const Duration(milliseconds: 200),
     );
 
-    // 미보유 시 실루엣 처리
     if (!isOwned) {
       imageWidget = ColorFiltered(
         colorFilter: const ColorFilter.mode(
@@ -108,9 +103,14 @@ class _PokedexTile extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: isOwned ? () {
-          // TODO: 상세 페이지 이동 로직 (추후 구현)
-        } : null,
+        onTap: isOwned
+            ? () {
+                showDialog(
+                  context: context,
+                  builder: (_) => PokemonDetailDialog(pokemon: pokemon),
+                );
+              }
+            : null,
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Column(
