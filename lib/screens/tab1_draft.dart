@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 
 import '../models/models.dart';
+import '../providers/diary_provider.dart';
 import '../services/services.dart';
 
 class Tab1Draft extends StatefulWidget {
@@ -124,6 +125,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       pokemonId: pokemonId,
     );
     await DbHelper.instance.insertDiary(diary);
+    await context.read<DiaryProvider>().refreshDiaries();
 
     if (!mounted) return;
     setState(() {
