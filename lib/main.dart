@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'home_screen.dart';
 import 'providers/diary_provider.dart';
+import 'providers/trainer_provider.dart';
 import 'services/services.dart';
 
 void main() {
@@ -24,6 +25,9 @@ class PokemonDiaryApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<DiaryProvider>(
           create: (_) => DiaryProvider()..loadDiaries(),
+        ),
+        ChangeNotifierProvider<TrainerProvider>(
+          create: (_) => TrainerProvider(),
         ),
       ],
       child: MaterialApp(

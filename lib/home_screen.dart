@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pokemon_diary/providers/trainer_provider.dart';
+import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
+import 'screens/trainer_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,33 +22,61 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleSpacing: 0,
-        title: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const CircleAvatar(
-                radius: 18,
-                backgroundImage: NetworkImage(
-                  'https://i.pravatar.cc/100?img=12',
-                ),
+        leadingWidth: 64,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Center(
+            child: GestureDetector(
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const TrainerCardPage(),
+                );
+              },
+              child: Consumer<TrainerProvider>(
+                builder: (context, trainer, child) {
+                  final iconPath = trainer.gender == "MALE"
+                      ? 'assets/images/trainer_card_icon_boy.png'
+                      : 'assets/images/trainer_card_icon_girl.png';
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.black12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: Image.asset(
+                        iconPath,
+                        width: 40,
+                        height: 32,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.error, size: 20, color: Colors.red);
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
-              Text(
-                _formatDate(DateTime.now()),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings, color: Colors.black54),
-                onPressed: () {},
-              ),
-            ],
+            ),
           ),
         ),
+        title: Text(
+          _formatDate(DateTime.now()),
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, color: Colors.black54),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: IndexedStack(
         index: _currentIndex,

@@ -43,6 +43,7 @@ dependencies:
   cached_network_image: any
   google_translator: any
   dart_sentiment: any
+  google_fonts: any
 
 dev_dependencies:
   flutter_test:
