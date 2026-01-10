@@ -192,7 +192,7 @@ class TrainerCardDialog extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -213,7 +213,7 @@ class TrainerCardDialog extends StatelessWidget {
                 Container(
                   height: 124,
                   width: double.infinity,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                 ),
               ],
             ),
@@ -222,7 +222,7 @@ class TrainerCardDialog extends StatelessWidget {
             Positioned.fill(
               child: CustomPaint(
                 painter: StripePainter(
-                  stripeColor: Colors.black.withOpacity(0.05),
+                  stripeColor: Colors.black.withValues(alpha: 0.05),
                 ),
               ),
             ),
@@ -248,7 +248,7 @@ class TrainerCardDialog extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFF70a0e0),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black.withOpacity(0.2)),
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
                           ),
                           child: Text(
                             "TRAINER CARD",
@@ -288,7 +288,7 @@ class TrainerCardDialog extends StatelessWidget {
                             height: 90,
                             margin: const EdgeInsets.only(left: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFa8dcb2).withOpacity(0.8),
+                              color: const Color(0xFFa8dcb2).withValues(alpha: 0.8),
                               border: Border.all(color: borderDark, width: 2),
                             ),
                             child: Image.asset(
@@ -312,7 +312,7 @@ class TrainerCardDialog extends StatelessWidget {
                             Text("BADGES", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
                             Container(
                               height: 2,
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               margin: const EdgeInsets.only(bottom: 2),
                             ),
                             Row(
@@ -328,7 +328,7 @@ class TrainerCardDialog extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     borderRadius: BorderRadius.circular(4),
                                     border: Border.all(color: borderDark),
                                     boxShadow: const [
