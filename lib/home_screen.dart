@@ -11,6 +11,19 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 1;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,12 +60,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
+      body: PageView(
+        controller: _pageController,
+        physics: const BouncingScrollPhysics(),
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
         children: const [
-          Tab2Diary(),
-          Tab1Draft(),
-          Tab3Pokedex(),
+          _KeepAliveWrapper(child: Tab2Diary()),
+          _KeepAliveWrapper(child: Tab1Draft()),
+          _KeepAliveWrapper(child: Tab3Pokedex()),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -60,9 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
         selectedItemColor: Colors.redAccent,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
+          if (index == _currentIndex) return;
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
         },
         items: const [
           BottomNavigationBarItem(
@@ -111,4 +133,25 @@ class _HomeScreenState extends State<HomeScreen> {
     final month = months[date.month - 1];
     return '$weekday, $month ${date.day}, ${date.year}';
   }
+}
+
+class _KeepAliveWrapper extends StatefulWidget {
+  final Widget child;
+
+  const _KeepAliveWrapper({required this.child});
+
+  @override
+  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin<_KeepAliveWrapper> {
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+
+  @override
+  bool get wantKeepAlive => true;
 }
