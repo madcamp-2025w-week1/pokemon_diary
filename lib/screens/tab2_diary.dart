@@ -3,9 +3,134 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
+import '../services/services.dart';
 
 class Tab2Diary extends StatelessWidget {
   const Tab2Diary({super.key});
+
+  Future<void> _handleDiaryTap(BuildContext context, Diary diary) async {
+    final apiService = context.read<PokemonApiService>();
+    final pokemon = await apiService.getPokemonById(diary.pokemonId);
+    if (!context.mounted) return;
+    _showDiaryDetail(context, diary, pokemon);
+  }
+
+  void _showDiaryDetail(BuildContext context, Diary diary, Pokemon? pokemon) {
+    final parsedDate = DateTime.tryParse(diary.date);
+    final monthText =
+        parsedDate != null ? _monthTitleCase(parsedDate) : '---';
+    final dayText = parsedDate != null
+        ? parsedDate.day.toString().padLeft(2, '0')
+        : '--';
+    final sentimentColor = _getSentimentColor(diary.sentiment);
+    final sentimentLabel = _capitalizeWords(diary.sentiment);
+    final iconUrl = _pokemonIconUrl(diary.pokemonId);
+    final pokemonName = pokemon?.englishName.isNotEmpty == true
+        ? pokemon!.englishName
+        : 'Pokemon #${diary.pokemonId}';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '$monthText $dayText',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: sentimentColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        sentimentLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Image.network(
+                      iconUrl,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const SizedBox(width: 56, height: 56);
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        pokemonName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.4,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      diary.content,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Color _getSentimentColor(String sentiment) {
     final normalized = sentiment.trim().toLowerCase();
@@ -54,6 +179,24 @@ class Tab2Diary extends StatelessWidget {
     return months[date.month - 1];
   }
 
+  String _monthTitleCase(DateTime date) {
+    const months = <String>[
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[date.month - 1];
+  }
+
   @override
   Widget build(BuildContext context) {
     final diaryProvider = context.watch<DiaryProvider>();
@@ -81,6 +224,7 @@ class Tab2Diary extends StatelessWidget {
             monthLabelBuilder: _monthLabel,
             sentimentColor: _getSentimentColor(diary.sentiment),
             sentimentLabel: _capitalizeWords(diary.sentiment),
+            onTap: () => _handleDiaryTap(context, diary),
           ),
         );
       },
@@ -94,6 +238,7 @@ class DiaryCard extends StatelessWidget {
   final String Function(DateTime date) monthLabelBuilder;
   final Color sentimentColor;
   final String sentimentLabel;
+  final VoidCallback onTap;
 
   const DiaryCard({
     super.key,
@@ -102,6 +247,7 @@ class DiaryCard extends StatelessWidget {
     required this.monthLabelBuilder,
     required this.sentimentColor,
     required this.sentimentLabel,
+    required this.onTap,
   });
 
   @override
@@ -118,74 +264,78 @@ class DiaryCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Image.network(
-                  iconUrl,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const SizedBox(width: 50, height: 50);
-                  },
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      monthText,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Image.network(
+                    iconUrl,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const SizedBox(width: 50, height: 50);
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        monthText,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      Text(
+                        dayText,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: sentimentColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      sentimentLabel,
                       style: const TextStyle(
-                        fontSize: 12,
+                        color: Colors.white,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black54,
                       ),
                     ),
-                    Text(
-                      dayText,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: sentimentColor,
-                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    sentimentLabel,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              diary.content,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 15,
-                color: Colors.black87,
-                height: 1.4,
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                diary.content,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: Colors.black87,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
