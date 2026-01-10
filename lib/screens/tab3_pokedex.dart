@@ -60,6 +60,7 @@ class _PokedexTile extends StatelessWidget {
   final bool isKorean;
 
   const _PokedexTile({
+    super.key, // super.key 추가 (성능상 권장)
     required this.pokemon,
     required this.isOwned,
     required this.isKorean,
@@ -72,19 +73,27 @@ class _PokedexTile extends StatelessWidget {
         : '???';
     final nameColor = isOwned ? Colors.black87 : Colors.black38;
 
+    // ★ 최적화 1: 미보유 시에는 무거운 GIF 대신 가벼운 PNG(spriteUrl) 사용
+    // 어차피 실루엣이라 움직임이 잘 안 보임 -> 성능 이득 극대화
+    final imageUrl = isOwned ? pokemon.showdownGifUrl : pokemon.homeSpriteUrl;
+
     Widget imageWidget = CachedNetworkImage(
-      imageUrl: pokemon.showdownGifUrl, // GIF URL
+      imageUrl: imageUrl,
       fit: BoxFit.contain,
+      // ★ 최적화 2: 메모리에 올릴 때 크기를 제한 (그리드 크기에 맞춰서 축소 디코딩)
+      // 원본이 커도 메모리에는 200px로 올라가서 렉이 줄어듦
+      memCacheHeight: 200, 
       placeholder: (context, url) => Center(
         child: SizedBox(
-          width: 20, 
-          height: 20, 
+          width: 20,
+          height: 20,
           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey[300]),
         ),
       ),
       errorWidget: (context, url, error) => const Icon(Icons.error),
     );
 
+    // 미보유 시 실루엣 처리
     if (!isOwned) {
       imageWidget = ColorFiltered(
         colorFilter: const ColorFilter.mode(
@@ -93,6 +102,9 @@ class _PokedexTile extends StatelessWidget {
         ),
         child: imageWidget,
       );
+    } else {
+      // ★ 최적화 3: GIF가 움직일 때 주변 위젯까지 다시 그리지 않도록 격리
+      imageWidget = RepaintBoundary(child: imageWidget);
     }
 
     return Card(
@@ -107,6 +119,7 @@ class _PokedexTile extends StatelessWidget {
             ? () {
                 showDialog(
                   context: context,
+                  // barrierDismissible: true, // 바깥 눌러서 닫기 (기본값 true)
                   builder: (_) => PokemonDetailDialog(pokemon: pokemon),
                 );
               }
@@ -116,6 +129,8 @@ class _PokedexTile extends StatelessWidget {
           child: Column(
             children: [
               Expanded(
+                // Hero 애니메이션은 리스트 렉의 주범이 될 수 있으므로, 
+                // 렉이 심하면 제거 고려. 지금은 유지.
                 child: Center(child: imageWidget),
               ),
               const SizedBox(height: 6),
