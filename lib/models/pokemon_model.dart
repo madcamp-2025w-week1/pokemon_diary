@@ -1,13 +1,34 @@
 import 'dart:convert';
 
+enum PokemonType {
+  electric, flying, fairy,                    // Joy
+  water, ghost, ice, ground, poison,          // Sad
+  fire, fighting, dragon, dark,               // Angry
+  grass, normal, bug, psychic, steel, rock    // Calm
+  
+}
+
+extension PokemonTypeExtension on PokemonType {
+  static PokemonType? tryParse(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    try {
+      return PokemonType.values.firstWhere(
+        (type) => type.name.toLowerCase() == value.trim().toLowerCase(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
 class Pokemon {
   final int id;
   final String englishName;
   final String koreanName;
   final String dexEntryEnglish;
   final String dexEntryKorean;
-  final String type1;
-  final String? type2;
+  final PokemonType type1;
+  final PokemonType? type2;
   final bool isLegendary;
   final bool isMythical;
   final double height;
@@ -40,8 +61,8 @@ class Pokemon {
       koreanName: map['korean_name'] ?? '',
       dexEntryEnglish: map['dex_entry_english'] ?? '',
       dexEntryKorean: map['dex_entry_korean'] ?? '',
-      type1: map['type_1'] ?? '',
-      type2: _emptyToNull(map['type_2']),
+      type1: PokemonTypeExtension.tryParse(map['type_1']) ?? PokemonType.normal,
+      type2: PokemonTypeExtension.tryParse(map['type_2']),
       isLegendary: _parseBool(map['is_legendary']),
       isMythical: _parseBool(map['is_mythical']),
       height: double.tryParse(map['height'] ?? '') ?? 0,
@@ -74,8 +95,8 @@ class Pokemon {
       'korean_name': koreanName,
       'dex_entry_english': dexEntryEnglish,
       'dex_entry_korean': dexEntryKorean,
-      'type_1': type1,
-      'type_2': type2,
+      'type_1': type1.name,
+      'type_2': type2?.name,
       'is_legendary': isLegendary,
       'is_mythical': isMythical,
       'height': height,

@@ -57,7 +57,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     final diaries = await DbHelper.instance.getDiaries();
     final existing = diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (existing.isNotEmpty) {
+    if (false/*existing.isNotEmpty*/) {
       final diary = existing.first;
       if (!mounted) return;
       
@@ -101,6 +101,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     _blinkController.repeat(reverse: true);
 
     final sentiment = _sentimentService.analyzeSentiment(text);
+    debugPrint("sentiment is $sentiment");
+
     final pokemonId = _gachaLogic.draftRandomPokemon();
     final apiService = context.read<PokemonApiService>();
     final pokemon = await apiService.getPokemonById(pokemonId);
