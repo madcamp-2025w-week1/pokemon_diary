@@ -1,5 +1,4 @@
 import 'package:dart_sentiment/dart_sentiment.dart';
-import '../models/models.dart';
 
 class SentimentService {
   final _sentimentAnalyzer = Sentiment();
@@ -28,8 +27,6 @@ class SentimentService {
     // Get Sentiment Score (-5 to +5)
     Map<String, dynamic> result = _sentimentAnalyzer.analysis(processedText);
     int score = result['score'];
-    
-    print("Sentiment Score: $score");
 
     // --- LOGIC TREE ---
     if (score < 0) {
