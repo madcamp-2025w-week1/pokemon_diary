@@ -44,6 +44,7 @@ dependencies:
   google_translator: any
   dart_sentiment: any
   google_fonts: any
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:
