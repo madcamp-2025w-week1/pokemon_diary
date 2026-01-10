@@ -60,7 +60,6 @@ class _PokedexTile extends StatelessWidget {
   final bool isKorean;
 
   const _PokedexTile({
-    super.key, // super.key 추가 (성능상 권장)
     required this.pokemon,
     required this.isOwned,
     required this.isKorean,
