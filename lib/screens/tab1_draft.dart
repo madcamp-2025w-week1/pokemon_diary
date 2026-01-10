@@ -102,10 +102,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     _blinkController.repeat(reverse: true);
 
     final sentiment = _sentimentService.analyzeSentiment(text);
-    debugPrint("sentiment is $sentiment");
-
-    final pokemonId = _gachaLogic.draftRandomPokemon();
     final apiService = context.read<PokemonApiService>();
+    final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
     final pokemon = await apiService.getPokemonById(pokemonId);
 
     // [Phase 1] 회전 및 점멸 대기 (2.5초)
