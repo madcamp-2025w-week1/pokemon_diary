@@ -321,12 +321,12 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       }
     }
 
-    // ★ 수정됨: [입력 모드] 정적 이미지 대신 Lottie를 멈춘 상태로 출력
+    // [입력 모드] 정적 이미지 대신 Lottie를 멈춘 상태로 출력
     return Lottie.asset(
       'assets/animations/Pokeball loading animation.json',
-      height: 150, // 입력 모드일 땐 살짝 작게
+      height: 180,
       fit: BoxFit.contain,
-      animate: false, // ★ 여기서 애니메이션을 끄면 0번 프레임(정적 이미지)으로 나옴!
+      animate: false, // 여기서 애니메이션을 끄면 0번 프레임(정적 이미지)으로 나옴
     );
   }
 
