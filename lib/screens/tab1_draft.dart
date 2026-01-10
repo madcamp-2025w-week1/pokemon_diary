@@ -20,16 +20,15 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   final GachaLogic _gachaLogic = GachaLogic();
 
   bool _isLoading = true;
-  bool _isResultMode = false;
+  bool _isResultMode = false; 
+  bool _isInputMode = true;   
   
-  // 애니메이션 상태 관리
   bool _isGachaAnimating = false;
   bool _showLightning = false;
   
   Diary? _todayDiary;
   Pokemon? _currentPokemon;
 
-  // 점멸 효과(Blinking) 컨트롤러
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
 
@@ -58,7 +57,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     final diaries = await DbHelper.instance.getDiaries();
     final existing = diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (false/*existing.isNotEmpty*/) {
+    if (false /*existing.isNotEmpty*/) {
       final diary = existing.first;
       if (!mounted) return;
       
@@ -70,12 +69,14 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         _todayDiary = diary;
         _currentPokemon = pokemon;
         _isResultMode = true;
+        _isInputMode = false;
         _isLoading = false;
       });
     } else {
       if (!mounted) return;
       setState(() {
         _isResultMode = false;
+        _isInputMode = true;
         _isLoading = false;
       });
     }
@@ -94,29 +95,58 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       return;
     }
 
-    // 1. 애니메이션 시작
+    // [Step 1] 즉시 UI 전환 (워터마크가 포함된 최종 UI로 바로 변경)
     setState(() {
+      _isInputMode = false; 
       _isGachaAnimating = true; 
     });
     
     _blinkController.repeat(reverse: true);
 
-    final sentiment = _sentimentService.analyzeSentiment(text);
-    final apiService = context.read<PokemonApiService>();
-    final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
-    final pokemon = await apiService.getPokemonById(pokemonId);
+    // [Step 2] 로직 수행 & 프리로딩
+    final logicFuture = _performGachaLogic(text);
 
-    // [Phase 1] 회전 및 점멸 대기 (2.5초)
+    // [Phase 1] 2.5초 대기
     await Future.delayed(const Duration(milliseconds: 2500));
 
-    // [Phase 2] 번개 효과로 전환
+    // [Phase 2] 번개
     _blinkController.stop(); 
     setState(() {
       _showLightning = true; 
     });
 
-    // ★ 수정됨: 번개 시간 2.5초로 연장 (기존 1.2초)
+    final resultData = await logicFuture;
+    
+    if (mounted && resultData['pokemon'] != null) {
+      final pokemon = resultData['pokemon'] as Pokemon;
+      await precacheImage(NetworkImage(pokemon.homeSpriteUrl), context);
+    }
+
+    // [Phase 3] 2.5초 대기
     await Future.delayed(const Duration(milliseconds: 2500));
+
+    // [Final] 결과 반영
+    final diary = resultData['diary'] as Diary;
+    await DbHelper.instance.insertDiary(diary);
+    if(mounted) {
+       await context.read<DiaryProvider>().refreshDiaries();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _todayDiary = diary;
+      _currentPokemon = resultData['pokemon'] as Pokemon;
+      _isResultMode = true;
+      _isGachaAnimating = false;
+      _showLightning = false;
+    });
+  }
+
+  Future<Map<String, dynamic>> _performGachaLogic(String text) async {
+    final sentiment = _sentimentService.analyzeSentiment(text);
+    final apiService = context.read<PokemonApiService>();
+    final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
+    final pokemon = await apiService.getPokemonById(pokemonId);
 
     final diary = Diary(
       date: _formatDate(DateTime.now()),
@@ -124,17 +154,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       sentiment: sentiment,
       pokemonId: pokemonId,
     );
-    await DbHelper.instance.insertDiary(diary);
-    await context.read<DiaryProvider>().refreshDiaries();
 
-    if (!mounted) return;
-    setState(() {
-      _todayDiary = diary;
-      _currentPokemon = pokemon;
-      _isResultMode = true;
-      _isGachaAnimating = false;
-      _showLightning = false;
-    });
+    return {'diary': diary, 'pokemon': pokemon};
   }
 
   @override
@@ -154,7 +175,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // --- [Section 1: Dynamic Top Area] ---
+                    // --- [Section 1: Top Visual] ---
                     SizedBox(
                       height: 220,
                       child: Center(
@@ -172,6 +193,16 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                           color: Colors.black87,
                         ),
                       ),
+                    ] else if (_isGachaAnimating) ...[
+                       const SizedBox(height: 12),
+                       const Text(
+                         "Finding your companion...",
+                         style: TextStyle(
+                           fontSize: 18,
+                           fontWeight: FontWeight.w600,
+                           color: Colors.grey,
+                         ),
+                       ),
                     ],
 
                     const SizedBox(height: 20),
@@ -192,10 +223,12 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                         ],
                         border: Border.all(color: Colors.black12),
                       ),
-                      child: _isResultMode && _todayDiary != null
+                      // ★ 수정 포인트: 입력 모드가 아니면 무조건 워터마크가 있는 Stack UI 노출
+                      child: !_isInputMode
                           ? Stack(
                               alignment: Alignment.center,
                               children: [
+                                // ★ 조건문 제거! 결과 모드랑 상관없이 무조건 워터마크 표시
                                 Opacity(
                                   opacity: 0.3,
                                   child: Image.asset(
@@ -205,7 +238,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 Text(
-                                  _todayDiary!.content,
+                                  // 내용도 바로 고정
+                                  _todayDiary?.content ?? _controller.text,
                                   style: const TextStyle(
                                     fontSize: 16, color: Colors.black87, height: 1.5,
                                   ),
@@ -215,7 +249,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                             )
                           : TextField(
                               controller: _controller,
-                              enabled: !_isGachaAnimating,
+                              enabled: true,
                               maxLines: 8,
                               minLines: 4,
                               style: const TextStyle(fontSize: 16),
@@ -235,7 +269,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                     const SizedBox(height: 20),
 
                     // --- [Section 3: Button] ---
-                    if (!_isResultMode && !_isGachaAnimating)
+                    if (_isInputMode)
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -255,12 +289,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                      )
-                    else if (_isGachaAnimating)
-                       const Text(
-                         "Analyzing your emotions...",
-                         style: TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500),
-                       ),
+                      ),
                   ],
                 ),
               ),
@@ -272,8 +301,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   }
 
   Widget _buildTopVisual() {
-    // 1. 결과 모드: 포켓몬 이미지
-    if (_isResultMode && _todayDiary != null && _currentPokemon != null) {
+    if (_isResultMode && _currentPokemon != null) {
       return Image.network(
         _currentPokemon!.homeSpriteUrl,
         height: 200,
@@ -281,17 +309,14 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       );
     }
     
-    // 2. 가챠 애니메이션 진행 중
     if (_isGachaAnimating) {
       if (_showLightning) {
-        // [Phase 2] 번개 애니메이션 (2.5초간 지속)
         return Lottie.asset(
           'assets/animations/Pikachu lightning.json',
           height: 220,
           fit: BoxFit.contain,
         );
       } else {
-        // [Phase 1] 회전하는 몬스터볼 + 점멸
         return Stack(
           alignment: Alignment.center,
           children: [
@@ -321,12 +346,11 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       }
     }
 
-    // [입력 모드] 정적 이미지 대신 Lottie를 멈춘 상태로 출력
     return Lottie.asset(
       'assets/animations/Pokeball loading animation.json',
       height: 180,
       fit: BoxFit.contain,
-      animate: false, // 여기서 애니메이션을 끄면 0번 프레임(정적 이미지)으로 나옴
+      animate: false,
     );
   }
 
