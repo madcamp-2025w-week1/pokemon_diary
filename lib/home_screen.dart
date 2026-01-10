@@ -75,7 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.grid_view),
-            label: 'Pokedex',
+            label: 'Pokédex',
           ),
         ],
       ),
