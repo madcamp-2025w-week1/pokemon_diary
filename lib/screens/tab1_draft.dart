@@ -27,6 +27,9 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   bool _isGachaAnimating = false;
   bool _showLightning = false;
   
+  // ★ 추가: 현재 재생할 번개 애니메이션 파일 경로 (기본값: 일반)
+  String _currentLightningAnim = 'assets/animations/gray_lightning.json';
+  
   Diary? _todayDiary;
   Pokemon? _currentPokemon;
 
@@ -58,7 +61,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     final diaries = await DbHelper.instance.getDiaries();
     final existing = diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (false /*existing.isNotEmpty*/) {
+    if (existing.isNotEmpty) {
       final diary = existing.first;
       if (!mounted) return;
       
@@ -97,7 +100,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       return;
     }
 
-    // [Step 1] 즉시 UI 전환 (워터마크가 포함된 최종 UI로 바로 변경)
+    // [Step 1] 즉시 UI 전환
     setState(() {
       _isInputMode = false; 
       _isGachaAnimating = true; 
@@ -105,26 +108,38 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     
     _blinkController.repeat(reverse: true);
 
-    // [Step 2] 로직 수행 & 프리로딩
+    // [Step 2] 로직 수행 & 프리로딩 시작
     final logicFuture = _performGachaLogic(text);
 
-    // [Phase 1] 2.5초 대기
+    // [Phase 1] 회전 및 점멸 대기 (2.5초)
     await Future.delayed(const Duration(milliseconds: 2500));
 
-    // [Phase 2] 번개
+    // ★ 중요: 번개 치기 전에 어떤 포켓몬인지 먼저 확인해서 색깔 결정!
+    final resultData = await logicFuture;
+    final pokemon = resultData['pokemon'] as Pokemon;
+
+    // 등급별 애니메이션 선택 로직
+    String lightningFile = 'assets/animations/gray_lightning.json'; // Default: Normal
+    if (pokemon.isMythical) {
+      lightningFile = 'assets/animations/purple_lightning.json'; // Mythical
+    } else if (pokemon.isLegendary) {
+      lightningFile = 'assets/animations/yellow_lightning.json'; // Legendary
+    }
+
+    // [Phase 2] 번개 효과로 전환
     _blinkController.stop(); 
+    
     setState(() {
+      _currentLightningAnim = lightningFile; // 결정된 애니메이션 설정
       _showLightning = true; 
     });
 
-    final resultData = await logicFuture;
-    
-    if (mounted && resultData['pokemon'] != null) {
-      final pokemon = resultData['pokemon'] as Pokemon;
+    // 이미지 프리로딩 (번개 치는 동안 다운로드)
+    if (mounted) {
       await precacheImage(NetworkImage(pokemon.homeSpriteUrl), context);
     }
 
-    // [Phase 3] 2.5초 대기
+    // [Phase 3] 번개 지속 시간 (2.5초)
     await Future.delayed(const Duration(milliseconds: 2500));
 
     // [Final] 결과 반영
@@ -138,7 +153,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     if (!mounted) return;
     setState(() {
       _todayDiary = diary;
-      _currentPokemon = resultData['pokemon'] as Pokemon;
+      _currentPokemon = pokemon;
       _isResultMode = true;
       _isGachaAnimating = false;
       _showLightning = false;
@@ -226,12 +241,10 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                         ],
                         border: Border.all(color: Colors.black12),
                       ),
-                      // ★ 수정 포인트: 입력 모드가 아니면 무조건 워터마크가 있는 Stack UI 노출
                       child: !_isInputMode
                           ? Stack(
                               alignment: Alignment.center,
                               children: [
-                                // ★ 조건문 제거! 결과 모드랑 상관없이 무조건 워터마크 표시
                                 Opacity(
                                   opacity: 0.3,
                                   child: Image.asset(
@@ -241,7 +254,6 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                                   ),
                                 ),
                                 Text(
-                                  // 내용도 바로 고정
                                   _todayDiary?.content ?? _controller.text,
                                   style: const TextStyle(
                                     fontSize: 16, color: Colors.black87, height: 1.5,
@@ -314,8 +326,9 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     
     if (_isGachaAnimating) {
       if (_showLightning) {
+        // ★ 수정 포인트: 결정된 이펙트 파일 재생
         return Lottie.asset(
-          'assets/animations/Pikachu lightning.json',
+          _currentLightningAnim, 
           height: 220,
           fit: BoxFit.contain,
         );
