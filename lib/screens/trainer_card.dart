@@ -12,10 +12,6 @@ class TrainerCardPage extends StatefulWidget {
 }
 
 class _TrainerCardPageState extends State<TrainerCardPage> {
-  // State for the card (Date and Streak remain local or could be moved later)
-  String _debutDate = "LOADING...";
-  final int _streak = 5;
-
   // Mock list of badges (Use Image.asset for real ones)
   final List<IconData> _badges = [
     Icons.bolt,
@@ -27,34 +23,6 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
     Icons.hexagon,
     Icons.local_fire_department
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadDebutDate();
-  }
-
-  Future<void> _loadDebutDate() async {
-    final diaries = await DbHelper.instance.getDiaries();
-
-    if (mounted) {
-      setState(() {
-        if (diaries.isEmpty) {
-          _debutDate = "NOT DEBUTED YET";
-        } else {
-          // getDiaries returns ordered by ID DESC (newest first), so last is oldest
-          final firstEntry = diaries.last;
-          // The date string in DB is YYYY-MM-DD
-          try {
-            final date = DateTime.parse(firstEntry.date);
-            _debutDate = _formatDate(date);
-          } catch (e) {
-            _debutDate = "UNKNOWN";
-          }
-        }
-      });
-    }
-  }
 
   String _formatDate(DateTime date) {
     const months = [
@@ -69,14 +37,26 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
   Widget build(BuildContext context) {
     final trainerProvider = context.watch<TrainerProvider>();
 
+    String displayDebut = "LOADING...";
+    if (trainerProvider.debutDate != "???" && trainerProvider.debutDate != "NOT STARTED") {
+      try {
+        final date = DateTime.parse(trainerProvider.debutDate);
+        displayDebut = _formatDate(date);
+      } catch (_) {
+        displayDebut = trainerProvider.debutDate;
+      }
+    } else {
+      displayDebut = trainerProvider.debutDate;
+    }
+
     return Center(
       child: Material(
         color: Colors.transparent,
         child: TrainerCardDialog(
           trainerName: trainerProvider.name,
           gender: trainerProvider.gender,
-          debutDate: _debutDate,
-          streak: _streak,
+          debutDate: displayDebut,
+          streak: trainerProvider.streak,
           badges: _badges,
           onEditName: () => _showEditNameDialog(context, trainerProvider),
           onEditGender: () => _showGenderDialog(context, trainerProvider),

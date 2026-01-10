@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 
@@ -95,6 +96,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           backgroundColor: Colors.redAccent,
         ),
       );
+
       return;
     }
 
@@ -145,6 +147,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     await DbHelper.instance.insertDiary(diary);
     if(mounted) {
        await context.read<DiaryProvider>().refreshDiaries();
+       await context.read<TrainerProvider>().refreshStreak();
     }
 
     if (!mounted) return;
