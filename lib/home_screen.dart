@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/tab1_draft.dart';
-import 'screens/tab2_diary.dart';
-import 'screens/tab3_pokedex.dart';
+import 'screens/screens.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

@@ -3,12 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 
-import '../models/diary_model.dart';
-import '../models/pokemon_model.dart';
-import '../services/api_service.dart';
-import '../services/db_helper.dart';
-import '../services/gacha_logic.dart';
-import '../services/sentiment_service.dart';
+import '../models/models.dart';
+import '../services/services.dart';
 
 class Tab1Draft extends StatefulWidget {
   const Tab1Draft({super.key});

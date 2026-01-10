@@ -1,7 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import '../models/diary_model.dart';
+import '../models/models.dart';
 
 class DbHelper {
   DbHelper._internal();

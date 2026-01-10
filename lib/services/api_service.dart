@@ -1,7 +1,7 @@
 import 'package:csv/csv.dart';
 import 'package:flutter/services.dart';
 
-import '../models/pokemon_model.dart';
+import '../models/models.dart';
 
 class PokemonApiService {
   static const String _csvAssetPath = 'assets/data/pokemon_data.csv';

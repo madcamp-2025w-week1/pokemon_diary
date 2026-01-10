@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'home_screen.dart';
-import 'services/api_service.dart';
-import 'services/db_helper.dart';
+import 'services/services.dart';
 
 void main() {
   runApp(const PokemonDiaryApp());
