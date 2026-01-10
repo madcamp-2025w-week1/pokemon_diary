@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 
 import '../models/diary_model.dart';
+import '../models/pokemon_model.dart';
 import '../services/api_service.dart';
 import '../services/db_helper.dart';
 import '../services/gacha_logic.dart';
@@ -29,7 +30,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   bool _showLightning = false;
   
   Diary? _todayDiary;
-  String? _pokemonName;
+  Pokemon? _currentPokemon;
 
   // 점멸 효과(Blinking) 컨트롤러
   late AnimationController _blinkController;
@@ -70,7 +71,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       if (!mounted) return;
       setState(() {
         _todayDiary = diary;
-        _pokemonName = pokemon?.englishName ?? 'Unknown';
+        _currentPokemon = pokemon;
         _isResultMode = true;
         _isLoading = false;
       });
@@ -131,7 +132,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     if (!mounted) return;
     setState(() {
       _todayDiary = diary;
-      _pokemonName = pokemon?.englishName ?? 'Unknown';
+      _currentPokemon = pokemon;
       _isResultMode = true;
       _isGachaAnimating = false;
       _showLightning = false;
@@ -163,10 +164,10 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                       ),
                     ),
                     
-                    if (_isResultMode && _pokemonName != null) ...[
+                    if (_isResultMode && _currentPokemon != null) ...[
                       const SizedBox(height: 12),
                       Text(
-                        _pokemonName!,
+                        _currentPokemon!.englishName,
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -199,8 +200,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                               children: [
                                 Opacity(
                                   opacity: 0.3,
-                                  child: Image.network(
-                                    'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png',
+                                  child: Image.asset(
+                                    'assets/images/poke-ball.png',
                                     height: 150,
                                     fit: BoxFit.contain,
                                   ),
@@ -274,9 +275,9 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
 
   Widget _buildTopVisual() {
     // 1. 결과 모드: 포켓몬 이미지
-    if (_isResultMode && _todayDiary != null) {
+    if (_isResultMode && _todayDiary != null && _currentPokemon != null) {
       return Image.network(
-        'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${_todayDiary!.pokemonId}.png',
+        _currentPokemon!.homeSpriteUrl,
         height: 200,
         fit: BoxFit.contain,
       );
