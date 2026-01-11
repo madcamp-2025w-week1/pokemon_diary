@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // Optional: For pixel font
+import 'package:google_fonts/google_fonts.dart'; 
 import 'package:provider/provider.dart';
 import '../providers/trainer_provider.dart';
+import '../models/models.dart'; // Ensure PokemonBadge is exported here
 
 class TrainerCardPage extends StatefulWidget {
   const TrainerCardPage({super.key});
@@ -11,17 +12,6 @@ class TrainerCardPage extends StatefulWidget {
 }
 
 class _TrainerCardPageState extends State<TrainerCardPage> {
-  // Mock list of badges (Use Image.asset for real ones)
-  final List<IconData> _badges = [
-    Icons.bolt,
-    Icons.water_drop,
-    Icons.grass,
-    Icons.psychology,
-    Icons.favorite,
-    Icons.change_history,
-    Icons.hexagon,
-    Icons.local_fire_department
-  ];
 
   String _formatDate(DateTime date) {
     const months = [
@@ -34,6 +24,7 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the provider to get real-time badge updates
     final trainerProvider = context.watch<TrainerProvider>();
 
     String displayDebut = "LOADING...";
@@ -56,7 +47,8 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
           gender: trainerProvider.gender,
           debutDate: displayDebut,
           streak: trainerProvider.streak,
-          badges: _badges,
+          // PASS THE REAL BADGES HERE
+          badges: trainerProvider.badges, 
           onEditName: () => _showEditNameDialog(context, trainerProvider),
           onEditGender: () => _showGenderDialog(context, trainerProvider),
           onSave: () {
@@ -67,7 +59,6 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
     );
   }
 
-  // Simple dialog to edit name
   void _showEditNameDialog(BuildContext context, TrainerProvider provider) {
     TextEditingController controller = TextEditingController(text: provider.name);
     showDialog(
@@ -88,7 +79,6 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
     );
   }
 
-  // Dialog to select gender
   void _showGenderDialog(BuildContext context, TrainerProvider provider) {
     showDialog(
       context: context,
@@ -126,7 +116,7 @@ class TrainerCardDialog extends StatelessWidget {
   final String gender;
   final String debutDate;
   final int streak;
-  final List<IconData> badges;
+  final List<PokemonBadge> badges; 
   final VoidCallback onEditName;
   final VoidCallback onEditGender;
   final VoidCallback onSave;
@@ -145,33 +135,30 @@ class TrainerCardDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Determine font style (Pixelated look)
     final pixelStyle = GoogleFonts.pressStart2p(
       fontSize: 10,
       color: const Color(0xFF2d3436),
       height: 1.4,
     );
 
-    // COLORS sourced from the image
     const Color borderLight = Color(0xFF63c7c8);
     const Color borderDark = Color(0xFF286a6b);
     const Color cardBgLight = Color(0xFF86c096);
 
-    // Select image based on gender
     final String imagePath = gender == "MALE"
         ? 'assets/images/red.png'
         : 'assets/images/misty.png';
 
     return Container(
       width: 340,
-      height: 280,
+      height: 280, 
       decoration: BoxDecoration(
         color: borderLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withOpacity(0.5),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -192,7 +179,7 @@ class TrainerCardDialog extends StatelessWidget {
                 Container(
                   height: 124,
                   width: double.infinity,
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: Colors.white.withOpacity(0.9),
                 ),
               ],
             ),
@@ -201,7 +188,7 @@ class TrainerCardDialog extends StatelessWidget {
             Positioned.fill(
               child: CustomPaint(
                 painter: StripePainter(
-                  stripeColor: Colors.black.withValues(alpha: 0.05),
+                  stripeColor: Colors.black.withOpacity(0.05),
                 ),
               ),
             ),
@@ -227,7 +214,7 @@ class TrainerCardDialog extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFF70a0e0),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
+                            border: Border.all(color: Colors.black.withOpacity(0.2)),
                           ),
                           child: Text(
                             "TRAINER CARD",
@@ -236,38 +223,37 @@ class TrainerCardDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8), // Reduced slightly
 
-                    // --- MAIN CONTENT AREA (Info + Avatar) ---
+                    // --- MAIN INFO ROW ---
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced vertical padding
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // LEFT COLUMN (Info)
+                          // Left Info
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _buildInfoRow("NAME", trainerName, pixelStyle, onTap: onEditName),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 _buildInfoRow("GENDER", gender, pixelStyle, onTap: onEditGender),
-                                const SizedBox(height: 6),
-                                Text("DEBUT DATE: $debutDate", style: pixelStyle),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
+                                Text("DEBUT: $debutDate", style: pixelStyle),
+                                const SizedBox(height: 4),
                                 Text("STREAK: $streak DAYS", style: pixelStyle),
                               ],
                             ),
                           ),
-
-                          // RIGHT COLUMN (Avatar)
+                          // Right Avatar
                           Container(
                             width: 72,
-                            height: 90,
+                            height: 80, // Slightly shorter to save space
                             margin: const EdgeInsets.only(left: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFa8dcb2).withValues(alpha: 0.8),
+                              color: const Color(0xFFa8dcb2).withOpacity(0.8),
                               border: Border.all(color: borderDark, width: 2),
                             ),
                             child: Image.asset(
@@ -291,14 +277,44 @@ class TrainerCardDialog extends StatelessWidget {
                             Text("BADGES", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
                             Container(
                               height: 2,
-                              color: Colors.white.withValues(alpha: 0.5),
-                              margin: const EdgeInsets.only(bottom: 2),
+                              color: Colors.white.withOpacity(0.5),
+                              margin: const EdgeInsets.only(bottom: 4), // Reduced margin
                             ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: badges.map((icon) => Icon(icon, color: Colors.white, size: 24)).toList(),
+                            
+                            // *** COMPACT BADGE DISPLAY ***
+                            SizedBox(
+                              width: double.infinity,
+                              child: Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                spacing: 8, // Tighter spacing
+                                runSpacing: 4, // Tighter row spacing
+                                children: badges.map((badge) {
+                                  return Tooltip(
+                                    message: "${badge.name}\n${badge.description}",
+                                    triggerMode: TooltipTriggerMode.tap,
+                                    child: Opacity(
+                                      opacity: badge.isUnlocked ? 1.0 : 0.3,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(3), // Smaller padding
+                                        decoration: badge.isUnlocked ? BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(color: Colors.white.withOpacity(0.6), blurRadius: 6)
+                                          ]
+                                        ) : null,
+                                        child: Icon(
+                                          badge.icon, 
+                                          color: badge.isUnlocked ? Colors.white : Colors.black, 
+                                          size: 16 // RESIZED: Smaller icon to fit
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
-                            const SizedBox(height: 10),
+                            
+                            const SizedBox(height: 8),
 
                             // --- FOOTER BUTTON ---
                             Center(
@@ -307,7 +323,7 @@ class TrainerCardDialog extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.8),
+                                    color: Colors.white.withOpacity(0.8),
                                     borderRadius: BorderRadius.circular(4),
                                     border: Border.all(color: borderDark),
                                     boxShadow: const [
@@ -357,8 +373,6 @@ class StripePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = stripeColor;
     const stripeHeight = 4.0;
-
-    // Draw dark stripes across the whole card
     for (double i = 0; i < size.height; i += stripeHeight * 2) {
       canvas.drawRect(Rect.fromLTWH(0, i, size.width, stripeHeight), paint);
     }
