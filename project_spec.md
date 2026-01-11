@@ -6,23 +6,21 @@
 
 ---
 
-## 0. Agent Scope & Authority (MANDATORY)
-> **CRITICAL:** This section defines the boundaries for AI Agents. Violating these rules causes immediate rejection.
+## 0. Agent Scope & Authority (REVISED)
+> **CRITICAL:** Constraints are relaxed to favor visual quality and development speed.
 
 ### 0.1. Allowed Actions
-- **Modify:** Files under `lib/` and `assets/` as strictly requested.
-- **Create:** Helper classes or widgets within existing directories.
-- **Refactor:** Improve performance (e.g., `const` constructors, `CachedNetworkImage`) without changing business logic.
+- **Dependency Management:** You ARE allowed to add well-known, stable Flutter packages to `pubspec.yaml` (e.g., animations, UI effects, shimmering).
+- **External Engines:** Prioritize using specialized animation libraries over manual `AnimationController` coding if it yields better results.
+- **Refactor:** Actively suggest and implement "ready-made" professional widgets to replace manual CSS-like container styling.
 
 ### 0.2. Forbidden Actions
-- **Schema Changes:** Do NOT modify the SQLite database schema (`diaries` table) without explicit user permission.
-- **Dependency Creep:** Do NOT add new packages to `pubspec.yaml` unless explicitly instructed.
-- **Scope Creep:** Do NOT modify `lib/main.dart` (Theme/Root) unless the task specifically requires global config changes.
-- **Pseudo-code:** Never output placeholder comments like `// ... rest of the code`. Always provide full, working code.
+- **Unstable Packages:** Do NOT use packages with low popularity or poor maintenance.
+- **Breaking Logic:** Do NOT change existing business logic/services while upgrading UI components.
 
 ### 0.3. Ownership
-- **Part B (Jack):** Owns `lib/models/`, `lib/services/`, `lib/providers/` (Data Logic).
 - **Part A:** Owns `lib/screens/`, `lib/widgets/` (UI/UX).
+- **Part B:** Owns `lib/models/`, `lib/services/`, `lib/providers/` (Data Logic).
 
 ---
 
@@ -34,7 +32,10 @@
 
 ---
 
-## 2. Tech Stack & Constraints
+## 2. Tech Stack & Constraints (Updated)
+- **Animation Strategy:** - Mandatory: `lottie` (Current)
+- **Highly Recommended:** `animate_do` (For entry/exit effects), `shimmer` (For loading states)
+- **Visual Goal:** "Retro Aesthetic + Modern Fluidity." Don't just make it look old; make it feel premium with smooth transitions.
 - **Language:** Dart (Flutter)
 - **State Management:** `Provider` (Simple & Effective for Week 1)
 - **Local Database:** `sqflite` (No Backend Server)
