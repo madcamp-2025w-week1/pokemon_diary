@@ -6,6 +6,26 @@
 
 ---
 
+## 0. Agent Scope & Authority (MANDATORY)
+> **CRITICAL:** This section defines the boundaries for AI Agents. Violating these rules causes immediate rejection.
+
+### 0.1. Allowed Actions
+- **Modify:** Files under `lib/` and `assets/` as strictly requested.
+- **Create:** Helper classes or widgets within existing directories.
+- **Refactor:** Improve performance (e.g., `const` constructors, `CachedNetworkImage`) without changing business logic.
+
+### 0.2. Forbidden Actions
+- **Schema Changes:** Do NOT modify the SQLite database schema (`diaries` table) without explicit user permission.
+- **Dependency Creep:** Do NOT add new packages to `pubspec.yaml` unless explicitly instructed.
+- **Scope Creep:** Do NOT modify `lib/main.dart` (Theme/Root) unless the task specifically requires global config changes.
+- **Pseudo-code:** Never output placeholder comments like `// ... rest of the code`. Always provide full, working code.
+
+### 0.3. Ownership
+- **Part B (Jack):** Owns `lib/models/`, `lib/services/`, `lib/providers/` (Data Logic).
+- **Part A:** Owns `lib/screens/`, `lib/widgets/` (UI/UX).
+
+---
+
 ## 1. Project Overview
 - **Goal:** A gamified diary app that analyzes the user's daily emotion and rewards them with a Pokemon card collection.
 - **Platform:** Flutter (Android/iOS)
@@ -25,34 +45,48 @@
 
 ---
 
-## 3. Architecture & Folder Structure
-Follow the strict `lib/` directory structure:
+## 3. Architecture & Folder Structure (Updated)
+Follow the updated `lib/` and `assets/` directory structure to ensure consistency across the project.
+*Note: Use `export` files (e.g., `models.dart`) to keep imports clean.*
+
 ```text
 assets/
+├── animations/           # Lottie JSON files (gray/yellow/purple_lightning.json, pokeball_loading.json)
 ├── data/
 │   └── pokemon_data.csv  # Pre-generated Pokemon metadata
 └── images/
-    ├── logo/             # App logos
-    └── ...
+    ├── logo/             # App branding assets
+    ├── red.png           # Trainer avatar (Male)
+    ├── misty.png         # Trainer avatar (Female)
+    └── poke-ball.png     # Static asset for watermark and UI
 
 lib/
-├── main.dart             # App Root & Theme configuration
-├── home_screen.dart      # Main Layout with Header & BottomNavigationBar
-├── models/               # [Part B] Data Models
+├── main.dart             # App Entry Point: MultiProvider & Theme setup
+├── home_screen.dart      # Root Layout: Scaffold with BottomNavigationBar & PageView
+├── models/               # Data Objects and Schemas
+│   ├── models.dart       # Export file for data models
 │   ├── diary_model.dart  # Data structure for user's diary entries
-│   └── pokemon_model.dart# Data structure for Pokemon metadata
-├── services/             # [Part B] Services & Business Logic
-│   ├── db_helper.dart    # SQLite Database management
-│   ├── gacha_logic.dart  # Random Pokemon selection logic
-│   ├── api_service.dart  # Local CSV parsing & Image URL management
-│   └── sentiment_service.dart # [Part C] Language detection & Sentiment analysis
-├── screens/              # [Part A] Tab Views
-│   ├── tab1_draft.dart   # Diary input & Gacha animation logic
-│   ├── tab2_diary.dart   # List of historical diary entries
-│   └── tab3_pokedex.dart # Grid view for Pokemon collection
+│   └── pokemon_model.dart# Data structure for Pokemon metadata (CSV mapping)
+├── providers/            # State Management (ChangeNotifier)
+│   ├── diary_provider.dart   # Manages global state for diary list & DB sync
+│   └── trainer_provider.dart # Manages user profile (Name, Gender)
+├── screens/              # Main App Views
+│   ├── screens.dart      # Export file for screens
+│   ├── tab1_draft.dart   # Diary input & Gacha sequence (Animation phase)
+│   ├── tab2_diary.dart   # List of historical diary cards
+│   ├── tab3_pokedex.dart # Grid view of collected/silhouette Pokemon
+│   ├── pokemon_detail_screen.dart # Retro-style Pokemon card dialog (Dialog UI)
+│   └── trainer_card.dart # Trainer profile card view (Dialog UI)
+├── services/             # Core Business Logic & Infrastructure
+│   ├── services.dart     # Export file for services
+│   ├── db_helper.dart    # Singleton: SQLite CRUD operations
+│   ├── api_service.dart  # Singleton: CSV parsing & Pokemon data provider
+│   ├── gacha_logic.dart  # Randomization & Grade-based selection logic
+│   └── sentiment_service.dart # Sentiment analysis logic (Mock or API)
 └── widgets/              # Reusable UI Components
-    ├── pokemon_image.dart# Handling static/gif images & silhouettes
-    └── emotion_badge.dart# Visual indicator for analyzed emotions
+    ├── widgets.dart      # Export file for custom widgets
+    ├── emotion_badge.dart# Visual indicator for analyzed emotions (Joy, Sad, etc.)
+    └── pokemon_image.dart# Smart image handler for GIF, Static, and Silhouettes
 ```
 
 ---
@@ -76,6 +110,11 @@ Since there is no backend, `sqflite` manages user-generated data, while a pre-ba
 - **Min Length:** 10 characters (Korean/English combined) to ensure accurate sentiment analysis.
 - **Max Length:** 1,000 characters (UI stability).
 - **Handling:** UI should show a character counter and prevent "Gacha" if the text is too short.
+
+### 4.2. Database Helper Responsibility (Strict Separation)
+- **Role:** `DbHelper` must remain a **Pure Data Layer**. It only handles SQL execution.
+- **Restriction:** NEVER import `package:flutter/material.dart` or any UI-related packages inside `db_helper.dart`.
+- **Access Pattern:** UI components must NOT call `DbHelper` directly. They must access data via `DiaryProvider`.
 
 ---
 
@@ -173,3 +212,19 @@ The system maps the English-analyzed sentiment result to specific Pokemon types:
 - **Raw Query Support:** Allow executing raw SQL strings for quick debugging during the development phase.
 
 ---
+
+## 9. Error Handling Policy (Stability First)
+- **Database Failures:** Throw a custom Exception. Never fail silently.
+- **CSV Load Failure:** Use `assert` or throw a critical error during initialization. The app cannot function without metadata.
+- **Sentiment/Network Failures:**
+  - If Sentiment API fails -> Fallback to "Normal" or "Calm" (Default Enum).
+  - If Image fails to load -> Display the `poke-ball.png` placeholder or `Icon(Icons.error)`.
+- **Try-Catch:** Do not use empty `try-catch` blocks that swallow errors. Log the error to console using `debugPrint`.
+
+---
+
+## 10. Output Rules (STRICT)
+- **Code Only:** When requested to implement a feature, output **Dart code only** unless an explanation is explicitly requested.
+- **Full Context:** When modifying a file, output the **FULL file content** to prevent context loss and copy-paste errors.
+- **No Pseudo-code:** Never use placeholders like `// ... insert logic here`.
+- **Syntax:** Always use fenced code blocks: ```dart ... ```.
