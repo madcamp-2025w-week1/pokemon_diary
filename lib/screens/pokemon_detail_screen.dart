@@ -49,7 +49,6 @@ class PokemonDetailDialog extends StatelessWidget {
       case PokemonType.dragon: return const Color(0xFF7038F8);
       case PokemonType.steel: return const Color(0xFFB8B8D0);
       case PokemonType.dark: return const Color(0xFF705848);
-      default: return Colors.grey;
     }
   }
 
@@ -68,7 +67,6 @@ class PokemonDetailDialog extends StatelessWidget {
 
     const Color borderLight = Color(0xFF63c7c8);
     const Color borderDark = Color(0xFF286a6b);
-    const Color cardBgLight = Color(0xFF86c096);
 
     return Dialog(
       backgroundColor: Colors.transparent,

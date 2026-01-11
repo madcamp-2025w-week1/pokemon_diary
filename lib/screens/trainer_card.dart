@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // Optional: For pixel font
 import 'package:provider/provider.dart';
 import '../providers/trainer_provider.dart';
-import '../services/services.dart';
 
 class TrainerCardPage extends StatefulWidget {
   const TrainerCardPage({super.key});
