@@ -6,7 +6,7 @@ import 'providers/diary_provider.dart';
 import 'providers/trainer_provider.dart';
 import 'services/services.dart';
 
-void main() {
+void main() async {
   runApp(const PokemonDiaryApp());
 }
 

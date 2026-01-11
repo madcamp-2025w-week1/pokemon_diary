@@ -1,74 +1,95 @@
-import 'package:dart_sentiment/dart_sentiment.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../api_keys.dart';
 
 class SentimentService {
-  final _sentimentAnalyzer = Sentiment();
-
-  // emotions lexicon
-  // Electric, Flying, Fairy
-  final List<String> joyWords = [
-    "happy", "excited", "amazing", "love", "great", "awesome", "wonderful", 
-    "best", "yay", "fun", "enjoy", "win", "victory",
-    "delighted", "cheerful", "glad", "grateful", "blessed", "fantastic", 
-    "proud", "success", "laugh", "laughing", "smile", "smiling", "optimistic",
-    "thrilled", "lucky", "perfect", "favorite", "liked", "hope", "energetic",
-    "yummy", "delicious", "party", "celebrate", "achievement"
-  ];
-
-  // Water, Ghost, Ice, Poison, Ground
-  final List<String> sadWords = [
-    "sad", "depressed", "cry", "crying", "lonely", "tear", "miss", "grief", 
-    "bad", "sorry", "hurt", "fail", "lost",
-    "broken", "empty", "hopeless", "tired", "exhausted", "pain", "painful",
-    "regret", "disappointed", "bummer", "awful", "terrible", "gloomy", 
-    "alone", "heartbreak", "missed", "mistake", "guilt", "guilty", "shame",
-    "unfortunate", "sick", "ill", "unhappy", "blue", "melancholy", "down", "good"
-  ];
-
-  // Fire, Fighting, Dragon, Dark
-  final List<String> angryWords = [
-    "angry", "stress", "mad", "hate", "furious", "rage", "stupid", "annoy", 
-    "fight", "destroy", "busy", "deadline", "pressure",
-    "frustrated", "frustrating", "irritated", "irritating", "upset", "livid",
-    "jealous", "envy", "hated", "sucks", "worst", "damn", "idiot", "dumb",
-    "crazy", "scream", "yell", "shout", "punch", "conflict", "argument",
-    "enemy", "rude", "mean", "unfair", "betrayed", "cheated", "hostile",
-    "panic", "nervous", "anxious", "overwhelmed", "tense"
-  ];
-
-  // calm will be the default emotion if none of the other three apply
-
-  String analyzeSentiment(String text) {
-    String processedText = text.toLowerCase();
+  // Use the variable from secrets.dart
+  static const _apiKey = huggingFaceAPIKey; 
+  static const _modelUrl = "https://router.huggingface.co/hf-inference/models/SamLowe/roberta-base-go_emotions";
+  Future<String> analyzeSentiment(String text) async {
+    int maxRetries = 5;
     
-    // Get Sentiment Score (-5 to +5)
-    Map<String, dynamic> result = _sentimentAnalyzer.analysis(processedText);
-    int score = result['score'];
+    for (int i = 0; i < maxRetries; i++) {
+      final response = await http.post(
+        Uri.parse(_modelUrl),
+        headers: {
+          "Authorization": "Bearer $_apiKey",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"inputs": text}),
+      );
 
-    // --- LOGIC TREE ---
-    if (score < 0) {
-      // === NEGATIVE MOOD ===
-      if (_containsAny(text, angryWords)) {
-        return "angry";
-      } else if (_containsAny(text, sadWords)) {
-        return "sad";
+      if (response.statusCode == 200) {
+        // Success! Parse the result.
+        // The API returns a list of lists: [[{"label": "joy", "score": 0.9}, ...]]
+        final List<dynamic> data = jsonDecode(response.body);
+        final List<dynamic> emotions = data[0];
+
+        // Sort by score (confidence) to get the top emotion
+        emotions.sort((a, b) => b['score'].compareTo(a['score']));
+        print(emotions[0]['label']);
+        return mapEmotionToAvailableEmotions(emotions[0]['label']); // Returns "joy", "sadness", "anger", etc.
+      } 
+      
+      else if (response.statusCode == 503) {
+        // === CRITICAL PART: MODEL IS LOADING ===
+        // The error usually says "Model is currently loading", estimated_time: 20.0
+        final errorBody = jsonDecode(response.body);
+        double waitTime = errorBody['estimated_time'] ?? 10.0;
+        
+        print("Model is sleeping. Waking up... Waiting ${waitTime}s");
+        
+        // Wait for the suggested time before retrying
+        await Future.delayed(Duration(seconds: waitTime.ceil()));
+        continue; // Retry the loop
       } else {
-        return "sad"; // Default Negative
+        print("Error: ${response.statusCode} ${response.body}");
+        return 'calm'; // default emotion
       }
-      } else if (score > 0) {
-        // === POSITIVE MOOD ===
-        if (_containsAny(text, joyWords)){
-          return "joy";
-        }
-      }
-    // === NEUTRAL MOOD ===
+    }
+    return 'calm';
+  }
+
+  String mapEmotionToAvailableEmotions(String mlLabel) {
+    // === HIGH ENERGY / POSITIVE ===
+  // "I am pumped!" "Best day ever!"
+  const joySet = {
+    'excitement', 'joy', 'love', 'admiration', 
+    'optimism', 'pride', 'gratitude', 'amusement', 'desire'
+  };
+
+  // === LOW ENERGY / NEGATIVE ===
+  // "I feel empty." "I messed up."
+  const sadSet = {
+    'sadness', 'grief', 'disappointment', 
+    'remorse', 'embarrassment', 
+  };
+
+  // === HIGH ENERGY / NEGATIVE ===
+  // "I am stressing out!" "Leave me alone."
+  const angrySet = {
+    'anger', 'annoyance', 'disapproval', 'disgust', 
+    'fear', 'nervousness' // Nervousness is high energy stress!
+  };
+  
+  // === LOW ENERGY / POSITIVE (The "Calm" Bucket) ===
+  // "I agree." "I feel better now." "I wonder why?"
+  const calmSet = {
+    'relief',      // The feeling of stress leaving
+    'approval',    // "This is fine", "I accept this"
+    'realization', // "Oh, I see now"
+    'curiosity',   // "I wonder..."
+    'caring',      // "I care about this" (Warmth, not hype)
+    'confusion',   // "I'm not sure" (Neutral/Calm state)
+    'neutral'      // Explicit neutral label
+  };
+
+    if (joySet.contains(mlLabel)) return "joy";
+    if (sadSet.contains(mlLabel)) return "sad";
+    if (angrySet.contains(mlLabel)) return "angry";
     return "calm";
   }
 
-  bool _containsAny(String text, List<String> list) {
-    for (var word in list) {
-      if (text.contains(word)) return true;
-    }
-    return false;
-  }
-}
 
+  
+}
