@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:lottie/lottie.dart';
 import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:lottie/lottie.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
@@ -16,20 +18,20 @@ class Tab1Draft extends StatefulWidget {
 }
 
 class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
+  static const double _messageBoxHeight = 260;
   final TextEditingController _controller = TextEditingController();
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
 
   bool _isLoading = true;
-  bool _isResultMode = false; 
-  bool _isInputMode = true;   
-  
+  bool _isResultMode = false;
+  bool _isInputMode = true;
+
   bool _isGachaAnimating = false;
   bool _showLightning = false;
-  
-  // ★ 추가: 현재 재생할 번개 애니메이션 파일 경로 (기본값: 일반)
+
   String _currentLightningAnim = 'assets/animations/gray_lightning.json';
-  
+
   Diary? _todayDiary;
   Pokemon? _currentPokemon;
 
@@ -39,12 +41,13 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    
+
     _blinkController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _blinkAnimation = Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
+    _blinkAnimation =
+        Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
 
     _loadTodayEntry();
   }
@@ -61,13 +64,13 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     final diaries = await DbHelper.instance.getDiaries();
     final existing = diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (existing.isNotEmpty) {
+    if (false /*existing.isNotEmpty*/) {
       final diary = existing.first;
       if (!mounted) return;
-      
+
       final apiService = context.read<PokemonApiService>();
       final pokemon = await apiService.getPokemonById(diary.pokemonId);
-      
+
       if (!mounted) return;
       setState(() {
         _todayDiary = diary;
@@ -88,7 +91,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
 
   Future<void> _handleGacha() async {
     final text = _controller.text.trim();
-    
+
     if (text.length < 10) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -100,54 +103,45 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       return;
     }
 
-    // [Step 1] 즉시 UI 전환
     setState(() {
-      _isInputMode = false; 
-      _isGachaAnimating = true; 
+      _isInputMode = false;
+      _isGachaAnimating = true;
     });
-    
+
     _blinkController.repeat(reverse: true);
 
-    // [Step 2] 로직 수행 & 프리로딩 시작
     final logicFuture = _performGachaLogic(text);
 
-    // [Phase 1] 회전 및 점멸 대기 (2.5초)
     await Future.delayed(const Duration(milliseconds: 2500));
 
-    // ★ 중요: 번개 치기 전에 어떤 포켓몬인지 먼저 확인해서 색깔 결정!
     final resultData = await logicFuture;
     final pokemon = resultData['pokemon'] as Pokemon;
 
-    // 등급별 애니메이션 선택 로직
-    String lightningFile = 'assets/animations/gray_lightning.json'; // Default: Normal
+    String lightningFile = 'assets/animations/gray_lightning.json';
     if (pokemon.isMythical) {
-      lightningFile = 'assets/animations/purple_lightning.json'; // Mythical
+      lightningFile = 'assets/animations/purple_lightning.json';
     } else if (pokemon.isLegendary) {
-      lightningFile = 'assets/animations/yellow_lightning.json'; // Legendary
+      lightningFile = 'assets/animations/yellow_lightning.json';
     }
 
-    // [Phase 2] 번개 효과로 전환
-    _blinkController.stop(); 
-    
+    _blinkController.stop();
+
     setState(() {
-      _currentLightningAnim = lightningFile; // 결정된 애니메이션 설정
-      _showLightning = true; 
+      _currentLightningAnim = lightningFile;
+      _showLightning = true;
     });
 
-    // 이미지 프리로딩 (번개 치는 동안 다운로드)
     if (mounted) {
       await precacheImage(NetworkImage(pokemon.homeSpriteUrl), context);
     }
 
-    // [Phase 3] 번개 지속 시간 (2.5초)
     await Future.delayed(const Duration(milliseconds: 2500));
 
-    // [Final] 결과 반영
     final diary = resultData['diary'] as Diary;
     await DbHelper.instance.insertDiary(diary);
-    if(mounted) {
-       await context.read<DiaryProvider>().refreshDiaries();
-       await context.read<TrainerProvider>().refreshStreak();
+    if (mounted) {
+      await context.read<DiaryProvider>().refreshDiaries();
+      await context.read<TrainerProvider>().refreshStreak();
     }
 
     if (!mounted) return;
@@ -188,129 +182,261 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // --- [Section 1: Top Visual] ---
-                    SizedBox(
-                      height: 220,
-                      child: Center(
-                        child: _buildTopVisual(), 
-                      ),
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD93838),
+                    border: Border.all(
+                      color: const Color(0xFF202020),
+                      width: 3,
                     ),
-                    
-                    if (_isResultMode && _currentPokemon != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _currentPokemon!.englishName,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black54,
+                        offset: Offset(4, 4),
+                        blurRadius: 0,
                       ),
-                    ] else if (_isGachaAnimating) ...[
-                       const SizedBox(height: 12),
-                       const Text(
-                         "Finding your companion...",
-                         style: TextStyle(
-                           fontSize: 18,
-                           fontWeight: FontWeight.w600,
-                           color: Colors.grey,
-                         ),
-                       ),
                     ],
-
-                    const SizedBox(height: 20),
-
-                    // --- [Section 2: Main Card] ---
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 12,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                        border: Border.all(color: Colors.black12),
-                      ),
-                      child: !_isInputMode
-                          ? Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Opacity(
-                                  opacity: 0.3,
-                                  child: Image.asset(
-                                    'assets/images/poke-ball.png',
-                                    height: 150,
-                                    fit: BoxFit.contain,
-                                  ),
-                                ),
-                                Text(
-                                  _todayDiary?.content ?? _controller.text,
-                                  style: const TextStyle(
-                                    fontSize: 16, color: Colors.black87, height: 1.5,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            )
-                          : TextField(
-                              controller: _controller,
-                              enabled: true,
-                              maxLines: 8,
-                              minLines: 4,
-                              style: const TextStyle(fontSize: 16),
-                              decoration: InputDecoration(
-                                hintText: 'How are you feeling today? Share your thoughts to find your Pokemon companion...',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade400,
-                                  fontSize: 15,
-                                  height: 1.4,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                    ),
-                    
-                    const SizedBox(height: 20),
-
-                    // --- [Section 3: Button] ---
-                    if (_isInputMode)
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _handleGacha,
-                          icon: const Icon(Icons.catching_pokemon),
-                          label: const Text('Gacha! Analyze Emotion'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE74C3C),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildScreen(),
+                      const SizedBox(height: 12),
+                      _buildStatusLabel(),
+                      const SizedBox(height: 12),
+                      _buildMessageArea(),
+                      const SizedBox(height: 8),
+                      _buildControlsRow(),
+                    ],
+                  ),
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildScreen() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF355A35),
+        border: Border.all(color: const Color(0xFF202020), width: 3),
+      ),
+      padding: const EdgeInsets.all(6),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF70A070),
+          border: Border.all(color: const Color(0xFF1E2B1E), width: 2),
+        ),
+        height: 220,
+        child: Center(
+          child: _buildTopVisual(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusLabel() {
+    final label = _isGachaAnimating
+        ? 'SCANNING...'
+        : _isResultMode && _currentPokemon != null
+            ? '${_currentPokemon!.englishName}'.toUpperCase()
+            : 'READY TO ANALYZE';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF7FB7E8),
+        border: Border.all(color: const Color(0xFF202020), width: 2),
+      ),
+      child: Text(
+        label.toUpperCase(),
+        textAlign: TextAlign.center,
+        style: GoogleFonts.pressStart2p(
+          fontSize: 12,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMessageArea() {
+    if (!_isInputMode) {
+      return _buildSpeechBubble(
+        _todayDiary?.content ?? _controller.text,
+      );
+    }
+
+    return SizedBox(
+      height: _messageBoxHeight,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF6EFD8),
+          border: Border.all(color: const Color(0xFF202020), width: 2),
+        ),
+        child: TextField(
+          controller: _controller,
+          enabled: true,
+          maxLines: null,
+          expands: true,
+          style: GoogleFonts.pressStart2p(
+            fontSize: 11,
+            color: Colors.black87,
+          ),
+          decoration: InputDecoration(
+            hintText:
+                'How are you feeling today? Share your thoughts to find your Pokemon companion...'
+                    .toUpperCase(),
+            hintStyle: GoogleFonts.pressStart2p(
+              fontSize: 10,
+              color: Colors.grey.shade600,
+            ),
+            border: InputBorder.none,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpeechBubble(String text) {
+    return Stack(
+      children: [
+        SizedBox(
+          height: _messageBoxHeight,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6EFD8),
+              border: Border.all(color: const Color(0xFF202020), width: 2),
+            ),
+            child: Text(
+              text,
+              textAlign: TextAlign.left,
+              style: GoogleFonts.pressStart2p(
+                fontSize: 11,
+                color: Colors.black87,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          left: 18,
+          bottom: -8,
+          child: Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6EFD8),
+              border: Border.all(color: const Color(0xFF202020), width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildControlsRow() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 12, top: 10),
+          child: _buildDpad(),
+        ),
+        const SizedBox(width: 16),
+        _buildGachaButton(),
+      ],
+    );
+  }
+
+  Widget _buildDpad() {
+    const dpadSize = 90.0;
+    const padColor = Color(0xFF2B2B2B);
+
+    return SizedBox(
+      width: dpadSize,
+      height: dpadSize,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 30,
+            height: dpadSize,
+            decoration: BoxDecoration(
+              color: padColor,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.black, width: 2),
+            ),
+          ),
+          Container(
+            width: dpadSize,
+            height: 30,
+            decoration: BoxDecoration(
+              color: padColor,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.black, width: 2),
+            ),
+          ),
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGachaButton() {
+    final isEnabled = _isInputMode && !_isGachaAnimating;
+    final buttonColor =
+        isEnabled ? const Color(0xFFF2C94C) : const Color(0xFFB0B0B0);
+    final shadowColor = isEnabled ? Colors.black54 : Colors.black26;
+
+    return Expanded(
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: GestureDetector(
+          onTap: isEnabled ? _handleGacha : null,
+          child: Container(
+            margin: const EdgeInsets.only(top: 6, right: 10),
+            width: 110,
+            height: 110,
+            decoration: BoxDecoration(
+              color: buttonColor,
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF202020), width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor,
+                  offset: Offset(3, 3),
+                  blurRadius: 0,
+                ),
+              ],
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'GACHA!',
+              style: GoogleFonts.pressStart2p(
+                fontSize: 12,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -323,43 +449,41 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         fit: BoxFit.contain,
       );
     }
-    
+
     if (_isGachaAnimating) {
       if (_showLightning) {
-        // ★ 수정 포인트: 결정된 이펙트 파일 재생
         return Lottie.asset(
-          _currentLightningAnim, 
+          _currentLightningAnim,
           height: 220,
           fit: BoxFit.contain,
         );
-      } else {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            Lottie.asset(
-              'assets/animations/Pokeball loading animation.json',
-              height: 180,
-              fit: BoxFit.contain,
-            ),
-            AnimatedBuilder(
-              animation: _blinkAnimation,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _blinkAnimation.value,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        );
       }
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Lottie.asset(
+            'assets/animations/Pokeball loading animation.json',
+            height: 180,
+            fit: BoxFit.contain,
+          ),
+          AnimatedBuilder(
+            animation: _blinkAnimation,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _blinkAnimation.value,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      );
     }
 
     return Lottie.asset(

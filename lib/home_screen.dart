@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart'; // 필수 패키지
 import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,12 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 1;
   late final PageController _pageController;
 
+  static const Color gbBody = Color(0xFFD9D9D9);   // 메인 본체 회색
+  static const Color gbBorder = Color(0xFF333333); // 아주 진한 테두리
+  static const Color gbScreen = Color(0xFFFFFFFF); // 게임보이 스크린 녹색 (배경용)
+  static const Color gbBtnIdle = Color(0xFFC0C0C0); // 기본 버튼 회색
+  static const Color gbBtnPress = Color(0xFF8E8E8E); // 눌린 버튼 회색
+
   @override
   void initState() {
     super.initState();
@@ -30,139 +37,163 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pixelStyle = GoogleFonts.pressStart2p(
+      fontSize: 10,
+      color: gbBorder,
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leadingWidth: 64,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16),
-          child: Center(
-            child: GestureDetector(
-              onTap: () {
-                showDialog(
-                  context: context,
-                  builder: (context) => const TrainerCardPage(),
-                );
-              },
-              child: Consumer<TrainerProvider>(
-                builder: (context, trainer, child) {
-                  final iconPath = trainer.gender == "MALE"
-                      ? 'assets/images/trainer_card_icon_boy.png'
-                      : 'assets/images/trainer_card_icon_girl.png';
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.black12),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: Image.asset(
-                        iconPath,
-                        width: 40,
-                        height: 32,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(Icons.error, size: 20, color: Colors.red);
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
+      backgroundColor: gbScreen, // 전체 배경을 게임보이 스크린 색상으로 변경
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: gbBody, // 헤더를 본체 회색으로
+            border: Border(bottom: BorderSide(color: gbBorder, width: 4)),
+          ),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            leadingWidth: 64,
+            leading: _buildTrainerIcon(context),
+            title: Text(
+              _formatDate(DateTime.now()).toUpperCase(),
+              style: pixelStyle.copyWith(fontSize: 12, letterSpacing: 1),
             ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings, color: gbBorder, size: 24),
+                onPressed: () {},
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
         ),
-        title: Text(
-          _formatDate(DateTime.now()),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black54),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onPageChanged: (index) => setState(() => _currentIndex = index),
         children: const [
           _KeepAliveWrapper(child: Tab2Diary()),
           _KeepAliveWrapper(child: Tab1Draft()),
           _KeepAliveWrapper(child: Tab3Pokedex()),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        selectedItemColor: Colors.redAccent,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          if (index == _currentIndex) return;
+      bottomNavigationBar: Container(
+        height: 95,
+        decoration: const BoxDecoration(
+          color: gbBody, // 푸터를 본체 회색으로
+          border: Border(top: BorderSide(color: gbBorder, width: 4)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Row(
+          children: [
+            _buildRetroTab(0, Icons.menu_book, 'DIARY', pixelStyle),
+            const SizedBox(width: 10),
+            _buildRetroTab(1, Icons.edit_note, 'DRAFT', pixelStyle),
+            const SizedBox(width: 10),
+            _buildRetroTab(2, Icons.grid_view, 'POKEDEX', pixelStyle),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTrainerIcon(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12),
+      child: Center(
+        child: GestureDetector(
+          onTap: () => showDialog(
+            context: context,
+            builder: (context) => const TrainerCardPage(),
+          ),
+          child: Consumer<TrainerProvider>(
+            builder: (context, trainer, child) {
+              final iconPath = trainer.gender == "MALE"
+                  ? 'assets/images/trainer_card_icon_boy.png'
+                  : 'assets/images/trainer_card_icon_girl.png';
+              return Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: gbBorder, width: 2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Image.asset(iconPath, width: 32, height: 26, fit: BoxFit.cover),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRetroTab(int index, IconData icon, String label, TextStyle style) {
+    final isSelected = _currentIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
           _pageController.animateToPage(
             index,
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
           );
         },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book),
-            label: 'Diary',
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          decoration: BoxDecoration(
+            // ★ 선택 시 더 진한 회색(gbBtnPress), 아닐 시 기본 회색(gbBtnIdle)
+            color: isSelected ? gbBtnPress : gbBtnIdle,
+            borderRadius: BorderRadius.circular(4), // 조금 더 각진 느낌으로 수정
+            border: Border.all(color: gbBorder, width: 2),
+            boxShadow: isSelected
+                ? [
+                    // 눌렸을 때는 안쪽으로 들어간 느낌을 위해 그림자 방향 반전 (내부 그림자 느낌)
+                    BoxShadow(color: Colors.black.withOpacity(0.2), offset: const Offset(1, 1))
+                  ]
+                : [
+                    // 평소에는 오른쪽 아래로 강한 검은색 그림자 (입체감)
+                    const BoxShadow(color: gbBorder, offset: Offset(3, 3), blurRadius: 0)
+                  ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.edit_note),
-            label: 'Draft',
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon, 
+                color: isSelected ? Colors.white : gbBorder, // 선택 시 아이콘 색상 변경
+                size: 20
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: style.copyWith(
+                  fontSize: 9,
+                  color: isSelected ? Colors.white : gbBorder,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view),
-            label: 'Pokédex',
-          ),
-        ],
+        ),
       ),
     );
   }
 
   String _formatDate(DateTime date) {
-    const weekdays = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
+    const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']; // 레트로 감성 3글자 약자
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-    final weekday = weekdays[date.weekday - 1];
-    final month = months[date.month - 1];
-    return '$weekday, $month ${date.day}, ${date.year}';
+    final String dayName = weekdays[date.weekday % 7]; // 요일 추출
+    final String monthName = months[date.month - 1];
+    
+    // 출력 형태: "SUN, 11 JAN 2026"
+    return "$dayName, ${date.day} $monthName ${date.year}";
   }
 }
 
