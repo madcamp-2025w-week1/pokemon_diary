@@ -61,7 +61,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     final diaries = await DbHelper.instance.getDiaries();
     final existing = diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (existing.isNotEmpty) {
+    if (false /*existing.isNotEmpty*/) {
       final diary = existing.first;
       if (!mounted) return;
       
@@ -161,7 +161,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   }
 
   Future<Map<String, dynamic>> _performGachaLogic(String text) async {
-    final sentiment = _sentimentService.analyzeSentiment(text);
+    final sentiment = await _sentimentService.analyzeSentiment(text);
     final apiService = context.read<PokemonApiService>();
     final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
     final pokemon = await apiService.getPokemonById(pokemonId);
