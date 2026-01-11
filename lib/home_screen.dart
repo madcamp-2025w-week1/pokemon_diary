@@ -57,9 +57,26 @@ class _HomeScreenState extends State<HomeScreen> {
             scrolledUnderElevation: 0,
             leadingWidth: 64,
             leading: _buildTrainerIcon(context),
-            title: Text(
-              _formatDate(DateTime.now()).toUpperCase(),
-              style: pixelStyle.copyWith(fontSize: 12, letterSpacing: 1),
+            title: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAF4F1),
+                border: Border.all(color: gbBorder, width: 2),
+                borderRadius: const BorderRadius.only(
+                  bottomRight: Radius.circular(6),
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xFF97A7A2),
+                    offset: Offset(2, 2),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Text(
+                _formatDate(DateTime.now()).toUpperCase(),
+                style: pixelStyle.copyWith(fontSize: 12, letterSpacing: 1),
+              ),
             ),
             centerTitle: true,
             actions: [
