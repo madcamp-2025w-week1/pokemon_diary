@@ -141,7 +141,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     await DbHelper.instance.insertDiary(diary);
     if (mounted) {
       await context.read<DiaryProvider>().refreshDiaries();
-      await context.read<TrainerProvider>().refreshStreak();
+      await context.read<TrainerProvider>().refreshData();
     }
 
     if (!mounted) return;

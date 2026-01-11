@@ -8,11 +8,15 @@ class TrainerProvider with ChangeNotifier {
   String _gender = "MALE";
   String _debutDate = "???"; 
   int _streak = 0;
+  List<PokemonBadge> _badges = [];
 
   String get name => _name;
   String get gender => _gender;
   String get debutDate => _debutDate;
   int get streak => _streak;
+  List<PokemonBadge> get badges => _badges;
+
+  final _pokemonService = PokemonApiService();
 
   // 1. Load data immediately when the Provider is created
   TrainerProvider() {
@@ -44,7 +48,14 @@ class TrainerProvider with ChangeNotifier {
 
     // calculate streak for today 
     final allDiaries = await DbHelper.instance.getDiaries();
+    final allPokemon = await _pokemonService.getAllPokemon();
+    final Map<int, Pokemon> pokemonMap = {
+      for (var p in allPokemon) p.id: p
+    };
+
     _streak = calculateStreak(allDiaries);
+
+    _badges = _calculateBadges(allDiaries, _streak, pokemonMap);
 
     notifyListeners();
   }
@@ -71,6 +82,11 @@ class TrainerProvider with ChangeNotifier {
     return DateTime(date.year, date.month, date.day);
   }
 
+  // Call this when a new entry is added
+  Future<void> refreshData() async {
+    await _loadData(); // Re-runs everything including badge calc
+  }
+  
   // Call this whenever a new Diary is saved to refresh the streak
   Future<void> refreshStreak() async {
     final allDiaries = await DbHelper.instance.getDiaries();
@@ -122,4 +138,123 @@ class TrainerProvider with ChangeNotifier {
 
     return streak;
   }
+
+  List<PokemonBadge> _calculateBadges(List<Diary> diaries, int currentStreak, Map<int, Pokemon> pokemonMap) {
+    String getType(int id) => pokemonMap[id]?.type1.toString().toLowerCase() ?? 'normal';
+
+    final uniqueTypes = diaries.map((d) => getType(d.pokemonId)).toSet();
+    final uniqueEmotions = diaries.map((d) => d.sentiment.toLowerCase()).toSet();
+    final angryCount = diaries.where((d) => d.sentiment.toLowerCase() == 'angry').length;
+
+    // Thunder Badge Logic (Check Types using the Map)
+    int maxElectricStreak = getMaxElectricStreak(diaries, pokemonMap);
+
+    return [
+      // 1. BOULDER (Rock) - Foundation: 7 Days Total
+      PokemonBadge(
+        id: 'boulder',
+        name: 'Boulder Badge',
+        description: 'Log entries on 7 different days',
+        icon: Icons.hexagon, // Rock shape
+        isUnlocked: diaries.length >= 7,
+      ),
+
+      // 2. CASCADE (Water) - Flow: All 4 Emotions
+      PokemonBadge(
+        id: 'cascade',
+        name: 'Cascade Badge',
+        description: 'Log Joy, Sad, Angry, and Calm',
+        icon: Icons.water_drop,
+        isUnlocked: uniqueEmotions.containsAll(['joy', 'sad', 'angry', 'calm']),
+      ),
+
+      // 3. THUNDER (Electric) - Spark: 3 Day Electric Streak
+      PokemonBadge(
+        id: 'thunder',
+        name: 'Thunder Badge',
+        description: '3-day streak of High Energy (Joy)',
+        icon: Icons.bolt,
+        isUnlocked: maxElectricStreak >= 3,
+      ),
+
+      // 4. RAINBOW (Grass/Color) - Diversity: 10 Types
+      PokemonBadge(
+        id: 'rainbow',
+        name: 'Rainbow Badge',
+        description: 'Catch 10 unique Pokemon types',
+        icon: Icons.grass, // Or Icons.palette
+        isUnlocked: uniqueTypes.length >= 10,
+      ),
+
+      // 5. SOUL (Heart) - Reflection: 500+ chars
+      PokemonBadge(
+        id: 'soul',
+        name: 'Soul Badge',
+        description: 'Write a long entry (>500 chars)',
+        icon: Icons.favorite,
+        isUnlocked: diaries.any((d) => d.content.length > 500),
+      ),
+
+      // 6. MARSH (Psychic) - Discipline: 30 Day Streak
+      PokemonBadge(
+        id: 'marsh',
+        name: 'Marsh Badge',
+        description: 'Achieve a 30-day writing streak',
+        icon: Icons.psychology,
+        isUnlocked: currentStreak >= 30,
+      ),
+
+      // 7. VOLCANO (Fire) - Venting: 5 Angry Entries
+      PokemonBadge(
+        id: 'volcano',
+        name: 'Volcano Badge',
+        description: 'Log 5 Angry entries',
+        icon: Icons.local_fire_department,
+        isUnlocked: angryCount >= 5,
+      ),
+
+      // 8. EARTH (Ground) - Master: 50 Unique Entries
+      PokemonBadge(
+        id: 'earth',
+        name: 'Earth Badge',
+        description: 'Log 50 total entries',
+        icon: Icons.public, // Earth icon
+        isUnlocked: diaries.length >= 50,
+      ),
+    ];
+    
+    }
+  }
+
+  int getMaxElectricStreak(List<Diary> diaries, Map<int, Pokemon> pokemonMap) {
+    int maxElectricStreak = 0;
+    int currentElectricStreak = 0;
+    List<Diary> sorted = List.from(diaries)..sort((a, b) => a.date.compareTo(b.date));
+    
+    String getType(int id) => pokemonMap[id]?.type1.toString().toLowerCase() ?? 'normal';
+
+    for (int i = 0; i < sorted.length; i++) {
+       // Look up Type from Map
+       String type = getType(sorted[i].pokemonId);
+       
+       if (type == 'electric') {
+         if (i > 0) {
+            final prev = DateTime.parse(sorted[i-1].date);
+            final curr = DateTime.parse(sorted[i].date);
+            if (curr.difference(prev).inDays == 1) {
+               currentElectricStreak++;
+            } else if (curr.difference(prev).inDays > 1) {
+               currentElectricStreak = 1; 
+            }
+         } else {
+            currentElectricStreak = 1;
+         }
+       } else {
+         currentElectricStreak = 0;
+       }
+       if (currentElectricStreak > maxElectricStreak) maxElectricStreak = currentElectricStreak;
+
+       
+    }
+    return maxElectricStreak;
 }
