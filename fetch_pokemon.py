@@ -5,7 +5,7 @@ import time
 # --- CONFIGURATION ---
 START_ID = 1
 END_ID = 151  # Change to 494 for Gen 4
-OUTPUT_FILE = 'pokemon_data.csv'
+OUTPUT_FILE = 'pokemon_data_pixel.csv'
 
 # Helper to find text in a specific language from a list
 def get_lang_text(list_obj, key_name, target_lang='en'):
@@ -92,7 +92,7 @@ def fetch_data():
                 
                 # 6. Construct Image URLs (Using your patterns)
                 sprite_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/{poke_id}.png"
-                gif_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/{poke_id}.gif"
+                gif_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/{poke_id}.gif"
                 icon_url = f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/{poke_id}.png"
 
                 # --- D. WRITE ROW ---

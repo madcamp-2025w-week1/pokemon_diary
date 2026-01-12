@@ -567,10 +567,21 @@ class PokemonDetailDialog extends StatelessWidget {
                                 ),
                                 padding: const EdgeInsets.all(16),
                                 child: CachedNetworkImage(
-                                  imageUrl: pokemon.homeSpriteUrl,
-                                  fit: BoxFit.contain,
-                                  placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: borderDark)),
-                                ),
+                                  imageUrl: pokemon.gifUrl!,
+                                  // 1. Use imageBuilder to customize how the image is rendered
+                                  imageBuilder: (context, imageProvider) => Image(
+                                    image: imageProvider,
+                                    fit: BoxFit.contain,
+                                    // 2. This is the key setting. It forces "Nearest Neighbor" scaling.
+                                    filterQuality: FilterQuality.none, 
+                                  ),
+                                  // Keep your existing placeholder
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(color: borderDark)
+                                  ),
+                                  // It's good practice to add an error widget too, just in case
+                                  errorWidget: (context, url, error) => const Icon(Icons.error, color: borderDark),
+                                )
                               ),
                             ),
                             const SizedBox(height: 16),

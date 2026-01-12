@@ -70,6 +70,7 @@ flutter:
 
   assets:
     - assets/data/pokemon_data.csv
+    - assets/data/pokemon_data_pixel.csv
     - assets/images/
     - assets/animations/
 

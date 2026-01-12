@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../models/models.dart';
 
 class PokemonApiService {
-  static const String _csvAssetPath = 'assets/data/pokemon_data.csv';
+  static const String _csvAssetPath = 'assets/data/pokemon_data_pixel.csv';
 
   List<Pokemon>? _cache;
 
