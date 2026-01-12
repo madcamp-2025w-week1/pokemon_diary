@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // 필수 패키지
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -17,11 +17,11 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 1;
   late final PageController _pageController;
 
-  static const Color gbBody = Color(0xFFD9D9D9);   // 메인 본체 회색
-  static const Color gbBorder = Color(0xFF333333); // 아주 진한 테두리
-  static const Color gbScreen = Color(0xFFFFFFFF); // 게임보이 스크린 녹색 (배경용)
-  static const Color gbBtnIdle = Color(0xFFC0C0C0); // 기본 버튼 회색
-  static const Color gbBtnPress = Color(0xFF8E8E8E); // 눌린 버튼 회색
+  static const Color gbBody = Color(0xFFD9D9D9);   
+  static const Color gbBorder = Color(0xFF333333); 
+  static const Color gbScreen = Color(0xFFFFFFFF); 
+  static const Color gbBtnIdle = Color(0xFFC0C0C0); 
+  static const Color gbBtnPress = Color(0xFF8E8E8E); 
 
   @override
   void initState() {
@@ -44,12 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: gbScreen, // 전체 배경을 게임보이 스크린 색상으로 변경
+      backgroundColor: gbScreen, 
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Container(
           decoration: const BoxDecoration(
-            color: gbBody, // 헤더를 본체 회색으로
+            color: gbBody, 
             border: Border(bottom: BorderSide(color: gbBorder, width: 4)),
           ),
           child: AppBar(
@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Text(
                 _formatDate(DateTime.now()).toUpperCase(),
-                style: pixelStyle.copyWith(fontSize: 12, letterSpacing: 1),
+                style: pixelStyle.copyWith(fontSize: 10, letterSpacing: 1),
               ),
             ),
             centerTitle: true,
@@ -100,25 +100,28 @@ class _HomeScreenState extends State<HomeScreen> {
           _KeepAliveWrapper(child: Tab3Pokedex()),
         ],
       ),
-      bottomNavigationBar: Container(
-        height: 95,
-        decoration: const BoxDecoration(
-          color: gbBody, // 푸터를 본체 회색으로
-          border: Border(top: BorderSide(color: gbBorder, width: 4)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        child: Row(
-          children: [
-            _buildRetroTab(0, Icons.menu_book, 'DIARY', pixelStyle),
-            const SizedBox(width: 10),
-            _buildRetroTab(1, Icons.edit_note, 'DRAFT', pixelStyle),
-            const SizedBox(width: 10),
-            _buildRetroTab(2, Icons.grid_view, 'POKEDEX', pixelStyle),
-          ],
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          height: 95,
+          decoration: const BoxDecoration(
+            color: gbBody, 
+            border: Border(top: BorderSide(color: gbBorder, width: 4)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            children: [
+              _buildRetroTab(0, Icons.menu_book, 'DIARY', pixelStyle),
+              const SizedBox(width: 10),
+              _buildRetroTab(1, Icons.edit_note, 'DRAFT', pixelStyle),
+              const SizedBox(width: 10),
+              _buildRetroTab(2, Icons.grid_view, 'POKEDEX', pixelStyle),
+            ],
+          ),
         ),
       ),
-    );
-  }
+    ); // Scaffold 닫기
+  } // build 메서드 닫기
 
   Widget _buildTrainerIcon(BuildContext context) {
     return Padding(
@@ -165,17 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 100),
           decoration: BoxDecoration(
-            // ★ 선택 시 더 진한 회색(gbBtnPress), 아닐 시 기본 회색(gbBtnIdle)
             color: isSelected ? gbBtnPress : gbBtnIdle,
-            borderRadius: BorderRadius.circular(4), // 조금 더 각진 느낌으로 수정
+            borderRadius: BorderRadius.circular(4),
             border: Border.all(color: gbBorder, width: 2),
             boxShadow: isSelected
                 ? [
-                    // 눌렸을 때는 안쪽으로 들어간 느낌을 위해 그림자 방향 반전 (내부 그림자 느낌)
                     BoxShadow(color: Colors.black.withOpacity(0.2), offset: const Offset(1, 1))
                   ]
                 : [
-                    // 평소에는 오른쪽 아래로 강한 검은색 그림자 (입체감)
                     const BoxShadow(color: gbBorder, offset: Offset(3, 3), blurRadius: 0)
                   ],
           ),
@@ -184,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Icon(
                 icon, 
-                color: isSelected ? Colors.white : gbBorder, // 선택 시 아이콘 색상 변경
+                color: isSelected ? Colors.white : gbBorder, 
                 size: 20
               ),
               const SizedBox(height: 4),
@@ -204,22 +204,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatDate(DateTime date) {
-    const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']; // 레트로 감성 3글자 약자
+    const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
-    final String dayName = weekdays[date.weekday % 7]; // 요일 추출
+    final String dayName = weekdays[date.weekday % 7];
     final String monthName = months[date.month - 1];
-    
-    // 출력 형태: "SUN, 11 JAN 2026"
     return "$dayName, ${date.day} $monthName ${date.year}";
   }
 }
 
 class _KeepAliveWrapper extends StatefulWidget {
   final Widget child;
-
   const _KeepAliveWrapper({required this.child});
-
   @override
   State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
 }
@@ -231,7 +226,6 @@ class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
     super.build(context);
     return widget.child;
   }
-
   @override
   bool get wantKeepAlive => true;
 }
