@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart'; // ScrollDirection 사용을 위해 추가
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
 import 'screens/trainer_card.dart';
-import 'services/sound_service.dart'; // 사운드 서비스 import
+import 'services/sound_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,7 +15,6 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-// ★ 1. Mixin 추가 (WidgetsBindingObserver)
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 1;
   late final PageController _pageController;
@@ -28,12 +28,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // ★ 2. 감시자 등록
     WidgetsBinding.instance.addObserver(this);
     
     _pageController = PageController(initialPage: _currentIndex);
 
-    // BGM 시작
     SoundService().init().then((_) {
       SoundService().playBgm();
     });
@@ -41,28 +39,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    // ★ 3. 감시자 해제 (메모리 누수 방지)
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
   }
 
-  // ★ 4. 앱 생명주기 변화 감지 (핵심 로직)
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
     switch (state) {
       case AppLifecycleState.paused:
-        // 앱이 백그라운드로 갔을 때 (홈 화면 등) -> 음악 일시 정지
         SoundService().pauseBgm();
         break;
       case AppLifecycleState.resumed:
-        // 앱이 다시 포커스를 잡았을 때 -> 음악 이어서 재생
         SoundService().resumeBgm();
         break;
       case AppLifecycleState.detached:
-        // 앱이 완전히 종료될 때 -> 정지
         SoundService().stopBgm();
         break;
       default:
@@ -125,22 +117,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
-      body: PageView(
-        controller: _pageController,
-        physics: const BouncingScrollPhysics(),
-        onPageChanged: (index) {
-          // ★ [핵심 수정] 페이지가 실제로 바뀌는 순간 소리 재생!
-          // 스와이프든 버튼 클릭이든 여기서 다 잡힘.
-          if (_currentIndex != index) {
-            SoundService().playTabSound();
-            setState(() => _currentIndex = index);
-          }
+      // ★ NotificationListener를 사용하여 스크롤 상태 감지
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          // 사용자가 직접 손가락으로 밀고 있을 때만 로직이 작동하게 함
+          return false;
         },
-        children: const [
-          _KeepAliveWrapper(child: Tab2Diary()),
-          _KeepAliveWrapper(child: Tab1Draft()),
-          _KeepAliveWrapper(child: Tab3Pokedex()),
-        ],
+        child: PageView(
+          controller: _pageController,
+          physics: const BouncingScrollPhysics(),
+          onPageChanged: (index) {
+            // ★ [핵심 로직] 사용자가 손가락으로 드래그 중일 때만 소리 재생 (스와이프 대응)
+            // _pageController.position.userScrollDirection이 idle이 아니면 '스와이프' 중인 것임
+            if (_pageController.position.userScrollDirection != ScrollDirection.idle) {
+              if (_currentIndex != index) {
+                SoundService().playTabSound();
+              }
+            }
+            setState(() => _currentIndex = index);
+          },
+          children: const [
+            _KeepAliveWrapper(child: Tab2Diary()),
+            _KeepAliveWrapper(child: Tab1Draft()),
+            _KeepAliveWrapper(child: Tab3Pokedex()),
+          ],
+        ),
       ),
       bottomNavigationBar: SafeArea(
         top: false,
@@ -195,15 +196,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-Widget _buildRetroTab(int index, IconData icon, String label, TextStyle style) {
+  Widget _buildRetroTab(int index, IconData icon, String label, TextStyle style) {
     final isSelected = _currentIndex == index;
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // ★ [제거] 여기서 playTabSound()를 호출하지 않음! (중복 방지)
-          // animateToPage가 실행되면 PageView의 onPageChanged가 호출되면서 소리가 남.
-          
+          // ★ [핵심 로직] 버튼을 눌렀을 때는 즉시 소리 재생 (버튼 클릭 대응)
+          // index가 현재와 다를 때만 재생하여 중복 방지
+          if (_currentIndex != index) {
+            SoundService().playTabSound();
+          }
+
           _pageController.animateToPage(
             index,
             duration: const Duration(milliseconds: 200),

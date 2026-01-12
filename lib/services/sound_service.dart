@@ -6,24 +6,37 @@ class SoundService {
   SoundService._internal();
 
   final AudioPlayer _bgmPlayer = AudioPlayer();
+  
+  // 효과음 전용 플레이어 (미리 생성해서 메모리에 올려둠)
+  final AudioPlayer _tabSfxPlayer = AudioPlayer();
 
   Future<void> init() async {
-    // ★ [핵심] 오디오 모드 설정: 사운드가 겹쳐도 BGM이 멈추지 않게 함 (Mixing)
+    // 1. 오디오 컨텍스트 설정 (BGM과 효과음 믹싱)
     await AudioPlayer.global.setAudioContext(AudioContext(
       android: AudioContextAndroid(
         isSpeakerphoneOn: false,
         stayAwake: true,
         contentType: AndroidContentType.music,
-        usageType: AndroidUsageType.game, // 게임용 설정
-        audioFocus: AndroidAudioFocus.none, // ★ 중요: 포커스를 뺏지 않음 (병렬 재생)
+        usageType: AndroidUsageType.game,
+        audioFocus: AndroidAudioFocus.none, 
       ),
       iOS: AudioContextIOS(
-        category: AVAudioSessionCategory.ambient, // ★ 중요: 다른 소리와 섞임
+        category: AVAudioSessionCategory.ambient,
       ),
     ));
 
+    // 2. BGM 설정
     await _bgmPlayer.setReleaseMode(ReleaseMode.loop);
-    await _bgmPlayer.setVolume(0.4); 
+    await _bgmPlayer.setVolume(0.4);
+
+    // 3. 효과음 플레이어 미리 세팅
+    // ★ PlayerMode.lowLatency: 짧은 효과음 전용 모드 (필수)
+    await _tabSfxPlayer.setPlayerMode(PlayerMode.lowLatency);
+    await _tabSfxPlayer.setVolume(1.0);
+    
+    // ★ 핵심: 파일을 미리 한 번 로드해서 캐시에 등록해둠 (이걸 해두면 나중에 play 할 때 빠름)
+    // 소리는 안 내고 로드만 하는 꼼수야.
+    await _tabSfxPlayer.setSource(AssetSource('sounds/tab_switching.wav'));
   }
 
   Future<void> playBgm() async {
@@ -31,15 +44,16 @@ class SoundService {
     await _bgmPlayer.play(AssetSource('sounds/bgm_main_8bit.mp3'));
   }
 
-  // ★ [수정] 탭 전환 효과음
+  // ★ [수정된 로직]
   Future<void> playTabSound() async {
-    final sfxPlayer = AudioPlayer();
-    // 효과음 볼륨을 BGM보다 크게 설정해서 뚫고 나오게 함
-    await sfxPlayer.setVolume(1.0); 
+    // 1. 만약 이전 소리가 재생 중이면 즉시 끊어서 리셋 (반응속도 향상)
+    if (_tabSfxPlayer.state == PlayerState.playing) {
+      await _tabSfxPlayer.stop();
+    }
     
-    // ★ 중요: MP3 대신 WAV 사용 권장! (파일명을 wav로 바꿨다고 가정하거나, mp3라도 최대한 빠르게)
-    // 반응속도 최우선 모드 (PlayerMode.lowLatency)
-    await sfxPlayer.play(AssetSource('sounds/tab_switching.mp3'), mode: PlayerMode.lowLatency);
+    // 2. resume() 대신 play() 사용!
+    // AssetSource를 쓰면 내부적으로 캐싱된 파일을 쓰기 때문에 딜레이가 거의 없음
+    await _tabSfxPlayer.play(AssetSource('sounds/tab_switching.wav'));
   }
 
   Future<void> pauseBgm() async {
