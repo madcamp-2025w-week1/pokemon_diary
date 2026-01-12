@@ -128,7 +128,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       body: PageView(
         controller: _pageController,
         physics: const BouncingScrollPhysics(),
-        onPageChanged: (index) => setState(() => _currentIndex = index),
+        onPageChanged: (index) {
+          // ★ [핵심 수정] 페이지가 실제로 바뀌는 순간 소리 재생!
+          // 스와이프든 버튼 클릭이든 여기서 다 잡힘.
+          if (_currentIndex != index) {
+            SoundService().playTabSound();
+            setState(() => _currentIndex = index);
+          }
+        },
         children: const [
           _KeepAliveWrapper(child: Tab2Diary()),
           _KeepAliveWrapper(child: Tab1Draft()),
@@ -188,12 +195,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildRetroTab(int index, IconData icon, String label, TextStyle style) {
+Widget _buildRetroTab(int index, IconData icon, String label, TextStyle style) {
     final isSelected = _currentIndex == index;
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
+          // ★ [제거] 여기서 playTabSound()를 호출하지 않음! (중복 방지)
+          // animateToPage가 실행되면 PageView의 onPageChanged가 호출되면서 소리가 남.
+          
           _pageController.animateToPage(
             index,
             duration: const Duration(milliseconds: 200),
@@ -220,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               Icon(
                 icon,
                 color: isSelected ? Colors.white : gbBorder,
-                size: 20
+                size: 20,
               ),
               const SizedBox(height: 4),
               Text(
