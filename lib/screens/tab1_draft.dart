@@ -37,6 +37,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
 
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
+  bool _isEditorOpen = false;
 
   @override
   void initState() {
@@ -57,6 +58,103 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     _controller.dispose();
     _blinkController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openFloatingEditor() async {
+    if (_isEditorOpen) return;
+    setState(() {
+      _isEditorOpen = true;
+    });
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black54,
+      builder: (context) {
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: viewInsets.bottom + 16,
+          ),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6EFD8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFF202020), width: 2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    offset: Offset(2, 2),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Stack(
+                children: [
+                  TextField(
+                    controller: _controller,
+                    autofocus: true,
+                    maxLines: null,
+                    style: GoogleFonts.pressStart2p(
+                      fontSize: 11,
+                      color: Colors.black87,
+                    ),
+                    decoration: InputDecoration(
+                      hintText:
+                          'How are you feeling today? Share your thoughts to find your Pokemon companion...'
+                              .toUpperCase(),
+                      hintStyle: GoogleFonts.pressStart2p(
+                        fontSize: 10,
+                        color: Colors.grey.shade600,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.only(
+                        right: 32,
+                        bottom: 6,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8C2A2A),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: const Color(0xFF202020),
+                            width: 2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward,
+                          size: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _isEditorOpen = false;
+    });
   }
 
   Future<void> _loadTodayEntry() async {
@@ -358,26 +456,31 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF202020), width: 2),
       ),
-      child: TextField(
-        controller: _controller,
-        enabled: true,
-        maxLines: null,
-        expands: true,
-        textAlignVertical: TextAlignVertical.top,
-        style: GoogleFonts.pressStart2p(
-          fontSize: 11,
-          color: Colors.black87,
-        ),
-        decoration: InputDecoration(
-          hintText:
-              'How are you feeling today? Share your thoughts to find your Pokemon companion...'
-                  .toUpperCase(),
-          hintStyle: GoogleFonts.pressStart2p(
-            fontSize: 10,
-            color: Colors.grey.shade600,
+      child: GestureDetector(
+        onTap: _openFloatingEditor,
+        child: AbsorbPointer(
+          child: TextField(
+            controller: _controller,
+            enabled: true,
+            maxLines: null,
+            expands: true,
+            textAlignVertical: TextAlignVertical.top,
+            style: GoogleFonts.pressStart2p(
+              fontSize: 11,
+              color: Colors.black87,
+            ),
+            decoration: InputDecoration(
+              hintText:
+                  'How are you feeling today? Share your thoughts to find your Pokemon companion...'
+                      .toUpperCase(),
+              hintStyle: GoogleFonts.pressStart2p(
+                fontSize: 10,
+                color: Colors.grey.shade600,
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+            ),
           ),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
         ),
       ),
     );
