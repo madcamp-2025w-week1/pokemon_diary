@@ -231,33 +231,47 @@ class _Tab2DiaryState extends State<Tab2Diary> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF1D3E6B), width: 3),
       ),
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollUpdateNotification) {
-            final index = (notification.metrics.pixels / _itemExtent).round();
-            final clamped = index.clamp(0, diaries.length - 1);
-            if (clamped != _selectedIndex) {
-              setState(() {
-                _selectedIndex = clamped;
-              });
-            }
-          }
-          return false;
+      // 1. Wrap with LayoutBuilder to get the available height
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // 2. Calculate padding: Allow the last item to scroll to the top
+          // (View Height - Item Height) ensures the last item can stand alone at the top
+          final double bottomPadding = (constraints.maxHeight - _itemExtent).clamp(0.0, double.infinity);
+
+          return NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is ScrollUpdateNotification) {
+                // Your existing selection logic
+                final index = (notification.metrics.pixels / _itemExtent).round();
+                final clamped = index.clamp(0, diaries.length - 1);
+                
+                if (clamped != _selectedIndex) {
+                  setState(() {
+                    _selectedIndex = clamped;
+                  });
+                }
+              }
+              return false;
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              itemExtent: _itemExtent,
+              // 3. Apply the calculated padding here
+              padding: EdgeInsets.only(bottom: bottomPadding),
+              itemCount: diaries.length,
+              itemBuilder: (context, index) {
+                final diary = diaries[index];
+                final isSelected = index == _selectedIndex;
+                return _DiaryListItem(
+                  diary: diary,
+                  pokemon: pokemonMap[diary.pokemonId],
+                  isSelected: isSelected,
+                  pixelText: pixelText,
+                );
+              },
+            ),
+          );
         },
-        child: ListView.builder(
-          controller: _scrollController,
-          itemExtent: _itemExtent,
-          itemCount: diaries.length,
-          itemBuilder: (context, index) {
-            final diary = diaries[index];
-            final isSelected = index == _selectedIndex;
-            return _DiaryListItem(
-              diary: diary,
-              isSelected: isSelected,
-              pixelText: pixelText,
-            );
-          },
-        ),
       ),
     );
   }
