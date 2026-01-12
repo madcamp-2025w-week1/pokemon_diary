@@ -287,7 +287,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFD93838),
+        color: const Color(0xFF8C2A2A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF202020), width: 2),
         boxShadow: const [

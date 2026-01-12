@@ -59,8 +59,8 @@ class Tab3Pokedex extends StatelessWidget {
                     ),
                     padding: EdgeInsets.zero,
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4F6E74),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF5B7A62),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFF1B2D3A), width: 2),
                       ),
@@ -176,8 +176,8 @@ class _PokedexTile extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final idFontSize = (constraints.maxWidth * 0.12).clamp(8.0, 10.0);
-        final nameFontSize = (constraints.maxWidth * 0.14).clamp(9.0, 11.0);
+        final idFontSize = (constraints.maxWidth * 0.10).clamp(8.0, 10.0);
+        final nameFontSize = (constraints.maxWidth * 0.01).clamp(8.0, 10.0);
         final pixelId = GoogleFonts.pressStart2p(
           fontSize: idFontSize,
           color: nameColor,

@@ -107,12 +107,12 @@ class _Tab2DiaryState extends State<Tab2Diary> {
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF3B79DB),
+        color: const Color(0xFF1E3A6D),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1D3E6B), width: 2),
+        border: Border.all(color: const Color(0xFF0F2142), width: 2),
         boxShadow: const [
           BoxShadow(
-            color: Color(0xFF1D3E6B),
+            color: Color(0xFF0F2142),
             offset: Offset(2, 2),
             blurRadius: 0,
           ),
