@@ -224,7 +224,7 @@ class TrainerCardDialog extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8), // Reduced slightly
+                    const SizedBox(height: 24), // Reduced slightly
 
                     // --- MAIN INFO ROW ---
                     Container(
