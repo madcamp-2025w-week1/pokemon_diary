@@ -180,55 +180,58 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final availableHeight = constraints.maxHeight;
-          const fixedHeight =
-              12 + // padding top
-              12 + // draft header gap
-              46 + // draft header
-              12 + // screen gap
-              220 + // screen height
-              12 + // status gap
-              40 + // status label
-              8 + // message gap
-              120; // controls row area estimate
-          var messageHeight = availableHeight - fixedHeight;
+          const headerHeight = 40.0;
+          const statusHeight = 38.0;
+          const controlsHeight = 120.0;
+          const verticalGaps = 10 + 12 + 12 + 8;
+          const paddingVertical = 24.0;
+
+          final usableHeight = constraints.maxHeight -
+              (headerHeight + statusHeight + controlsHeight + verticalGaps + paddingVertical);
+          final screenHeight = (usableHeight * 0.5).clamp(150.0, 220.0);
+          var messageHeight = usableHeight - screenHeight;
           if (messageHeight > _maxMessageBoxHeight) {
             messageHeight = _maxMessageBoxHeight;
           } else if (messageHeight < _minMessageBoxHeight) {
             messageHeight = _minMessageBoxHeight;
           }
 
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: SizedBox(
-                width: constraints.maxWidth,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD93838),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black54,
-                        offset: Offset(4, 4),
-                        blurRadius: 0,
-                      ),
-                    ],
+          return SizedBox(
+            height: constraints.maxHeight,
+            width: constraints.maxWidth,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFD93838),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black54,
+                    offset: Offset(4, 4),
+                    blurRadius: 0,
                   ),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  child: Column(
-                    children: [
-                      _buildDraftHeader(),
-                      const SizedBox(height: 10),
-                      _buildScreen(),
-                      const SizedBox(height: 12),
-                      _buildStatusLabel(),
-                      const SizedBox(height: 12),
-                      _buildMessageArea(messageHeight),
-                      const SizedBox(height: 8),
-                      _buildControlsRow(),
-                    ],
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: headerHeight,
+                    child: _buildDraftHeader(),
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  _buildScreen(screenHeight),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: statusHeight,
+                    child: _buildStatusLabel(),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildMessageArea(messageHeight),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: controlsHeight,
+                    child: _buildControlsRow(),
+                  ),
+                ],
               ),
             ),
           );
@@ -237,7 +240,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildScreen() {
+  Widget _buildScreen(double height) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF355A35),
@@ -251,7 +254,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFF1E2B1E), width: 2),
         ),
-        height: 220,
+        height: height,
         child: Center(
           child: _buildTopVisual(),
         ),
