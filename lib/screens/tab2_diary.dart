@@ -269,6 +269,16 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                   diary: diary,
                   isSelected: isSelected,
                   pixelText: pixelText,
+                  onTap: () {
+                    _scrollController.animateTo(
+                      index * _itemExtent,
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOut,
+                    );
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
                 );
               },
             ),
@@ -326,11 +336,13 @@ class _DiaryListItem extends StatelessWidget {
   final Diary diary;
   final bool isSelected;
   final TextStyle pixelText;
+  final VoidCallback onTap;
 
   const _DiaryListItem({
     required this.diary,
     required this.isSelected,
     required this.pixelText,
+    required this.onTap,
   });
 
   @override
@@ -340,82 +352,83 @@ class _DiaryListItem extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 120),
-            opacity: isSelected ? 1 : 0,
-            child: const Icon(Icons.play_arrow, color: Color(0xFFE5D98C), size: 18),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5D98C),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected ? const Color(0xFF2F3A3A) : const Color(0xFF8E7B2C),
-                  // 1. CHANGED: Reduced border width to 2px/1px for cleaner look at small scale
-                  width: isSelected ? 2 : 1,
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          children: [
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 120),
+              opacity: isSelected ? 1 : 0,
+              child: const Icon(Icons.play_arrow, color: Color(0xFFE5D98C), size: 18),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5D98C),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? const Color(0xFF2F3A3A) : const Color(0xFF8E7B2C),
+                    width: isSelected ? 2 : 1,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0xFF1D3E6B),
+                      offset: Offset(1, 1),
+                      blurRadius: 0,
+                    ),
+                  ],
                 ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0xFF1D3E6B),
-                    // 2. CHANGED: Reduced shadow offset to (1, 1)
-                    offset: Offset(1, 1),
-                    blurRadius: 0,
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFD8BF5B),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        topRight: Radius.circular(8),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        _DiaryIcon(pokemonId: diary.pokemonId, size: 24),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            dateLabel,
-                            style: pixelText.copyWith(fontSize: 8),
-                          ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFD8BF5B),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
                         ),
-                        Transform.scale(scale: 0.8, child: _SentimentDot(sentiment: diary.sentiment)),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF2E8B7),
-                      borderRadius: BorderRadius.only(
-                        bottomLeft: Radius.circular(8),
-                        bottomRight: Radius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          _DiaryIcon(pokemonId: diary.pokemonId, size: 24),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              dateLabel,
+                              style: pixelText.copyWith(fontSize: 8),
+                            ),
+                          ),
+                          Transform.scale(scale: 0.8, child: _SentimentDot(sentiment: diary.sentiment)),
+                        ],
                       ),
                     ),
-                    child: Text(
-                      _titleSnippet(diary.content),
-                      style: pixelText.copyWith(fontSize: 9),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF2E8B7),
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(8),
+                          bottomRight: Radius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        _titleSnippet(diary.content),
+                        style: pixelText.copyWith(fontSize: 9),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
