@@ -38,6 +38,9 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
   bool _isEditorOpen = false;
+  final FocusNode _editorFocusNode = FocusNode();
+  BuildContext? _editorContext;
+  double _lastMessageHeight = 0;
 
   @override
   void initState() {
@@ -51,11 +54,18 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
 
     _loadTodayEntry();
+
+    _editorFocusNode.addListener(() {
+      if (!_editorFocusNode.hasFocus && _isEditorOpen && _editorContext != null) {
+        Navigator.of(_editorContext!).pop();
+      }
+    });
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _editorFocusNode.dispose();
     _blinkController.dispose();
     super.dispose();
   }
@@ -72,7 +82,11 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
       builder: (context) {
+        _editorContext = context;
         final viewInsets = MediaQuery.of(context).viewInsets;
+        final maxHeight = MediaQuery.of(context).size.height * 0.7;
+        final minHeight = _lastMessageHeight > 0 ? _lastMessageHeight : 220.0;
+        final constrainedMax = maxHeight < minHeight ? minHeight : maxHeight;
         return Padding(
           padding: EdgeInsets.only(
             left: 16,
@@ -82,6 +96,10 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           child: Align(
             alignment: Alignment.bottomCenter,
             child: Container(
+              constraints: BoxConstraints(
+                minHeight: minHeight,
+                maxHeight: constrainedMax,
+              ),
               decoration: BoxDecoration(
                 color: const Color(0xFFF6EFD8),
                 borderRadius: BorderRadius.circular(12),
@@ -100,6 +118,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                   TextField(
                     controller: _controller,
                     autofocus: true,
+                    focusNode: _editorFocusNode,
                     maxLines: null,
                     style: GoogleFonts.pressStart2p(
                       fontSize: 11,
@@ -154,6 +173,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     if (!mounted) return;
     setState(() {
       _isEditorOpen = false;
+      _editorContext = null;
     });
   }
 
@@ -341,7 +361,12 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                   const SizedBox(height: 12),
                   Expanded(
                     flex: 4,
-                    child: _buildMessageArea(),
+                    child: LayoutBuilder(
+                      builder: (context, boxConstraints) {
+                        _lastMessageHeight = boxConstraints.maxHeight;
+                        return _buildMessageArea();
+                      },
+                    ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
