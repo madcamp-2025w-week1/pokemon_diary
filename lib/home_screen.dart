@@ -5,8 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
 import 'screens/trainer_card.dart';
-// ★ [추가] 사운드 서비스 import
-import 'services/sound_service.dart'; 
+import 'services/sound_service.dart'; // 사운드 서비스 import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,23 +14,26 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+// ★ 1. Mixin 추가 (WidgetsBindingObserver)
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 1;
   late final PageController _pageController;
 
-  static const Color gbBody = Color(0xFFD9D9D9);   
-  static const Color gbBorder = Color(0xFF333333); 
-  static const Color gbScreen = Color(0xFFFFFFFF); 
-  static const Color gbBtnIdle = Color(0xFFC0C0C0); 
-  static const Color gbBtnPress = Color(0xFF8E8E8E); 
+  static const Color gbBody = Color(0xFFD9D9D9);
+  static const Color gbBorder = Color(0xFF333333);
+  static const Color gbScreen = Color(0xFFFFFFFF);
+  static const Color gbBtnIdle = Color(0xFFC0C0C0);
+  static const Color gbBtnPress = Color(0xFF8E8E8E);
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: _currentIndex);
+    // ★ 2. 감시자 등록
+    WidgetsBinding.instance.addObserver(this);
     
-    // ★ [추가] BGM 재생 로직
-    // 앱 시작 시 사운드 서비스를 초기화하고 메인 BGM을 재생합니다.
+    _pageController = PageController(initialPage: _currentIndex);
+
+    // BGM 시작
     SoundService().init().then((_) {
       SoundService().playBgm();
     });
@@ -39,8 +41,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    // ★ 3. 감시자 해제 (메모리 누수 방지)
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
+  }
+
+  // ★ 4. 앱 생명주기 변화 감지 (핵심 로직)
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.paused:
+        // 앱이 백그라운드로 갔을 때 (홈 화면 등) -> 음악 일시 정지
+        SoundService().pauseBgm();
+        break;
+      case AppLifecycleState.resumed:
+        // 앱이 다시 포커스를 잡았을 때 -> 음악 이어서 재생
+        SoundService().resumeBgm();
+        break;
+      case AppLifecycleState.detached:
+        // 앱이 완전히 종료될 때 -> 정지
+        SoundService().stopBgm();
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -52,12 +79,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: gbScreen, 
+      backgroundColor: gbScreen,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Container(
           decoration: const BoxDecoration(
-            color: gbBody, 
+            color: gbBody,
             border: Border(bottom: BorderSide(color: gbBorder, width: 4)),
           ),
           child: AppBar(
@@ -113,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           height: 95,
           decoration: const BoxDecoration(
-            color: gbBody, 
+            color: gbBody,
             border: Border(top: BorderSide(color: gbBorder, width: 4)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -128,8 +155,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    ); 
-  } 
+    );
+  }
 
   Widget _buildTrainerIcon(BuildContext context) {
     return Padding(
@@ -191,8 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                icon, 
-                color: isSelected ? Colors.white : gbBorder, 
+                icon,
+                color: isSelected ? Colors.white : gbBorder,
                 size: 20
               ),
               const SizedBox(height: 4),
