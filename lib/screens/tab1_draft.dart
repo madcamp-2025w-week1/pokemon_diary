@@ -18,7 +18,8 @@ class Tab1Draft extends StatefulWidget {
 }
 
 class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
-  static const double _messageBoxHeight = 220;
+  static const double _maxMessageBoxHeight = 220;
+  static const double _minMessageBoxHeight = 160;
   final TextEditingController _controller = TextEditingController();
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
@@ -179,6 +180,24 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     return SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final availableHeight = constraints.maxHeight;
+          const fixedHeight =
+              12 + // padding top
+              12 + // draft header gap
+              46 + // draft header
+              12 + // screen gap
+              220 + // screen height
+              12 + // status gap
+              40 + // status label
+              8 + // message gap
+              120; // controls row area estimate
+          var messageHeight = availableHeight - fixedHeight;
+          if (messageHeight > _maxMessageBoxHeight) {
+            messageHeight = _maxMessageBoxHeight;
+          } else if (messageHeight < _minMessageBoxHeight) {
+            messageHeight = _minMessageBoxHeight;
+          }
+
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
@@ -199,12 +218,12 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                   child: Column(
                     children: [
                       _buildDraftHeader(),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       _buildScreen(),
                       const SizedBox(height: 12),
                       _buildStatusLabel(),
                       const SizedBox(height: 12),
-                      _buildMessageArea(),
+                      _buildMessageArea(messageHeight),
                       const SizedBox(height: 8),
                       _buildControlsRow(),
                     ],
@@ -222,12 +241,14 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF355A35),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF202020), width: 3),
       ),
       padding: const EdgeInsets.all(6),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFF70A070),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFF1E2B1E), width: 2),
         ),
         height: 220,
@@ -282,6 +303,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF7FB7E8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF202020), width: 2),
       ),
       child: Text(
@@ -295,20 +317,22 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMessageArea() {
+  Widget _buildMessageArea(double messageHeight) {
     if (!_isInputMode) {
       return _buildSpeechBubble(
         _todayDiary?.content ?? _controller.text,
+        messageHeight,
       );
     }
 
     return SizedBox(
-      height: _messageBoxHeight,
+      height: messageHeight,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFF6EFD8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFF202020), width: 2),
         ),
         child: TextField(
@@ -336,16 +360,17 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildSpeechBubble(String text) {
+  Widget _buildSpeechBubble(String text, double messageHeight) {
     return Stack(
       children: [
         SizedBox(
-          height: _messageBoxHeight,
+          height: messageHeight,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: const Color(0xFFF6EFD8),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFF202020), width: 2),
             ),
             child: Text(
@@ -367,6 +392,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
             height: 16,
             decoration: BoxDecoration(
               color: const Color(0xFFF6EFD8),
+              borderRadius: BorderRadius.circular(4),
               border: Border.all(color: const Color(0xFF202020), width: 2),
             ),
           ),
