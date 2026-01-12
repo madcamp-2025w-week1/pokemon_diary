@@ -13,8 +13,8 @@ class Tab2Diary extends StatefulWidget {
 }
 
 class _Tab2DiaryState extends State<Tab2Diary> {
-  // 1. CHANGED: Reduced from 110 to 98 (Since we shrunk the icon/padding)
-  static const double _itemExtent = 98; 
+  // Kept at 84 for the compact look
+  static const double _itemExtent = 72; 
   final ScrollController _scrollController = ScrollController();
   int _selectedIndex = 0;
 
@@ -155,7 +155,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
           children: [
             Row(
               children: [
-                _buildPokemonIcon(diary.pokemonId, 40),
+                _buildPokemonIcon(diary.pokemonId, 45),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -339,13 +339,13 @@ class _DiaryListItem extends StatelessWidget {
     final dateLabel = parsed != null ? _formatShortDate(parsed) : '--/--/--';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
           AnimatedOpacity(
             duration: const Duration(milliseconds: 120),
             opacity: isSelected ? 1 : 0,
-            child: const Icon(Icons.play_arrow, color: Color(0xFFE5D98C)),
+            child: const Icon(Icons.play_arrow, color: Color(0xFFE5D98C), size: 18),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -355,12 +355,14 @@ class _DiaryListItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected ? const Color(0xFF2F3A3A) : const Color(0xFF8E7B2C),
-                  width: isSelected ? 3 : 2,
+                  // 1. CHANGED: Reduced border width to 2px/1px for cleaner look at small scale
+                  width: isSelected ? 2 : 1,
                 ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0xFF1D3E6B),
-                    offset: Offset(2, 2),
+                    // 2. CHANGED: Reduced shadow offset to (1, 1)
+                    offset: Offset(1, 1),
                     blurRadius: 0,
                   ),
                 ],
@@ -370,8 +372,7 @@ class _DiaryListItem extends StatelessWidget {
                 children: [
                   Container(
                     width: double.infinity,
-                    // 2. CHANGED: Reduced vertical padding from 8 to 4
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: const BoxDecoration(
                       color: Color(0xFFD8BF5B),
                       borderRadius: BorderRadius.only(
@@ -381,22 +382,21 @@ class _DiaryListItem extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        // 3. CHANGED: Reduced Icon size from 36 to 28
-                        _DiaryIcon(pokemonId: diary.pokemonId, size: 28),
+                        _DiaryIcon(pokemonId: diary.pokemonId, size: 24),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             dateLabel,
-                            style: pixelText.copyWith(fontSize: 10),
+                            style: pixelText.copyWith(fontSize: 8),
                           ),
                         ),
-                        _SentimentDot(sentiment: diary.sentiment),
+                        Transform.scale(scale: 0.8, child: _SentimentDot(sentiment: diary.sentiment)),
                       ],
                     ),
                   ),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: const BoxDecoration(
                       color: Color(0xFFF2E8B7),
                       borderRadius: BorderRadius.only(
@@ -406,7 +406,7 @@ class _DiaryListItem extends StatelessWidget {
                     ),
                     child: Text(
                       _titleSnippet(diary.content),
-                      style: pixelText,
+                      style: pixelText.copyWith(fontSize: 9),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
