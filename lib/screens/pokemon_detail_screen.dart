@@ -4,14 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 
-// --- 1. 독립된 일기 상세 팝업 위젯 (Tab2Diary 스타일 적용) ---
+// --- 1. Diary Detail Dialog (Unchanged) ---
 class DiaryDetailDialog extends StatelessWidget {
   final Diary diary;
   final Pokemon? pokemon;
 
   const DiaryDetailDialog({super.key, required this.diary, this.pokemon});
 
-  // Tab2Diary에서 사용하던 헬퍼 메서드들 그대로 이식
   Color _getSentimentColor(String sentiment) {
     final normalized = sentiment.trim().toLowerCase();
     if (normalized == 'joy' || normalized == 'happy') return Colors.amber.shade600;
@@ -80,11 +79,126 @@ class DiaryDetailDialog extends StatelessWidget {
   }
 }
 
-// --- 2. 메인 포켓몬 상세 정보 다이얼로그 ---
+// --- 2. Pokemon Detail Dialog (Themed by Type) ---
 class PokemonDetailDialog extends StatelessWidget {
   final Pokemon pokemon;
 
   const PokemonDetailDialog({super.key, required this.pokemon});
+
+  // --- Theme Helper: Returns Colors based on Type ---
+  Map<String, Color> _getTypeTheme(PokemonType type) {
+    switch (type) {
+      case PokemonType.grass:
+        return {
+          'outer': const Color(0xFF388E3C), // Dark Green
+          'inner': const Color(0xFF81C784), // Light Green
+          'header': const Color(0xFF2E7D32), // Deep Green Tag
+        };
+      case PokemonType.fire:
+        return {
+          'outer': const Color(0xFFD32F2F), // Red
+          'inner': const Color(0xFFFF8A65), // Soft Orange
+          'header': const Color(0xFFC62828), // Deep Red Tag
+        };
+      case PokemonType.water:
+        return {
+          'outer': const Color(0xFF1976D2), // Blue
+          'inner': const Color(0xFF64B5F6), // Light Blue
+          'header': const Color(0xFF1565C0), // Deep Blue Tag
+        };
+      case PokemonType.electric:
+        return {
+          'outer': const Color(0xFFFBC02D), // Dark Yellow
+          'inner': const Color.fromARGB(129, 255, 241, 118), // Light Yellow
+          'header': const Color(0xFFF9A825), // Deep Gold Tag
+        };
+      case PokemonType.psychic:
+        return {
+          'outer': const Color(0xFFC2185B), // Pink
+          'inner': const Color(0xFFF06292), // Light Pink
+          'header': const Color(0xFFAD1457), // Deep Pink Tag
+        };
+      case PokemonType.ice:
+        return {
+          'outer': const Color(0xFF0097A7), // Cyan
+          'inner': const Color(0xFF4DD0E1), // Light Cyan
+          'header': const Color(0xFF00838F), // Deep Cyan Tag
+        };
+      case PokemonType.dragon:
+        return {
+          'outer': const Color(0xFF512DA8), // Deep Purple
+          'inner': const Color(0xFF9575CD), // Light Purple
+          'header': const Color(0xFF4527A0), // Dark Purple Tag
+        };
+      case PokemonType.dark:
+        return {
+          'outer': const Color(0xFF424242), // Dark Grey
+          'inner': const Color(0xFF9E9E9E), // Light Grey
+          'header': const Color(0xFF212121), // Black Tag
+        };
+      case PokemonType.fairy:
+        return {
+          'outer': const Color(0xFFE91E63), // Hot Pink
+          'inner': const Color(0xFFF48FB1), // Light Pink
+          'header': const Color(0xFFC2185B), // Deep Pink Tag
+        };
+      case PokemonType.fighting:
+        return {
+          'outer': const Color(0xFFC62828), // Red-Brown
+          'inner': const Color(0xFFEF9A9A), // Light Red
+          'header': const Color(0xFFB71C1C), // Deep Maroon Tag
+        };
+      case PokemonType.poison:
+        return {
+          'outer': const Color(0xFF7B1FA2), // Purple
+          'inner': const Color(0xFFCE93D8), // Light Purple
+          'header': const Color(0xFF6A1B9A), // Deep Purple Tag
+        };
+      case PokemonType.ground:
+        return {
+          'outer': const Color(0xFF795548), // Brown
+          'inner': const Color(0xFFA1887F), // Light Brown
+          'header': const Color(0xFF5D4037), // Deep Brown Tag
+        };
+      case PokemonType.rock:
+        return {
+          'outer': const Color(0xFF616161), // Grey
+          'inner': const Color(0xFFBDBDBD), // Light Grey
+          'header': const Color(0xFF424242), // Dark Grey Tag
+        };
+      case PokemonType.bug:
+        return {
+          'outer': const Color(0xFF689F38), // Olive Green
+          'inner': const Color(0xFFAED581), // Light Olive
+          'header': const Color(0xFF558B2F), // Deep Olive Tag
+        };
+      case PokemonType.ghost:
+        return {
+          'outer': const Color(0xFF4527A0), // Deep Indigo
+          'inner': const Color(0xFF7986CB), // Light Indigo
+          'header': const Color(0xFF311B92), // Dark Indigo Tag
+        };
+      case PokemonType.steel:
+        return {
+          'outer': const Color(0xFF546E7A), // Blue Grey
+          'inner': const Color(0xFF90A4AE), // Light Blue Grey
+          'header': const Color(0xFF455A64), // Deep Blue Grey Tag
+        };
+      case PokemonType.flying:
+        return {
+          'outer': const Color(0xFF0288D1), // Light Blue
+          'inner': const Color(0xFF81D4FA), // Sky Blue
+          'header': const Color(0xFF0277BD), // Deep Blue Tag
+        };
+      case PokemonType.normal:
+      default:
+        return {
+          'outer': const Color(0xFF2F4D63), // Default Slate (Tab3 Style)
+          'inner': const Color(0xFF5B7A62), // Default Sage
+          'header': const Color(0xFF4F6E74), // Default Teal
+        };
+    }
+  }
 
   Future<List<String>> _loadCatchDates() async {
     final diaries = await DbHelper.instance.getDiaries();
@@ -105,7 +219,7 @@ class PokemonDetailDialog extends StatelessWidget {
 
   Color _typeColor(PokemonType type) {
     switch (type) {
-      case PokemonType.electric: return const Color(0xFFFFD700);
+      case PokemonType.electric: return const Color.fromARGB(255, 231, 196, 3);
       case PokemonType.flying: return const Color(0xFF89CFF0);
       case PokemonType.fire: return const Color(0xFFFF6B6B);
       case PokemonType.water: return const Color(0xFF4D96FF);
@@ -139,8 +253,14 @@ class PokemonDetailDialog extends StatelessWidget {
       height: 1.4,
     );
 
-    const Color borderLight = Color(0xFF63c7c8);
-    const Color borderDark = Color(0xFF286a6b);
+    // --- APPLY THEME ---
+    final theme = _getTypeTheme(pokemon.type1);
+    final pokedexOuter = theme['outer']!;
+    final pokedexInner = theme['inner']!;
+    final headerColor = theme['header']!;
+
+    const Color borderDark = Color(0xFF1B2D3A);   // Keep borders dark/consistent
+    const Color contentBg = Color(0xFFF7F1E3);    // Cream (Paper/Screen)
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -148,7 +268,7 @@ class PokemonDetailDialog extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: borderLight,
+          color: pokedexOuter, // Dynamic Type Color
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
@@ -164,19 +284,26 @@ class PokemonDetailDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Stack(
             children: [
-              Positioned.fill(child: Container(color: const Color(0xFF4FD1C5))), // 레트로 블루 배경
+              // 1. Dynamic Background Color
+              Positioned.fill(child: Container(color: pokedexInner)), 
+              
+              // 2. Content Area (Cream)
               Positioned(
                 top: 50,
                 left: 0,
                 right: 0,
                 height: 280,
-                child: Container(color: Colors.white.withValues(alpha: 0.9)),
+                child: Container(color: contentBg.withValues(alpha: 0.95)),
               ),
+              
+              // 3. Stripes
               Positioned.fill(
                 child: CustomPaint(
                   painter: StripePainter(stripeColor: Colors.black.withValues(alpha: 0.05)),
                 ),
               ),
+
+              // 4. Main Content
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
@@ -185,6 +312,7 @@ class PokemonDetailDialog extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Header Row
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
                       child: Row(
@@ -193,7 +321,7 @@ class PokemonDetailDialog extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF70a0e0),
+                              color: headerColor, // Dynamic Tag Color
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
                             ),
@@ -206,6 +334,8 @@ class PokemonDetailDialog extends StatelessWidget {
                         ],
                       ),
                     ),
+                    
+                    // Detail Scroll View
                     Flexible(
                       fit: FlexFit.loose,
                       child: SingleChildScrollView(
@@ -215,11 +345,13 @@ class PokemonDetailDialog extends StatelessWidget {
                           children: [
                             Text(title, style: pixelStyle.copyWith(fontSize: 16, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                             const SizedBox(height: 16),
+                            
+                            // Image Box
                             Center(
                               child: Container(
                                 width: 180, height: 180,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.8),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: borderDark, width: 2),
                                 ),
@@ -232,6 +364,8 @@ class PokemonDetailDialog extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 16),
+                            
+                            // Type Chips
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -243,6 +377,8 @@ class PokemonDetailDialog extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 12),
+                            
+                            // Height/Weight Box
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               decoration: BoxDecoration(color: borderDark.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
@@ -250,18 +386,24 @@ class PokemonDetailDialog extends StatelessWidget {
                                   style: pixelStyle.copyWith(color: Colors.white, fontSize: 10), textAlign: TextAlign.center),
                             ),
                             const SizedBox(height: 16),
+                            
+                            // Description Box
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.8),
+                                color: contentBg.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: borderDark),
                               ),
                               child: Text(description.toUpperCase(), style: pixelStyle.copyWith(fontSize: 10, height: 1.6)),
                             ),
                             const SizedBox(height: 16),
+                            
+                            // Dates Label
                             Text("DATES CAUGHT", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
                             Container(height: 2, color: Colors.white.withValues(alpha: 0.5), margin: const EdgeInsets.symmetric(vertical: 4)),
+                            
+                            // Dates List
                             FutureBuilder<List<String>>(
                               future: _loadCatchDates(),
                               builder: (context, snapshot) {
@@ -275,7 +417,7 @@ class PokemonDetailDialog extends StatelessWidget {
                                       final dateStr = snapshot.data![index];
                                       return Padding(
                                         padding: const EdgeInsets.only(right: 8, top: 8),
-                                        child: InkWell( // ★ 날짜 클릭 시 일기 팝업 실행
+                                        child: InkWell( 
                                           onTap: () async {
                                             final diaries = await DbHelper.instance.getDiaries();
                                             final targetDiary = diaries.firstWhere((d) => d.date == dateStr && d.pokemonId == pokemon.id);
@@ -289,7 +431,7 @@ class PokemonDetailDialog extends StatelessWidget {
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(alpha: 0.9),
+                                              color: contentBg, 
                                               borderRadius: BorderRadius.circular(4),
                                               border: Border.all(color: borderDark),
                                             ),
