@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
 import 'screens/trainer_card.dart';
+// ★ [추가] 사운드 서비스 import
+import 'services/sound_service.dart'; 
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +29,12 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
+    
+    // ★ [추가] BGM 재생 로직
+    // 앱 시작 시 사운드 서비스를 초기화하고 메인 BGM을 재생합니다.
+    SoundService().init().then((_) {
+      SoundService().playBgm();
+    });
   }
 
   @override
@@ -76,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Text(
                 _formatDate(DateTime.now()).toUpperCase(),
-                style: pixelStyle.copyWith(fontSize: 10, letterSpacing: 1),
+                style: pixelStyle.copyWith(fontSize: 12, letterSpacing: 1),
               ),
             ),
             centerTitle: true,
@@ -120,8 +128,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    ); // Scaffold 닫기
-  } // build 메서드 닫기
+    ); 
+  } 
 
   Widget _buildTrainerIcon(BuildContext context) {
     return Padding(

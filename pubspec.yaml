@@ -45,6 +45,7 @@ dependencies:
   dart_sentiment: any
   google_fonts: any
   shared_preferences: ^2.3.0
+  audioplayers: ^6.0.0
 
 dev_dependencies:
   flutter_test:
@@ -73,6 +74,7 @@ flutter:
     - assets/data/pokemon_data_pixel.csv
     - assets/images/
     - assets/animations/
+    - assets/sounds/
 
   # To add assets to your application, add an assets section, like this:
   # assets:
