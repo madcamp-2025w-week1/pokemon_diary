@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; 
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pokemon_diary/screens/badge_popup.dart'; 
 import 'package:provider/provider.dart';
 import '../providers/trainer_provider.dart';
 import '../models/models.dart'; // Ensure PokemonBadge is exported here
@@ -289,13 +290,21 @@ class TrainerCardDialog extends StatelessWidget {
                                 spacing: 8, // Tighter spacing
                                 runSpacing: 4, // Tighter row spacing
                                 children: badges.map((badge) {
-                                  return Tooltip(
-                                    message: "${badge.name}\n${badge.description}",
-                                    triggerMode: TooltipTriggerMode.tap,
+                                  return GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => BadgeUnlockDialog(
+                                          badge: badge,
+                                          onClose: () => Navigator.pop(context),
+                                        ),
+                                      );
+                                    },
                                     child: Opacity(
+                                      // Keep the card icon dimmed if locked
                                       opacity: badge.isUnlocked ? 1.0 : 0.3,
                                       child: Container(
-                                        padding: const EdgeInsets.all(3), // Smaller padding
+                                        padding: const EdgeInsets.all(3),
                                         decoration: badge.isUnlocked ? BoxDecoration(
                                           shape: BoxShape.circle,
                                           boxShadow: [
@@ -305,7 +314,7 @@ class TrainerCardDialog extends StatelessWidget {
                                         child: Icon(
                                           badge.icon, 
                                           color: badge.isUnlocked ? Colors.white : Colors.black, 
-                                          size: 16 // RESIZED: Smaller icon to fit
+                                          size: 16
                                         ),
                                       ),
                                     ),
