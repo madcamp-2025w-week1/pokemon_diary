@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: gbScreen, // 전체 배경을 게임보이 스크린 색상으로 변경
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pokemon_diary/providers/trainer_provider.dart';
+import 'package:pokemon_diary/screens/badge_popup.dart';
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
@@ -18,8 +19,6 @@ class Tab1Draft extends StatefulWidget {
 }
 
 class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
-  static const double _maxMessageBoxHeight = 220;
-  static const double _minMessageBoxHeight = 160;
   final TextEditingController _controller = TextEditingController();
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
@@ -140,9 +139,32 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
 
     final diary = resultData['diary'] as Diary;
     await DbHelper.instance.insertDiary(diary);
+
     if (mounted) {
+      // 1. Refresh Diary Provider
       await context.read<DiaryProvider>().refreshDiaries();
-      await context.read<TrainerProvider>().refreshData();
+      
+      // 2. Refresh Trainer Provider (This triggers badge calculation)
+      // Capture provider in variable to use inside loop
+      final trainerProvider = context.read<TrainerProvider>();
+      await trainerProvider.refreshData();
+
+      // 3. CHECK FOR NEW BADGES
+      if (trainerProvider.newlyUnlockedBadges.isNotEmpty) {
+        // Show a dialog for EACH new badge (in case they unlock 2 at once)
+        for (var badge in trainerProvider.newlyUnlockedBadges) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false, // User must click button to close
+            builder: (context) => BadgeUnlockDialog(
+              badge: badge,
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          );
+        }
+        // Clear the list so we don't show them again
+        trainerProvider.clearNewBadges();
+      }
     }
 
     if (!mounted) return;
@@ -156,8 +178,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   }
 
   Future<Map<String, dynamic>> _performGachaLogic(String text) async {
-    final sentiment = await _sentimentService.analyzeSentiment(text);
     final apiService = context.read<PokemonApiService>();
+    final sentiment = await _sentimentService.analyzeSentiment(text);
     final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
     final pokemon = await apiService.getPokemonById(pokemonId);
 
@@ -183,18 +205,6 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           const headerHeight = 40.0;
           const statusHeight = 38.0;
           const controlsHeight = 120.0;
-          const verticalGaps = 10 + 12 + 12 + 8;
-          const paddingVertical = 24.0;
-
-          final usableHeight = constraints.maxHeight -
-              (headerHeight + statusHeight + controlsHeight + verticalGaps + paddingVertical);
-          final screenHeight = (usableHeight * 0.5).clamp(150.0, 220.0);
-          var messageHeight = usableHeight - screenHeight;
-          if (messageHeight > _maxMessageBoxHeight) {
-            messageHeight = _maxMessageBoxHeight;
-          } else if (messageHeight < _minMessageBoxHeight) {
-            messageHeight = _minMessageBoxHeight;
-          }
 
           return SizedBox(
             height: constraints.maxHeight,
@@ -218,14 +228,20 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                     child: _buildDraftHeader(),
                   ),
                   const SizedBox(height: 10),
-                  _buildScreen(screenHeight),
+                  Expanded(
+                    flex: 5,
+                    child: _buildScreen(),
+                  ),
                   const SizedBox(height: 12),
                   SizedBox(
                     height: statusHeight,
                     child: _buildStatusLabel(),
                   ),
                   const SizedBox(height: 12),
-                  _buildMessageArea(messageHeight),
+                  Expanded(
+                    flex: 4,
+                    child: _buildMessageArea(),
+                  ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: controlsHeight,
@@ -240,7 +256,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildScreen(double height) {
+  Widget _buildScreen() {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF355A35),
@@ -254,9 +270,13 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0xFF1E2B1E), width: 2),
         ),
-        height: height,
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
         child: Center(
-          child: _buildTopVisual(),
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: _buildTopVisual(),
+          ),
         ),
       ),
     );
@@ -298,7 +318,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     final label = _isGachaAnimating
         ? 'SCANNING...'
         : _isResultMode && _currentPokemon != null
-            ? '${_currentPokemon!.englishName}'.toUpperCase()
+            ? _currentPokemon!.englishName.toUpperCase()
             : 'READY TO ANALYZE';
 
     return Container(
@@ -320,87 +340,67 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildMessageArea(double messageHeight) {
+  Widget _buildMessageArea() {
     if (!_isInputMode) {
       return _buildSpeechBubble(
         _todayDiary?.content ?? _controller.text,
-        messageHeight,
       );
     }
 
-    return SizedBox(
-      height: messageHeight,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF6EFD8),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF202020), width: 2),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6EFD8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF202020), width: 2),
+      ),
+      child: TextField(
+        controller: _controller,
+        enabled: true,
+        maxLines: null,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        style: GoogleFonts.pressStart2p(
+          fontSize: 11,
+          color: Colors.black87,
         ),
-        child: TextField(
-          controller: _controller,
-          enabled: true,
-          maxLines: null,
-          expands: true,
-          style: GoogleFonts.pressStart2p(
-            fontSize: 11,
-            color: Colors.black87,
+        decoration: InputDecoration(
+          hintText:
+              'How are you feeling today? Share your thoughts to find your Pokemon companion...'
+                  .toUpperCase(),
+          hintStyle: GoogleFonts.pressStart2p(
+            fontSize: 10,
+            color: Colors.grey.shade600,
           ),
-          decoration: InputDecoration(
-            hintText:
-                'How are you feeling today? Share your thoughts to find your Pokemon companion...'
-                    .toUpperCase(),
-            hintStyle: GoogleFonts.pressStart2p(
-              fontSize: 10,
-              color: Colors.grey.shade600,
-            ),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.zero,
-          ),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
         ),
       ),
     );
   }
 
-  Widget _buildSpeechBubble(String text, double messageHeight) {
-    return Stack(
-      children: [
-        SizedBox(
-          height: messageHeight,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6EFD8),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF202020), width: 2),
-            ),
-            child: Text(
-              text,
-              textAlign: TextAlign.left,
-              style: GoogleFonts.pressStart2p(
-                fontSize: 11,
-                color: Colors.black87,
-                height: 1.4,
-              ),
-            ),
+  Widget _buildSpeechBubble(String text) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6EFD8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF202020), width: 2),
+      ),
+      child: SingleChildScrollView(
+        child: Text(
+          text,
+          textAlign: TextAlign.left,
+          style: GoogleFonts.pressStart2p(
+            fontSize: 11,
+            color: Colors.black87,
+            height: 1.4,
           ),
         ),
-        Positioned(
-          left: 18,
-          bottom: -8,
-          child: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6EFD8),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFF202020), width: 2),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -504,7 +504,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     if (_isResultMode && _currentPokemon != null) {
       return Image.network(
         _currentPokemon!.homeSpriteUrl,
-        height: 200,
+        height: 160,
         fit: BoxFit.contain,
       );
     }
@@ -513,7 +513,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
       if (_showLightning) {
         return Lottie.asset(
           _currentLightningAnim,
-          height: 220,
+          height: 180,
           fit: BoxFit.contain,
         );
       }
@@ -522,7 +522,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         children: [
           Lottie.asset(
             'assets/animations/Pokeball loading animation.json',
-            height: 180,
+            height: 140,
             fit: BoxFit.contain,
           ),
           AnimatedBuilder(
@@ -531,8 +531,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
               return Opacity(
                 opacity: _blinkAnimation.value,
                 child: Container(
-                  width: 180,
-                  height: 180,
+                  width: 140,
+                  height: 140,
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
@@ -547,7 +547,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
 
     return Lottie.asset(
       'assets/animations/Pokeball loading animation.json',
-      height: 180,
+      height: 140,
       fit: BoxFit.contain,
       animate: false,
     );
