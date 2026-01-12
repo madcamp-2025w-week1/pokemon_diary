@@ -204,7 +204,10 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         builder: (context, constraints) {
           const headerHeight = 40.0;
           const statusHeight = 38.0;
-          const controlsHeight = 120.0;
+          final controlsHeight =
+              (constraints.maxHeight * 0.16).clamp(90.0, 120.0);
+          final dpadSize = (controlsHeight * 0.75).clamp(60.0, 90.0);
+          final gachaSize = (controlsHeight * 0.95).clamp(80.0, 110.0);
 
           return SizedBox(
             height: constraints.maxHeight,
@@ -245,7 +248,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                   const SizedBox(height: 8),
                   SizedBox(
                     height: controlsHeight,
-                    child: _buildControlsRow(),
+                    child: _buildControlsRow(dpadSize, gachaSize),
                   ),
                 ],
               ),
@@ -404,23 +407,24 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildControlsRow() {
+  Widget _buildControlsRow(double dpadSize, double gachaSize) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 12, top: 10),
-          child: _buildDpad(),
+          child: _buildDpad(dpadSize),
         ),
         const SizedBox(width: 16),
-        _buildGachaButton(),
+        _buildGachaButton(gachaSize),
       ],
     );
   }
 
-  Widget _buildDpad() {
-    const dpadSize = 90.0;
+  Widget _buildDpad(double dpadSize) {
     const padColor = Color(0xFF2B2B2B);
+    final barThickness = (dpadSize * 0.33).clamp(20.0, 30.0);
+    final centerSize = (dpadSize * 0.22).clamp(16.0, 20.0);
 
     return SizedBox(
       width: dpadSize,
@@ -429,7 +433,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         alignment: Alignment.center,
         children: [
           Container(
-            width: 30,
+            width: barThickness,
             height: dpadSize,
             decoration: BoxDecoration(
               color: padColor,
@@ -439,7 +443,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           ),
           Container(
             width: dpadSize,
-            height: 30,
+            height: barThickness,
             decoration: BoxDecoration(
               color: padColor,
               borderRadius: BorderRadius.circular(6),
@@ -447,8 +451,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
             ),
           ),
           Container(
-            width: 20,
-            height: 20,
+            width: centerSize,
+            height: centerSize,
             decoration: BoxDecoration(
               color: Colors.black87,
               borderRadius: BorderRadius.circular(4),
@@ -459,11 +463,12 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildGachaButton() {
+  Widget _buildGachaButton(double gachaSize) {
     final isEnabled = _isInputMode && !_isGachaAnimating;
     final buttonColor =
         isEnabled ? const Color(0xFFF2C94C) : const Color(0xFFB0B0B0);
     final shadowColor = isEnabled ? Colors.black54 : Colors.black26;
+    final fontSize = (gachaSize * 0.14).clamp(10.0, 12.0);
 
     return Expanded(
       child: Align(
@@ -472,8 +477,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           onTap: isEnabled ? _handleGacha : null,
           child: Container(
             margin: const EdgeInsets.only(top: 6, right: 10),
-            width: 110,
-            height: 110,
+            width: gachaSize,
+            height: gachaSize,
             decoration: BoxDecoration(
               color: buttonColor,
               shape: BoxShape.circle,
@@ -490,7 +495,7 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
             child: Text(
               'GACHA!',
               style: GoogleFonts.pressStart2p(
-                fontSize: 12,
+                fontSize: fontSize,
                 color: Colors.black,
               ),
             ),
