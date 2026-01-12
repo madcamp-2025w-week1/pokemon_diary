@@ -18,7 +18,7 @@ class Tab1Draft extends StatefulWidget {
 }
 
 class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
-  static const double _messageBoxHeight = 260;
+  static const double _messageBoxHeight = 220;
   final TextEditingController _controller = TextEditingController();
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
@@ -187,10 +187,6 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                 child: Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFD93838),
-                    border: Border.all(
-                      color: const Color(0xFF202020),
-                      width: 3,
-                    ),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black54,
