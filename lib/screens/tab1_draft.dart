@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:pokemon_diary/providers/trainer_provider.dart';
+import 'package:pokemon_diary/screens/badge_popup.dart';
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
@@ -138,9 +139,32 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
 
     final diary = resultData['diary'] as Diary;
     await DbHelper.instance.insertDiary(diary);
+
     if (mounted) {
+      // 1. Refresh Diary Provider
       await context.read<DiaryProvider>().refreshDiaries();
-      await context.read<TrainerProvider>().refreshData();
+      
+      // 2. Refresh Trainer Provider (This triggers badge calculation)
+      // Capture provider in variable to use inside loop
+      final trainerProvider = context.read<TrainerProvider>();
+      await trainerProvider.refreshData();
+
+      // 3. CHECK FOR NEW BADGES
+      if (trainerProvider.newlyUnlockedBadges.isNotEmpty) {
+        // Show a dialog for EACH new badge (in case they unlock 2 at once)
+        for (var badge in trainerProvider.newlyUnlockedBadges) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false, // User must click button to close
+            builder: (context) => BadgeUnlockDialog(
+              badge: badge,
+              onClose: () => Navigator.of(context).pop(),
+            ),
+          );
+        }
+        // Clear the list so we don't show them again
+        trainerProvider.clearNewBadges();
+      }
     }
 
     if (!mounted) return;

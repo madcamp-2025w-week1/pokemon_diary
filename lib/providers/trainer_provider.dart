@@ -10,11 +10,14 @@ class TrainerProvider with ChangeNotifier {
   int _streak = 0;
   List<PokemonBadge> _badges = [];
 
+  List<PokemonBadge> _newlyUnlockedBadges = [];
+
   String get name => _name;
   String get gender => _gender;
   String get debutDate => _debutDate;
   int get streak => _streak;
   List<PokemonBadge> get badges => _badges;
+  List<PokemonBadge> get newlyUnlockedBadges => _newlyUnlockedBadges;
 
   final _pokemonService = PokemonApiService();
 
@@ -46,7 +49,7 @@ class TrainerProvider with ChangeNotifier {
       }
     }
 
-    // calculate streak for today 
+    // calculate data 
     final allDiaries = await DbHelper.instance.getDiaries();
     final allPokemon = await _pokemonService.getAllPokemon();
     final Map<int, Pokemon> pokemonMap = {
@@ -55,8 +58,35 @@ class TrainerProvider with ChangeNotifier {
 
     _streak = calculateStreak(allDiaries);
 
-    _badges = _calculateBadges(allDiaries, _streak, pokemonMap);
+    final freshBadges = _calculateBadges(allDiaries, _streak, pokemonMap);
+    _badges = freshBadges;
 
+    // Load the list of badge IDs we already knew about
+    final List<String> knownBadgeIds = prefs.getStringList('trainer_known_badges') ?? [];
+    
+    _newlyUnlockedBadges = []; // Reset the "New" list
+    List<String> updatedKnownBadges = List.from(knownBadgeIds);
+    bool needsSave = false;
+
+    for (var badge in _badges) {
+      // If badge is unlocked NOW, but was NOT in our known list...
+      if (badge.isUnlocked && !knownBadgeIds.contains(badge.id)) {
+        _newlyUnlockedBadges.add(badge);
+        updatedKnownBadges.add(badge.id);
+        needsSave = true;
+      }
+    }
+
+    if (needsSave) {
+      await prefs.setStringList('trainer_known_badges', updatedKnownBadges);
+    }
+
+    notifyListeners();
+  }
+
+  // Call this after showing the popups to clean up
+  void clearNewBadges() {
+    _newlyUnlockedBadges = [];
     notifyListeners();
   }
 
@@ -85,21 +115,6 @@ class TrainerProvider with ChangeNotifier {
   // Call this when a new entry is added
   Future<void> refreshData() async {
     await _loadData(); // Re-runs everything including badge calc
-  }
-  
-  // Call this whenever a new Diary is saved to refresh the streak
-  Future<void> refreshStreak() async {
-    final allDiaries = await DbHelper.instance.getDiaries();
-    _streak = calculateStreak(allDiaries);
-    
-    // Also check debut date if this was the VERY FIRST entry
-    if (_debutDate == "NOT STARTED" && allDiaries.isNotEmpty) {
-       _debutDate = allDiaries.last.date;
-       final prefs = await SharedPreferences.getInstance();
-       await prefs.setString('trainer_debut', _debutDate);
-    }
-    
-    notifyListeners();
   }
 
   int calculateStreak(List<Diary> diaries) {
