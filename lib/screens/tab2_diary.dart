@@ -13,7 +13,8 @@ class Tab2Diary extends StatefulWidget {
 }
 
 class _Tab2DiaryState extends State<Tab2Diary> {
-  static const double _itemExtent = 96;
+  // 1. CHANGED: Reduced from 110 to 98 (Since we shrunk the icon/padding)
+  static const double _itemExtent = 98; 
   final ScrollController _scrollController = ScrollController();
   int _selectedIndex = 0;
 
@@ -28,6 +29,11 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     final diaryProvider = context.watch<DiaryProvider>();
     final diaries = diaryProvider.diaries;
 
+    final pixelText = GoogleFonts.pressStart2p(
+      fontSize: 11,
+      color: const Color(0xFF2F3A3A),
+    );
+
     if (diaryProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -38,12 +44,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
           color: const Color(0xFF2B6FD3),
           child: Column(
             children: [
-              _buildHeader(
-                GoogleFonts.pressStart2p(
-                  fontSize: 11,
-                  color: const Color(0xFF2F3A3A),
-                ),
-              ),
+              _buildHeader(pixelText),
               const SizedBox(height: 10),
               Expanded(
                 child: Padding(
@@ -68,10 +69,6 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     }
 
     final selectedDiary = diaries[_selectedIndex.clamp(0, diaries.length - 1)];
-    final pixelText = GoogleFonts.pressStart2p(
-      fontSize: 11,
-      color: const Color(0xFF2F3A3A),
-    );
 
     return SafeArea(
       child: Container(
@@ -85,9 +82,13 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Column(
                   children: [
-                    _buildDetailPanel(selectedDiary, pixelText),
+                    Expanded(
+                      flex: 3, 
+                      child: _buildDetailPanel(selectedDiary, pixelText),
+                    ),
                     const SizedBox(height: 12),
                     Expanded(
+                      flex: 2, 
                       child: _buildListPanel(diaries, pixelText),
                     ),
                   ],
@@ -132,7 +133,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
 
   Widget _buildDetailPanel(Diary diary, TextStyle pixelText) {
     return Container(
-      height: 240,
+      width: double.infinity, 
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFFE5D98C),
@@ -157,7 +158,10 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                 _buildPokemonIcon(diary.pokemonId, 40),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(_formatDetailTitle(diary), style: pixelText.copyWith(fontSize: 10)),
+                  child: Text(
+                    _formatDetailTitle(diary), 
+                    style: pixelText.copyWith(fontSize: 12), 
+                  ),
                 ),
                 _buildSentimentBadge(diary.sentiment, pixelText),
               ],
@@ -173,9 +177,12 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                   ),
                   Positioned.fill(
                     child: Padding(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                       child: SingleChildScrollView(
-                        child: Text(diary.content, style: pixelText.copyWith(height: 1.6, fontSize: 9)),
+                        child: Text(
+                          diary.content, 
+                          style: pixelText.copyWith(height: 2.0, fontSize: 12),
+                        ),
                       ),
                     ),
                   ),
@@ -195,7 +202,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     );
 
     return Container(
-      height: 240,
+      width: double.infinity,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFFE5D98C),
@@ -231,17 +238,13 @@ class _Tab2DiaryState extends State<Tab2Diary> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF1D3E6B), width: 3),
       ),
-      // 1. Wrap with LayoutBuilder to get the available height
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // 2. Calculate padding: Allow the last item to scroll to the top
-          // (View Height - Item Height) ensures the last item can stand alone at the top
           final double bottomPadding = (constraints.maxHeight - _itemExtent).clamp(0.0, double.infinity);
 
           return NotificationListener<ScrollNotification>(
             onNotification: (notification) {
               if (notification is ScrollUpdateNotification) {
-                // Your existing selection logic
                 final index = (notification.metrics.pixels / _itemExtent).round();
                 final clamped = index.clamp(0, diaries.length - 1);
                 
@@ -256,15 +259,14 @@ class _Tab2DiaryState extends State<Tab2Diary> {
             child: ListView.builder(
               controller: _scrollController,
               itemExtent: _itemExtent,
-              // 3. Apply the calculated padding here
               padding: EdgeInsets.only(bottom: bottomPadding),
               itemCount: diaries.length,
               itemBuilder: (context, index) {
                 final diary = diaries[index];
                 final isSelected = index == _selectedIndex;
+                
                 return _DiaryListItem(
                   diary: diary,
-                  pokemon: pokemonMap[diary.pokemonId],
                   isSelected: isSelected,
                   pixelText: pixelText,
                 );
@@ -368,7 +370,8 @@ class _DiaryListItem extends StatelessWidget {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    // 2. CHANGED: Reduced vertical padding from 8 to 4
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: const BoxDecoration(
                       color: Color(0xFFD8BF5B),
                       borderRadius: BorderRadius.only(
@@ -378,7 +381,8 @@ class _DiaryListItem extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        _DiaryIcon(pokemonId: diary.pokemonId, size: 36),
+                        // 3. CHANGED: Reduced Icon size from 36 to 28
+                        _DiaryIcon(pokemonId: diary.pokemonId, size: 28),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -494,7 +498,7 @@ class _LinedPaperPainter extends CustomPainter {
       ..color = const Color(0xFFCCE0EA)
       ..strokeWidth = 1;
 
-    const lineGap = 18.0;
+    const lineGap = 24.0; 
     for (double y = 0; y < size.height; y += lineGap) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
