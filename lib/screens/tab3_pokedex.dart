@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
@@ -29,29 +30,100 @@ class Tab3Pokedex extends StatelessWidget {
         }
 
         final pokemonList = snapshot.data!;
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          cacheExtent: 600,
-          itemCount: pokemonList.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 0.78,
+        final pixelText = GoogleFonts.pressStart2p(
+          fontSize: 11,
+          color: const Color(0xFF2F3A3A),
+        );
+
+        return Container(
+          color: const Color(0xFF7F9B6F),
+          child: Column(
+            children: [
+              _buildHeader(pixelText),
+              const SizedBox(height: 10),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(6, 0, 6, 12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2F4D63),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF1B2D3A), width: 3),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0xFF1B2D3A),
+                          offset: Offset(3, 3),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.zero,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF4F6E74),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF1B2D3A), width: 2),
+                      ),
+                      padding: EdgeInsets.zero,
+                      child: GridView.builder(
+                        padding: const EdgeInsets.all(0),
+                        cacheExtent: 600,
+                        itemCount: pokemonList.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 0,
+                          crossAxisSpacing: 0,
+                          childAspectRatio: 0.78,
+                        ),
+                        itemBuilder: (context, index) {
+                          final pokemon = pokemonList[index];
+                          final isOwned = ownedIds.contains(pokemon.id);
+                          return _PokedexTile(
+                            pokemon: pokemon,
+                            isOwned: isOwned,
+                            isKorean: isKorean,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          itemBuilder: (context, index) {
-            final pokemon = pokemonList[index];
-            final isOwned = ownedIds.contains(pokemon.id);
-            return _PokedexTile(
-              pokemon: pokemon,
-              isOwned: isOwned,
-              isKorean: isKorean,
-            );
-          },
         );
       },
     );
   }
+}
+
+Widget _buildHeader(TextStyle pixelText) {
+  return Container(
+    margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      color: const Color(0xFF4F6E74),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFF1B2D3A), width: 2),
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0xFF1B2D3A),
+          offset: Offset(2, 2),
+          blurRadius: 0,
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.grid_view, color: Colors.white, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          'POKEDEX',
+          style: pixelText.copyWith(color: Colors.white, fontSize: 12),
+        ),
+      ],
+    ),
+  );
 }
 
 class _PokedexTile extends StatelessWidget {
@@ -70,29 +142,26 @@ class _PokedexTile extends StatelessWidget {
     final displayName = isOwned
         ? (isKorean ? pokemon.koreanName : pokemon.englishName)
         : '???';
-    final nameColor = isOwned ? Colors.black87 : Colors.black38;
+    final nameColor = isOwned ? const Color(0xFF1E1E1E) : const Color(0xFF4A4A4A);
 
-    // ★ 최적화 1: 미보유 시에는 무거운 GIF 대신 가벼운 PNG(spriteUrl) 사용
-    // 어차피 실루엣이라 움직임이 잘 안 보임 -> 성능 이득 극대화
     final imageUrl = isOwned ? pokemon.showdownGifUrl : pokemon.homeSpriteUrl;
-
     Widget imageWidget = CachedNetworkImage(
       imageUrl: imageUrl,
       fit: BoxFit.contain,
-      // ★ 최적화 2: 메모리에 올릴 때 크기를 제한 (그리드 크기에 맞춰서 축소 디코딩)
-      // 원본이 커도 메모리에는 200px로 올라가서 렉이 줄어듦
-      memCacheHeight: 200, 
+      memCacheHeight: 200,
       placeholder: (context, url) => Center(
         child: SizedBox(
           width: 20,
           height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey[300]),
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Colors.grey[300],
+          ),
         ),
       ),
       errorWidget: (context, url, error) => const Icon(Icons.error),
     );
 
-    // 미보유 시 실루엣 처리
     if (!isOwned) {
       imageWidget = ColorFiltered(
         colorFilter: const ColorFilter.mode(
@@ -102,61 +171,94 @@ class _PokedexTile extends StatelessWidget {
         child: imageWidget,
       );
     } else {
-      // ★ 최적화 3: GIF가 움직일 때 주변 위젯까지 다시 그리지 않도록 격리
       imageWidget = RepaintBoundary(child: imageWidget);
     }
 
-    return Card(
-      elevation: 2,
-      color: const Color(0xFFF5F1E8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: isOwned
-            ? () {
-                showDialog(
-                  context: context,
-                  // barrierDismissible: true, // 바깥 눌러서 닫기 (기본값 true)
-                  builder: (_) => PokemonDetailDialog(pokemon: pokemon),
-                );
-              }
-            : null,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final idFontSize = (constraints.maxWidth * 0.12).clamp(8.0, 10.0);
+        final nameFontSize = (constraints.maxWidth * 0.14).clamp(9.0, 11.0);
+        final pixelId = GoogleFonts.pressStart2p(
+          fontSize: idFontSize,
+          color: nameColor,
+        );
+        final pixelName = GoogleFonts.pressStart2p(
+          fontSize: nameFontSize,
+          color: nameColor,
+        );
+
+        final lineColor = const Color(0xFF2B2B2B);
+        final bandOuter = isOwned ? const Color(0xFF4F6E3E) : const Color(0xFF3F4A3A);
+        final bandInner = isOwned ? const Color(0xFF5E7A46) : const Color(0xFF4A5440);
+        final innerFill = isOwned ? const Color(0xFFF7F1E3) : const Color(0xFF6E7A67);
+
+        return Card(
+          elevation: 0,
+          color: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(10),
+            onTap: isOwned
+                ? () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => PokemonDetailDialog(pokemon: pokemon),
+                    );
+                  }
+                : null,
         child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            children: [
-              Expanded(
-                // Hero 애니메이션은 리스트 렉의 주범이 될 수 있으므로, 
-                // 렉이 심하면 제거 고려. 지금은 유지.
-                child: Center(child: imageWidget),
+          padding: const EdgeInsets.all(6),
+          child: Container(
+            decoration: BoxDecoration(
+              color: bandOuter,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(color: lineColor, width: 2),
               ),
-              const SizedBox(height: 6),
-              Text(
-                '#${pokemon.id.toString().padLeft(3, '0')}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+              padding: const EdgeInsets.all(2),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: innerFill,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: lineColor, width: 2),
+                ),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Center(child: imageWidget),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '#${pokemon.id.toString().padLeft(3, '0')}',
+                      style: pixelId,
+                    ),
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        displayName.toUpperCase(),
+                        style: pixelName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                displayName,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: nameColor,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+      },
     );
   }
 }
