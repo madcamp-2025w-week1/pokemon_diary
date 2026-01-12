@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
-import '../services/services.dart';
 
 class Tab2Diary extends StatefulWidget {
   const Tab2Diary({super.key});
@@ -14,21 +13,9 @@ class Tab2Diary extends StatefulWidget {
 }
 
 class _Tab2DiaryState extends State<Tab2Diary> {
-  static const double _itemExtent = 110;
+  static const double _itemExtent = 96;
   final ScrollController _scrollController = ScrollController();
   int _selectedIndex = 0;
-  
-  // ★ 수정 1: late를 제거하고 nullable로 선언하거나, 
-  // 여기서는 initState 의존성을 없애기 위해 nullable Future로 관리해.
-  Future<List<Pokemon>>? _pokemonFuture;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // ★ 수정 2: context가 완전히 준비된 didChangeDependencies에서 초기화하는 것이 더 안전해.
-    // 한 번만 실행되도록 체크.
-    _pokemonFuture ??= context.read<PokemonApiService>().getAllPokemon();
-  }
 
   @override
   void dispose() {
@@ -71,12 +58,11 @@ class _Tab2DiaryState extends State<Tab2Diary> {
       );
     }
 
-    // 선택된 인덱스 보정 로직
     if (_selectedIndex >= diaries.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
-          _selectedIndex = diaries.isEmpty ? 0 : diaries.length - 1;
+          _selectedIndex = diaries.length - 1;
         });
       });
     }
@@ -90,54 +76,31 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     return SafeArea(
       child: Container(
         color: const Color(0xFF2B6FD3),
-        child: FutureBuilder<List<Pokemon>>(
-          // ★ 수정 3: _pokemonFuture가 null일 경우를 대비해 처리
-          future: _pokemonFuture,
-          builder: (context, snapshot) {
-            // 로딩 중 표시 추가 (Future가 완료될 때까지 기다림)
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: Colors.white));
-            }
-
-            final pokemonList = snapshot.data ?? const <Pokemon>[];
-            final pokemonMap = {
-              for (final pokemon in pokemonList) pokemon.id: pokemon,
-            };
-
-            return Column(
-              children: [
-                _buildHeader(pixelText),
-                const SizedBox(height: 10),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Column(
-                      children: [
-                        _buildDetailPanel(
-                          selectedDiary,
-                          pokemonMap[selectedDiary.pokemonId],
-                          pixelText,
-                        ),
-                        const SizedBox(height: 12),
-                        Expanded(
-                          child: _buildListPanel(diaries, pokemonMap, pixelText),
-                        ),
-                      ],
+        child: Column(
+          children: [
+            _buildHeader(pixelText),
+            const SizedBox(height: 10),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    _buildDetailPanel(selectedDiary, pixelText),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: _buildListPanel(diaries, pixelText),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-              ],
-            );
-          },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );
   }
 
-  // --- 이하 위젯 빌드 메서드들은 기존과 동일 (생략하지 않고 그대로 사용하면 돼) ---
-  // _buildHeader, _buildDetailPanel, _buildListPanel 등...
-  
   Widget _buildHeader(TextStyle pixelText) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
@@ -167,9 +130,9 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     );
   }
 
-  Widget _buildDetailPanel(Diary diary, Pokemon? pokemon, TextStyle pixelText) {
+  Widget _buildDetailPanel(Diary diary, TextStyle pixelText) {
     return Container(
-      height: 240, // 적절한 고정 높이 부여 또는 Flexible 처리
+      height: 240,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFFE5D98C),
@@ -191,7 +154,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
           children: [
             Row(
               children: [
-                _buildPokemonIcon(pokemon, 40),
+                _buildPokemonIcon(diary.pokemonId, 40),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(_formatDetailTitle(diary), style: pixelText.copyWith(fontSize: 10)),
@@ -212,10 +175,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                     child: Padding(
                       padding: const EdgeInsets.all(8),
                       child: SingleChildScrollView(
-                        child: Text(
-                          diary.content,
-                          style: pixelText.copyWith(height: 1.6, fontSize: 9),
-                        ),
+                        child: Text(diary.content, style: pixelText.copyWith(height: 1.6, fontSize: 9)),
                       ),
                     ),
                   ),
@@ -263,7 +223,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     );
   }
 
-  Widget _buildListPanel(List<Diary> diaries, Map<int, Pokemon> pokemonMap, TextStyle pixelText) {
+  Widget _buildListPanel(List<Diary> diaries, TextStyle pixelText) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
@@ -293,7 +253,6 @@ class _Tab2DiaryState extends State<Tab2Diary> {
             final isSelected = index == _selectedIndex;
             return _DiaryListItem(
               diary: diary,
-              pokemon: pokemonMap[diary.pokemonId],
               isSelected: isSelected,
               pixelText: pixelText,
             );
@@ -303,17 +262,14 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     );
   }
 
-  Widget _buildPokemonIcon(Pokemon? pokemon, double size) {
-    final iconUrl = pokemon?.iconSpriteUrl;
-    if (iconUrl == null || iconUrl.isEmpty) {
-      return SizedBox(width: size, height: size);
-    }
+  Widget _buildPokemonIcon(int pokemonId, double size) {
+    final iconUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
     return Image.network(
       iconUrl,
       width: size,
       height: size,
       fit: BoxFit.contain,
-      errorBuilder: (c, e, s) => SizedBox(width: size, height: size),
+      errorBuilder: (context, error, stackTrace) => SizedBox(width: size, height: size),
     );
   }
 
@@ -352,13 +308,11 @@ class _Tab2DiaryState extends State<Tab2Diary> {
 
 class _DiaryListItem extends StatelessWidget {
   final Diary diary;
-  final Pokemon? pokemon;
   final bool isSelected;
   final TextStyle pixelText;
 
   const _DiaryListItem({
     required this.diary,
-    required this.pokemon,
     required this.isSelected,
     required this.pixelText,
   });
@@ -384,9 +338,7 @@ class _DiaryListItem extends StatelessWidget {
                 color: const Color(0xFFE5D98C),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF2F3A3A)
-                      : const Color(0xFF8E7B2C),
+                  color: isSelected ? const Color(0xFF2F3A3A) : const Color(0xFF8E7B2C),
                   width: isSelected ? 3 : 2,
                 ),
                 boxShadow: const [
@@ -412,7 +364,7 @@ class _DiaryListItem extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        _DiaryIcon(pokemon: pokemon, size: 36),
+                        _DiaryIcon(pokemonId: diary.pokemonId, size: 36),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -463,17 +415,14 @@ class _DiaryListItem extends StatelessWidget {
 }
 
 class _DiaryIcon extends StatelessWidget {
-  final Pokemon? pokemon;
+  final int pokemonId;
   final double size;
 
-  const _DiaryIcon({required this.pokemon, this.size = 24});
+  const _DiaryIcon({required this.pokemonId, this.size = 24});
 
   @override
   Widget build(BuildContext context) {
-    final iconUrl = pokemon?.iconSpriteUrl;
-    if (iconUrl == null || iconUrl.isEmpty) {
-      return SizedBox(width: size, height: size);
-    }
+    final iconUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
 
     return Image.network(
       iconUrl,

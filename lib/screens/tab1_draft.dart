@@ -199,9 +199,11 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   child: Column(
                     children: [
+                      _buildDraftHeader(),
+                      const SizedBox(height: 12),
                       _buildScreen(),
                       const SizedBox(height: 12),
                       _buildStatusLabel(),
@@ -236,6 +238,38 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
         child: Center(
           child: _buildTopVisual(),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDraftHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD93838),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF202020), width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xFF202020),
+            offset: Offset(2, 2),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.catching_pokemon, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            'DRAFT',
+            style: GoogleFonts.pressStart2p(
+              fontSize: 12,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
