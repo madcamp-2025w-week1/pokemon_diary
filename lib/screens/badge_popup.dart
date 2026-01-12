@@ -38,6 +38,21 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
     super.dispose();
   }
 
+  // --- HELPER: Get Color based on Badge Type ---
+  Color _getBadgeColor(String badgeId) {
+    switch (badgeId.toLowerCase()) {
+      case 'boulder': return const Color(0xFF78909C); // Blue Grey (Rock)
+      case 'cascade': return const Color(0xFF29B6F6); // Light Blue (Water)
+      case 'thunder': return const Color(0xFFFFCA28); // Amber (Electric)
+      case 'rainbow': return const Color(0xFF66BB6A); // Green (Grass/Nature)
+      case 'soul':    return const Color(0xFFEC407A); // Pink (Heart/Soul)
+      case 'marsh':   return const Color(0xFFAB47BC); // Purple (Psychic)
+      case 'volcano': return const Color(0xFFFF7043); // Deep Orange (Fire)
+      case 'earth':   return const Color(0xFF8D6E63); // Brown (Ground)
+      default:        return const Color(0xFFe58e26); // Default Gold
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final pixelStyle = GoogleFonts.pressStart2p(
@@ -47,14 +62,26 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
     
     final bool isUnlocked = widget.badge.isUnlocked;
 
-    // --- COLORS ---
-    final mainColor = isUnlocked ? const Color(0xFFe58e26) : const Color(0xFF7f8c8d);
-    final borderColor = isUnlocked ? const Color(0xFFf8c291) : const Color(0xFF95a5a6);
-    final innerColor = isUnlocked ? const Color(0xFFfad390) : const Color(0xFFbdc3c7);
-    final iconColor = isUnlocked ? const Color(0xFFe58e26) : const Color(0xFF7f8c8d);
+    // 1. DETERMINE COLORS
+    // If unlocked, use specific type color. If locked, use Grey.
+    final baseColor = isUnlocked 
+        ? _getBadgeColor(widget.badge.id) 
+        : const Color(0xFF7f8c8d);
+
+    final mainColor = baseColor;
+    // Lighter tint for border
+    final borderColor = isUnlocked ? baseColor.withOpacity(0.6) : const Color(0xFF95a5a6);
+    // Very light tint for background
+    final innerColor = isUnlocked ? baseColor.withOpacity(0.15) : const Color(0xFFbdc3c7);
+    final iconColor = mainColor;
 
     final headerText = isUnlocked ? "ACHIEVEMENT!" : "LOCKED";
     final buttonText = isUnlocked ? "AWESOME!" : "KEEP GOING";
+
+    // Layout Constants
+    const double headerHeight = 45.0; 
+    const double whiteStripHeight = 140.0;
+    const double firstSectionTotalHeight = headerHeight + whiteStripHeight; 
 
     return ScaleTransition(
       scale: _scaleAnimation,
@@ -85,22 +112,23 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
               borderRadius: BorderRadius.circular(6), 
               child: Stack(
                 children: [
-                  // 1. BASE BACKGROUND (Provided by Container color)
-                  
-                  // 2. WHITE SECTION STRIP (The "Trainer Card" Effect)
-                  // We position this to sit behind the Icon and Name
+                  // 1. WHITE SECTION STRIP (Middle Layer)
                   Positioned(
-                    top: 45, // Starts just below the header
+                    top: headerHeight, 
                     left: 0,
                     right: 0,
-                    height: 140, // Height to cover Icon + Name area
+                    height: whiteStripHeight, 
                     child: Container(
                       color: Colors.white.withOpacity(0.5), 
                     ),
                   ),
 
-                  // 3. GLOBAL STRIPES (Overlay on top of background & white strip)
-                  Positioned.fill(
+                  // 2. STRIPES (Top Section Only)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: firstSectionTotalHeight, 
                     child: CustomPaint(
                       painter: StripePainter(
                         stripeColor: Colors.black.withOpacity(0.05),
@@ -108,7 +136,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
                     ),
                   ),
 
-                  // 4. CONTENT COLUMN
+                  // 3. CONTENT COLUMN
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -149,7 +177,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
                           child: Icon(
                             widget.badge.icon,
                             size: 40,
-                            color: iconColor,
+                            color: iconColor, // Icons now match the theme color
                           ),
                         ),
                       ),
@@ -166,7 +194,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
                         ),
                       ),
 
-                      const SizedBox(height: 16), // Extra spacing to clear the white strip
+                      const SizedBox(height: 16), 
 
                       // Description
                       Padding(
@@ -215,7 +243,6 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
   }
 }
 
-// Reusing the StripePainter from your Trainer Card
 class StripePainter extends CustomPainter {
   final Color stripeColor;
 
