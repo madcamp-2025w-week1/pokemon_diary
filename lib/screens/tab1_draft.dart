@@ -18,7 +18,8 @@ class Tab1Draft extends StatefulWidget {
   State<Tab1Draft> createState() => _Tab1DraftState();
 }
 
-class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
+class _Tab1DraftState extends State<Tab1Draft>
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final TextEditingController _controller = TextEditingController();
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
@@ -41,10 +42,12 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   final FocusNode _editorFocusNode = FocusNode();
   BuildContext? _editorContext;
   double _lastMessageHeight = 0;
+  bool _wasKeyboardVisible = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     _blinkController = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -63,7 +66,24 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
   }
 
   @override
+  void didChangeMetrics() {
+    final bottomInset = View.of(context).viewInsets.bottom;
+    final isKeyboardVisible = bottomInset > 0;
+
+    if (_wasKeyboardVisible &&
+        !isKeyboardVisible &&
+        _isEditorOpen &&
+        _editorContext != null &&
+        mounted) {
+      Navigator.of(_editorContext!).pop();
+    }
+
+    _wasKeyboardVisible = isKeyboardVisible;
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _editorFocusNode.dispose();
     _blinkController.dispose();
@@ -79,6 +99,8 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
       backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
       builder: (context) {
@@ -95,74 +117,82 @@ class _Tab1DraftState extends State<Tab1Draft> with TickerProviderStateMixin {
           ),
           child: Align(
             alignment: Alignment.bottomCenter,
-            child: Container(
-              constraints: BoxConstraints(
-                minHeight: minHeight,
-                maxHeight: constrainedMax,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF6EFD8),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF202020), width: 2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black54,
-                    offset: Offset(2, 2),
-                    blurRadius: 0,
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Stack(
-                children: [
-                  TextField(
-                    controller: _controller,
-                    autofocus: true,
-                    focusNode: _editorFocusNode,
-                    maxLines: null,
-                    style: GoogleFonts.pressStart2p(
-                      fontSize: 11,
-                      color: Colors.black87,
+            child: PopScope(
+              canPop: false,
+              onPopInvokedWithResult: (didPop, result) {
+                if (didPop) return;
+                FocusScope.of(context).unfocus();
+                Navigator.of(context).pop();
+              },
+              child: Container(
+                constraints: BoxConstraints(
+                  minHeight: minHeight,
+                  maxHeight: constrainedMax,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6EFD8),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF202020), width: 2),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black54,
+                      offset: Offset(2, 2),
+                      blurRadius: 0,
                     ),
-                    decoration: InputDecoration(
-                      hintText:
-                          'How are you feeling today? Share your thoughts to find your Pokemon companion...'
-                              .toUpperCase(),
-                      hintStyle: GoogleFonts.pressStart2p(
-                        fontSize: 10,
-                        color: Colors.grey.shade600,
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Stack(
+                  children: [
+                    TextField(
+                      controller: _controller,
+                      autofocus: true,
+                      focusNode: _editorFocusNode,
+                      maxLines: null,
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: 11,
+                        color: Colors.black87,
                       ),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.only(
-                        right: 32,
-                        bottom: 6,
+                      decoration: InputDecoration(
+                        hintText:
+                            'How are you feeling today? Share your thoughts to find your Pokemon companion...'
+                                .toUpperCase(),
+                        hintStyle: GoogleFonts.pressStart2p(
+                          fontSize: 10,
+                          color: Colors.grey.shade600,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.only(
+                          right: 32,
+                          bottom: 6,
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8C2A2A),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: const Color(0xFF202020),
-                            width: 2,
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(context).pop(),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8C2A2A),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: const Color(0xFF202020),
+                              width: 2,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_forward,
+                            size: 16,
+                            color: Colors.white,
                           ),
                         ),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          size: 16,
-                          color: Colors.white,
-                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
