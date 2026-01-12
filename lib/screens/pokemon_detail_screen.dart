@@ -4,82 +4,292 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 
-// --- 1. Diary Detail Dialog (Unchanged) ---
-class DiaryDetailDialog extends StatelessWidget {
+// --- 1. Diary Detail Dialog (Themed to match Tab2Diary) ---
+class DiaryDetailDialog extends StatefulWidget {
   final Diary diary;
   final Pokemon? pokemon;
 
-  const DiaryDetailDialog({super.key, required this.diary, this.pokemon});
+  const DiaryDetailDialog({
+    super.key, 
+    required this.diary, 
+    this.pokemon
+  });
 
-  Color _getSentimentColor(String sentiment) {
-    final normalized = sentiment.trim().toLowerCase();
-    if (normalized == 'joy' || normalized == 'happy') return Colors.amber.shade600;
-    if (normalized == 'angry' || normalized == 'stress') return Colors.deepOrange.shade400;
-    if (normalized == 'sad' || normalized == 'depressed') return Colors.indigo.shade400;
-    if (normalized == 'calm' || normalized == 'normal') return Colors.teal.shade400;
-    return Colors.grey.shade400;
+  @override
+  State<DiaryDetailDialog> createState() => _DiaryDetailDialogState();
+}
+
+class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _scaleAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeOutBack);
+    _controller.forward();
   }
 
-  String _capitalize(String text) => text.isEmpty ? "" : text[0].toUpperCase() + text.substring(1).toLowerCase();
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // --- Theme Helper: Matches colors from Tab2Diary ---
+  Map<String, Color> _getSentimentTheme(String sentiment) {
+    final normalized = sentiment.trim().toLowerCase();
+
+    // JOY / HAPPY (Yellow/Gold)
+    if (normalized == 'joy' || normalized == 'happy') {
+      return {
+        'outer': const Color(0xFFE5D98C),    // Card Color
+        'border': const Color(0xFF8E7B2C),   // Border Color
+        'inner': const Color(0xFFD8BF5B),    // Header Color (Background)
+        'paper': const Color(0xFFF2E8B7),    // Body Color (Content Area)
+      };
+    }
+
+    // ANGRY / STRESS (Red/Terra Cotta)
+    if (normalized == 'angry' || normalized == 'stress' || normalized.contains('frustrat')) {
+      return {
+        'outer': const Color(0xFFE08E79),
+        'border': const Color(0xFF8D3B25),
+        'inner': const Color(0xFFCC7A66),
+        'paper': const Color(0xFFF2D5CE),
+      };
+    }
+
+    // SAD / DEPRESSED (Blue)
+    if (normalized == 'sad' || normalized == 'depressed' || normalized.contains('blue')) {
+      return {
+        'outer': const Color(0xFF9FB7E6),
+        'border': const Color(0xFF2C448E),
+        'inner': const Color(0xFF7B99D8),
+        'paper': const Color(0xFFD3DEF2),
+      };
+    }
+
+    // CALM / NORMAL (Green)
+    if (normalized == 'calm' || normalized == 'normal' || normalized.contains('peace')) {
+      return {
+        'outer': const Color(0xFF8CE5A9),
+        'border': const Color(0xFF2C8E4F),
+        'inner': const Color(0xFF6BD890),
+        'paper': const Color(0xFFD3F2DC),
+      };
+    }
+
+    // DEFAULT (Grey/Neutral)
+    return {
+      'outer': const Color(0xFFC0C0C0),
+      'border': const Color(0xFF606060),
+      'inner': const Color(0xFFA0A0A0),
+      'paper': const Color(0xFFE0E0E0),
+    };
+  }
+
+  String _formatDate(String dateStr) {
+    final date = DateTime.tryParse(dateStr);
+    if (date == null) return dateStr;
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return "${months[date.month - 1]} ${date.day}, ${date.year}";
+  }
 
   @override
   Widget build(BuildContext context) {
-    final parsedDate = DateTime.tryParse(diary.date);
-    final dateText = parsedDate != null ? "${_monthText(parsedDate)} ${parsedDate.day.toString().padLeft(2, '0')}" : "---";
-    final pokemonName = pokemon?.englishName ?? "Pokemon #${diary.pokemonId}";
+    // Colors & Fonts
+    final theme = _getSentimentTheme(widget.diary.sentiment);
+    final pixelStyle = GoogleFonts.pressStart2p(
+      color: const Color(0xFF2d3436),
+      fontSize: 10,
+      height: 1.5,
+    );
 
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    final pokemonName = widget.pokemon?.englishName.toUpperCase() ?? "UNKNOWN";
+    
+    // Extract colors
+    final outerColor = theme['outer']!;
+    final borderColor = theme['border']!;
+    final innerColor = theme['inner']!;
+    final paperColor = theme['paper']!;
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(20),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: outerColor,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white, width: 3), // Outer White Rim
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Stack(
               children: [
-                Text(dateText, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: _getSentimentColor(diary.sentiment),
-                    borderRadius: BorderRadius.circular(20),
+                // 1. Background Fill (Inner/Header Color)
+                Positioned.fill(child: Container(color: innerColor)),
+
+                // 2. Paper Content Area (Bottom 3/4ths)
+                Positioned(
+                  top: 50,
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(color: paperColor),
+                ),
+
+                // 3. Stripes Overlay
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05)),
                   ),
-                  child: Text(_capitalize(diary.sentiment), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+
+                // 4. Content Layout
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: borderColor, width: 2), // Colored Theme Border
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // --- Header Row ---
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Date Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: borderColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _formatDate(widget.diary.date),
+                                style: pixelStyle.copyWith(color: Colors.white, fontSize: 10),
+                              ),
+                            ),
+                            // Close Button
+                            GestureDetector(
+                              onTap: () => Navigator.of(context).pop(),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: borderColor),
+                                ),
+                                child: Icon(Icons.close, size: 14, color: borderColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // --- Main Content ---
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const SizedBox(height: 12),
+                              
+                              // Sentiment & Pokemon Info
+                              Row(
+                                children: [
+                                  // Sentiment Icon/Chip
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: borderColor,
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2,2))],
+                                    ),
+                                    child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          widget.diary.sentiment.toUpperCase(),
+                                          style: pixelStyle.copyWith(
+                                            color: borderColor,
+                                            fontSize: 12, 
+                                            fontWeight: FontWeight.bold
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          "FEAT. $pokemonName",
+                                          style: pixelStyle.copyWith(fontSize: 8, color: Colors.black54),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              
+                              const SizedBox(height: 16),
+
+                              // Text Content Box
+                              Container(
+                                constraints: const BoxConstraints(minHeight: 100),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: borderColor, width: 1.5),
+                                ),
+                                child: Text(
+                                  widget.diary.content,
+                                  style: pixelStyle.copyWith(
+                                    fontSize: 11,
+                                    height: 1.6,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(pokemonName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 12),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
-              child: SingleChildScrollView(
-                child: Text(diary.content, style: const TextStyle(fontSize: 16, height: 1.5)),
-              ),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(onPressed: () => Navigator.pop(context), child: const Text("Close")),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
-
-  String _monthText(DateTime date) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[date.month - 1];
-  }
 }
 
-// --- 2. Pokemon Detail Dialog (Themed by Type) ---
+// --- 2. Pokemon Detail Dialog (Unchanged Type-Themed Version) ---
 class PokemonDetailDialog extends StatelessWidget {
   final Pokemon pokemon;
 
@@ -273,7 +483,7 @@ class PokemonDetailDialog extends StatelessWidget {
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.5),
+              color: Colors.black.withOpacity(0.5),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -293,13 +503,13 @@ class PokemonDetailDialog extends StatelessWidget {
                 left: 0,
                 right: 0,
                 height: 280,
-                child: Container(color: contentBg.withValues(alpha: 0.95)),
+                child: Container(color: contentBg.withOpacity(0.95)),
               ),
               
               // 3. Stripes
               Positioned.fill(
                 child: CustomPaint(
-                  painter: StripePainter(stripeColor: Colors.black.withValues(alpha: 0.05)),
+                  painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05)),
                 ),
               ),
 
@@ -323,7 +533,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: headerColor, // Dynamic Tag Color
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
+                              border: Border.all(color: Colors.black.withOpacity(0.2)),
                             ),
                             child: Text("POKEDEX", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
                           ),
@@ -351,7 +561,7 @@ class PokemonDetailDialog extends StatelessWidget {
                               child: Container(
                                 width: 180, height: 180,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.6),
+                                  color: Colors.white.withOpacity(0.6),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: borderDark, width: 2),
                                 ),
@@ -381,7 +591,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             // Height/Weight Box
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 6),
-                              decoration: BoxDecoration(color: borderDark.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
+                              decoration: BoxDecoration(color: borderDark.withOpacity(0.9), borderRadius: BorderRadius.circular(4)),
                               child: Text('HT: ${pokemon.height.toStringAsFixed(1)}m | WT: ${pokemon.weight.toStringAsFixed(1)}kg',
                                   style: pixelStyle.copyWith(color: Colors.white, fontSize: 10), textAlign: TextAlign.center),
                             ),
@@ -391,7 +601,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: contentBg.withValues(alpha: 0.8),
+                                color: contentBg.withOpacity(0.8),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: borderDark),
                               ),
@@ -401,7 +611,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             
                             // Dates Label
                             Text("DATES CAUGHT", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
-                            Container(height: 2, color: Colors.white.withValues(alpha: 0.5), margin: const EdgeInsets.symmetric(vertical: 4)),
+                            Container(height: 2, color: Colors.white.withOpacity(0.5), margin: const EdgeInsets.symmetric(vertical: 4)),
                             
                             // Dates List
                             FutureBuilder<List<String>>(
@@ -464,7 +674,7 @@ class PokemonDetailDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: _typeColor(type),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(color: Colors.black.withOpacity(0.3), width: 1.5),
         boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2, 2))],
       ),
       child: Text(type.name.toUpperCase(), style: baseStyle.copyWith(color: Colors.white, fontSize: 10, shadows: [const Shadow(offset: Offset(1, 1), color: Colors.black26)])),
