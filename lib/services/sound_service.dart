@@ -101,18 +101,20 @@ class SoundService {
     await _playSfx(_cardSfxPlayer, 'sounds/sfx_card_select.wav');
   }
 
-  Future<void> _playSfx(AudioPlayer player, String asset, {Duration? maxWait}) async {
+  Future<void> _playSfx(AudioPlayer player, String asset) async {
+    // 1. Restore the Mute Check
+    if (_sfxVolume <= 0) return; 
+
+    // 2. Stop if currently playing (Rapid fire support)
     if (player.state == PlayerState.playing) {
       await player.stop();
     }
+
+    // 3. Just Play - Do not wait for completion
+    // We await the 'start' of playback, but not the 'end' of the file.
     await player.play(AssetSource(asset));
-    if (maxWait == null) {
-      await player.onPlayerComplete.first;
-      return;
-    }
-    await Future.any([
-      player.onPlayerComplete.first,
-      Future.delayed(maxWait),
-    ]);
+    
+    // REMOVED: await player.onPlayerComplete.first; 
+    // This prevents the "hanging future" bug if interrupted.
   }
 }
