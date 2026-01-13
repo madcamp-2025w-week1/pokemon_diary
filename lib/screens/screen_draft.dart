@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/providers.dart';
@@ -22,6 +23,10 @@ class _DraftScreenState extends State<DraftScreen>
   final TextEditingController _controller = TextEditingController();
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
+  late AnimationController _revealController;
+  late Animation<double> _revealAnimation;
+  bool _hasStartedReveal = false;
+  static const Duration _revealDuration = Duration(seconds: 4);
   
   // Editor UI State
   bool _isEditorOpen = false;
@@ -76,10 +81,19 @@ class _DraftScreenState extends State<DraftScreen>
     super.dispose();
   }
 
-  void _onGachaPressed() {
+  Future<void> _onGachaPressed() async {
     final gachaProvider = context.read<GachaProvider>();
-    final settings = context.read<SettingsProvider>(); // For localized error
+  final trimmedText = _controller.text.trim();
+  final canStart = trimmedText.length >= 10;
+
     
+    await SoundService().duckBgm();
+    await SoundService().playGachaButton();
+    
+    final settings = context.read<SettingsProvider>(); // For localized error
+
+    _hasStartedReveal = false;
+    _revealController.reset();
     _blinkController.repeat(reverse: true);
 
     gachaProvider.performGacha(
@@ -131,6 +145,7 @@ class _DraftScreenState extends State<DraftScreen>
   @override
   Widget build(BuildContext context) {
     final gacha = context.watch<GachaProvider>();
+    _maybeStartReveal(gacha);
     final settings = context.watch<SettingsProvider>();
 
     if (gacha.isLoading) {
@@ -219,15 +234,42 @@ class _DraftScreenState extends State<DraftScreen>
 
   Widget _buildTopVisual(GachaProvider gacha, SettingsProvider settings) {
     if (gacha.isResultMode && gacha.currentPokemon != null) {
-      return Image.network(
+      final image = Image.network(
         // Use logic from your PokedexScreen to show Retro vs Modern here too if desired, 
         // but typically the 'HomeSprite' is the result.
         // If you want the Gacha reveal to match the art style:
         settings.isRetroArt 
           ? (gacha.currentPokemon!.gifUrl ?? gacha.currentPokemon!.homeSpriteUrl) 
           : gacha.currentPokemon!.homeSpriteUrl,
-        height: 160,
         fit: BoxFit.contain,
+      );
+      return SizedBox(
+        height: 160,
+        width: 160,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Positioned.fill(child: image),
+            if (gacha.isRevealing || _revealController.isAnimating)
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _revealAnimation,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _revealAnimation.value,
+                      child: ColorFiltered(
+                        colorFilter: const ColorFilter.mode(
+                          Colors.white,
+                          BlendMode.srcIn,
+                        ),
+                        child: image,
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
       );
     }
     // ... (Animation Logic unchanged)
@@ -255,6 +297,26 @@ class _DraftScreenState extends State<DraftScreen>
       );
     }
     return Lottie.asset('assets/animations/Pokeball loading animation.json', height: 140, fit: BoxFit.contain, animate: false);
+  }
+
+  void _maybeStartReveal(GachaProvider gacha) {
+    if (!gacha.isRevealing || _hasStartedReveal) {
+      return;
+    }
+
+    _hasStartedReveal = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final soundService = SoundService();
+      _revealController.duration = _revealDuration;
+      _revealController.reset();
+      soundService.playPokemonOut();
+      await _revealController.forward();
+      if (!mounted) return;
+      gacha.finishReveal();
+      await soundService.restoreBgm();
+      _hasStartedReveal = false;
+    });
   }
 
   Widget _buildDraftHeader(SettingsProvider settings) {

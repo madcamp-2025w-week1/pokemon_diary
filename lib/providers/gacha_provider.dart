@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/models.dart';
+import '../services/sound_service.dart';
 import '../services/services.dart';
 import 'diary_provider.dart';
 import 'trainer_provider.dart';
@@ -18,6 +19,7 @@ class GachaProvider extends ChangeNotifier {
   // Animation States
   bool _isGachaAnimating = false;
   bool _showLightning = false;
+  bool _isRevealing = false;
   String _currentLightningAnim = 'assets/animations/gray_lightning.json';
 
   // Data
@@ -33,6 +35,7 @@ class GachaProvider extends ChangeNotifier {
   bool get isInputMode => _isInputMode;
   bool get isGachaAnimating => _isGachaAnimating;
   bool get showLightning => _showLightning;
+  bool get isRevealing => _isRevealing;
   String get currentLightningAnim => _currentLightningAnim;
   Diary? get todayDiary => _todayDiary;
   Pokemon? get currentPokemon => _currentPokemon;
@@ -43,6 +46,13 @@ class GachaProvider extends ChangeNotifier {
   /// Clears the badge queue after they have been shown
   void clearPendingBadges() {
     _pendingBadges.clear();
+  }
+
+  void finishReveal() {
+    if (_isRevealing) {
+      _isRevealing = false;
+      notifyListeners();
+    }
   }
 
   /// Checks if the user has already drafted today
@@ -92,17 +102,27 @@ class GachaProvider extends ChangeNotifier {
       return;
     }
 
+    final soundService = SoundService();
+
+    const scanDuration = Duration(seconds: 3);
+    const lightningDuration = Duration(seconds: 2);
+
     // 1. Start Animation State
+    await soundService.duckBgm();
     _isInputMode = false;
+    _isResultMode = false;
     _isGachaAnimating = true;
+    _showLightning = false;
+    _isRevealing = false;
     notifyListeners();
 
     // 2. Perform Logic (Parallel to animation)
     // We calculate the result early, but wait for animation to reveal it.
     final logicFuture = _performGachaLogic(text, apiService);
 
-    // Wait for "scanning" phase (2.5s)
-    await Future.delayed(const Duration(milliseconds: 2500));
+    // Wait for "scanning" phase
+    soundService.playPokeballSpin();
+    await Future.delayed(scanDuration);
 
     // Retrieve results
     final resultData = await logicFuture;
@@ -123,7 +143,15 @@ class GachaProvider extends ChangeNotifier {
 
     // 4. Reveal Phase (Lightning Animation)
     // Delay to let the lightning play before showing the card
-    await Future.delayed(const Duration(milliseconds: 2500));
+    soundService.playElectricShock();
+    await Future.delayed(lightningDuration);
+    _showLightning = false;
+    _todayDiary = diary;
+    _currentPokemon = pokemon;
+    _isResultMode = true;
+    _isGachaAnimating = false;
+    _isRevealing = true;
+    notifyListeners();
 
     // 5. Save Data using DbHelper (accessed via Services export)
     await DbHelper.instance.insertDiary(diary);
@@ -138,13 +166,7 @@ class GachaProvider extends ChangeNotifier {
       trainerProvider.clearNewBadges();
     }
 
-    // 8. Final State Update
-    _todayDiary = diary;
-    _currentPokemon = pokemon;
-    _isResultMode = true;
-    _isGachaAnimating = false;
-    _showLightning = false;
-    
+    // 8. Final State Update (keep reveal in progress)
     notifyListeners();
   }
 
