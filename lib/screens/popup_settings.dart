@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../providers/settings_provider.dart';
+import '../providers/providers.dart';
 import '../services/sound_service.dart';
 
 class SettingsDialog extends StatelessWidget {
@@ -79,7 +79,32 @@ class SettingsDialog extends StatelessWidget {
               const Divider(color: borderColor, thickness: 1),
               const SizedBox(height: 16),
 
-              // 2. Sound Section
+              // 2. Art Style Section (NEW)
+              Text(settings.getText('ART_STYLE'), style: pixelStyle),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildStyleOption(
+                    context, 
+                    settings, 
+                    settings.getText('MODERN'), 
+                    false, // isRetro = false
+                  ),
+                  const SizedBox(width: 12),
+                  _buildStyleOption(
+                    context, 
+                    settings, 
+                    settings.getText('RETRO'), 
+                    true, // isRetro = true
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              const Divider(color: borderColor, thickness: 1),
+              const SizedBox(height: 16),
+
+              // 3. Sound Section
               Text(settings.getText('SOUND'), style: pixelStyle),
               const SizedBox(height: 16),
               
@@ -169,6 +194,48 @@ class SettingsDialog extends StatelessWidget {
         onTap: () {
           SoundService().playCardSelectSound();
           settings.setLanguage(code);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.white,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: isSelected ? color : Colors.grey),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.pressStart2p(
+                fontSize: 9,
+                color: isSelected ? Colors.white : Colors.grey,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStyleOption(BuildContext context, SettingsProvider settings, String label, bool isRetroOption) {
+    final isSelected = settings.isRetroArt == isRetroOption;
+    final color = isSelected ? const Color(0xFF286a6b) : Colors.grey[400]!;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () async {
+          SoundService().playCardSelectSound();
+          
+          // 1. Update the setting
+          await settings.setRetroArt(isRetroOption);
+          
+          // 2. Force Pokedex Reload immediately
+          // Using context.read because we are inside a callback
+          if (context.mounted) {
+            await context.read<PokedexProvider>().loadPokedex(
+              isRetro: isRetroOption,
+              forceRefresh: true, // IMPORTANT: Force clear cache
+            );
+          }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
