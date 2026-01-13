@@ -8,14 +8,14 @@ import '../models/models.dart';
 import '../providers/providers.dart';
 import 'screens.dart';
 
-class Tab3Pokedex extends StatefulWidget {
-  const Tab3Pokedex({super.key});
+class PokedexScreen extends StatefulWidget {
+  const PokedexScreen({super.key});
 
   @override
-  State<Tab3Pokedex> createState() => _Tab3PokedexState();
+  State<PokedexScreen> createState() => _PokedexScreenState();
 }
 
-class _Tab3PokedexState extends State<Tab3Pokedex> {
+class _PokedexScreenState extends State<PokedexScreen> {
   
   @override
   void initState() {

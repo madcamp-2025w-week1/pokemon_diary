@@ -7,14 +7,14 @@ import '../providers/providers.dart';
 import '../utils/utils.dart';
 import '../services/sound_service.dart';
 
-class Tab2Diary extends StatefulWidget {
-  const Tab2Diary({super.key});
+class DiaryScreen extends StatefulWidget {
+  const DiaryScreen({super.key});
 
   @override
-  State<Tab2Diary> createState() => _Tab2DiaryState();
+  State<DiaryScreen> createState() => _DiaryScreenState();
 }
 
-class _Tab2DiaryState extends State<Tab2Diary> {
+class _DiaryScreenState extends State<DiaryScreen> {
   // Kept at 84 for the compact look
   static const double _itemExtent = 72; 
   final ScrollController _scrollController = ScrollController();

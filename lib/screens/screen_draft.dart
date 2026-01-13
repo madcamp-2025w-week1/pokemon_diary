@@ -7,14 +7,14 @@ import '../providers/providers.dart';
 import '../services/services.dart';
 import 'screens.dart';
 
-class Tab1Draft extends StatefulWidget {
-  const Tab1Draft({super.key});
+class DraftScreen extends StatefulWidget {
+  const DraftScreen({super.key});
 
   @override
-  State<Tab1Draft> createState() => _Tab1DraftState();
+  State<DraftScreen> createState() => _DraftScreenState();
 }
 
-class _Tab1DraftState extends State<Tab1Draft>
+class _DraftScreenState extends State<DraftScreen>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   
   // Only UI controllers remain here

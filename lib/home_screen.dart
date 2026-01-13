@@ -136,9 +136,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             setState(() => _currentIndex = index);
           },
           children: const [
-            _KeepAliveWrapper(child: Tab2Diary()),
-            _KeepAliveWrapper(child: Tab1Draft()),
-            _KeepAliveWrapper(child: Tab3Pokedex()),
+            _KeepAliveWrapper(child: DiaryScreen()),
+            _KeepAliveWrapper(child: DraftScreen()),
+            _KeepAliveWrapper(child: PokedexScreen()),
           ],
         ),
       ),
