@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pokemon_diary/services/sound_service.dart';
 
 import '../models/models.dart';
 import '../services/services.dart';
@@ -111,7 +112,10 @@ class PokemonDetailDialog extends StatelessWidget {
                             child: Text("POKEDEX", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
                           ),
                           GestureDetector(
-                            onTap: () => Navigator.of(context).pop(),
+                            onTap: () {
+                              Navigator.of(context).pop();
+                              SoundService().playCardSelectSound();
+                            },
                             child: const Icon(Icons.close, color: borderDark, size: 20),
                           ),
                         ],
@@ -213,6 +217,8 @@ class PokemonDetailDialog extends StatelessWidget {
                                         padding: const EdgeInsets.only(right: 8, top: 8),
                                         child: InkWell( 
                                           onTap: () async {
+                                            SoundService().playCardSelectSound();
+                                            
                                             final diaries = await DbHelper.instance.getDiaries();
                                             final targetDiary = diaries.firstWhere((d) => d.date == dateStr && d.pokemonId == pokemon.id);
                                             if (context.mounted) {

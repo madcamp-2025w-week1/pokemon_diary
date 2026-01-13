@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -182,6 +183,7 @@ class _PokedexTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             onTap: isOwned
                 ? () {
+                  SoundService().playCardSelectSound();
                     showDialog(
                       context: context,
                       builder: (_) => PokemonDetailDialog(pokemon: pokemon),

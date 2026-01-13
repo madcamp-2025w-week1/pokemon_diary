@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../services/sound_service.dart';
+
 import '../providers/trainer_provider.dart';
 import '../models/models.dart'; // Ensure PokemonBadge is exported here
 import '../utils/utils.dart';
@@ -285,6 +287,7 @@ class TrainerCardDialog extends StatelessWidget {
                                 children: badges.map((badge) {
                                   return GestureDetector(
                                     onTap: () {
+                                      SoundService().playCardSelectSound();
                                       showDialog(
                                         context: context,
                                         builder: (context) => BadgeUnlockDialog(
@@ -321,7 +324,10 @@ class TrainerCardDialog extends StatelessWidget {
                             // --- FOOTER BUTTON ---
                             Center(
                               child: GestureDetector(
-                                onTap: onSave,
+                                onTap: () {
+                                  SoundService().playCardSelectSound();
+                                  onSave();
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(

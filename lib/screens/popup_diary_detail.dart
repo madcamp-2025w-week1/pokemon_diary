@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pokemon_diary/services/sound_service.dart';
 
 import '../models/models.dart';
 import '../utils/utils.dart';
@@ -131,7 +132,10 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                             ),
                             // Close Button
                             GestureDetector(
-                              onTap: () => Navigator.of(context).pop(),
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                SoundService().playCardSelectSound();
+                              },
                               child: Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(

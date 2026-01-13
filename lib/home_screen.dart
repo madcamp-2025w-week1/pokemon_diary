@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
               child: Text(
                 _formatDate(DateTime.now()).toUpperCase(),
-                style: pixelStyle.copyWith(fontSize: 12, letterSpacing: 1),
+                style: pixelStyle.copyWith(fontSize: 10, letterSpacing: 1),
               ),
             ),
             centerTitle: true,
@@ -170,10 +170,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       padding: const EdgeInsets.only(left: 12),
       child: Center(
         child: GestureDetector(
-          onTap: () => showDialog(
-            context: context,
-            builder: (context) => const TrainerCardPage(),
-          ),
+          onTap: () {
+            SoundService().playCardSelectSound();
+            showDialog(
+              context: context,
+              builder: (context) => const TrainerCardPage(),
+            );
+          },
           child: Consumer<TrainerProvider>(
             builder: (context, trainer, child) {
               final iconPath = trainer.gender == "MALE"
