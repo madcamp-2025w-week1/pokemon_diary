@@ -104,7 +104,7 @@ class GachaProvider extends ChangeNotifier {
 
     final soundService = SoundService();
 
-    const scanDuration = Duration(seconds: 3);
+    const scanDuration = Duration(milliseconds: 3400);
     const lightningDuration = Duration(seconds: 2);
 
     // 1. Start Animation State
@@ -123,6 +123,7 @@ class GachaProvider extends ChangeNotifier {
     // Wait for "scanning" phase
     soundService.playPokeballSpin();
     await Future.delayed(scanDuration);
+    await soundService.stopPokeballSpin();
 
     // Retrieve results
     final resultData = await logicFuture;

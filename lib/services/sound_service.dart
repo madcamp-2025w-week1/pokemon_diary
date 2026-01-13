@@ -157,6 +157,7 @@ class SoundService {
       _gachaButtonPlayer,
       'sounds/sfx_gacha_button.wav',
     );
+    await Future.delayed(_gachaButtonDuration);
   }
 
   Future<void> playPokeballSpin() async {
@@ -164,6 +165,12 @@ class SoundService {
       _pokeballSpinPlayer,
       'sounds/sfx_pokeball_spin.wav',
     );
+  }
+
+  Future<void> stopPokeballSpin() async {
+    if (_pokeballSpinPlayer.state == PlayerState.playing) {
+      await _pokeballSpinPlayer.stop();
+    }
   }
 
   Future<void> playElectricShock() async {

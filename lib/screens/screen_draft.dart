@@ -268,7 +268,7 @@ class _DraftScreenState extends State<DraftScreen>
                   animation: _revealAnimation,
                   builder: (context, child) {
                     return Opacity(
-                      opacity: _revealAnimation.value,
+                      opacity: 1.0 - _revealAnimation.value,
                       child: ColorFiltered(
                         colorFilter: const ColorFilter.mode(
                           Colors.white,
