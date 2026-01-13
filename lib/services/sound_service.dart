@@ -79,24 +79,40 @@ class SoundService {
     _currentTrack = null; // Reset tracker so it can play again if requested
   }
 
-  Future<void> pauseBgm() async => await _bgmPlayer.pause();
-  Future<void> resumeBgm() async => await _bgmPlayer.resume();
+  Future<void> pauseBgm() async {
+    if (_bgmPlayer.state == PlayerState.playing) {
+      await _bgmPlayer.pause();
+    }
+  }
+
+  Future<void> resumeBgm() async {
+    if (_bgmPlayer.state == PlayerState.paused) {
+      await _bgmPlayer.resume();
+    }
+  }
 
   // --- SFX Triggers ---
 
   Future<void> playTabSound() async {
-    if (_sfxVolume <= 0) return;
-    if (_tabSfxPlayer.state == PlayerState.playing) {
-      await _tabSfxPlayer.stop();
-    }
-    await _tabSfxPlayer.resume();
+    await _playSfx(_tabSfxPlayer, 'sounds/sfx_card_select.wav');
   }
 
   Future<void> playCardSelectSound() async {
-    if (_sfxVolume <= 0) return;
-    if (_cardSfxPlayer.state == PlayerState.playing) {
-      await _cardSfxPlayer.stop();
+    await _playSfx(_cardSfxPlayer, 'sounds/sfx_card_select.wav');
+  }
+
+  Future<void> _playSfx(AudioPlayer player, String asset, {Duration? maxWait}) async {
+    if (player.state == PlayerState.playing) {
+      await player.stop();
     }
-    await _cardSfxPlayer.resume();
+    await player.play(AssetSource(asset));
+    if (maxWait == null) {
+      await player.onPlayerComplete.first;
+      return;
+    }
+    await Future.any([
+      player.onPlayerComplete.first,
+      Future.delayed(maxWait),
+    ]);
   }
 }
