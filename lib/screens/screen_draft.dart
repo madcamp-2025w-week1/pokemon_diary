@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/providers.dart';
-import '../services/sound_service.dart';
 import '../services/services.dart';
+import '../utils/utils.dart'; // Import utils for UiText
 import 'screens.dart';
 
 class DraftScreen extends StatefulWidget {
@@ -39,16 +40,22 @@ class _DraftScreenState extends State<DraftScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // 1. Existing Blink Controller
     _blinkController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _blinkAnimation = Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
+
+    // 2. ADD THIS: Initialize Reveal Controller
     _revealController = AnimationController(
       duration: _revealDuration,
       vsync: this,
     );
-    _revealAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(_revealController);
+    _revealAnimation = CurvedAnimation(
+      parent: _revealController, 
+      curve: Curves.easeOut,
+    );
 
     // LOAD DATA ON STARTUP via Provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -58,7 +65,6 @@ class _DraftScreenState extends State<DraftScreen>
       context.read<GachaProvider>().loadTodayEntry(diaryProvider, apiService);
     });
 
-    // Close editor if focus lost
     _editorFocusNode.addListener(() {
       if (!_editorFocusNode.hasFocus && _isEditorOpen && _editorContext != null) {
         Navigator.of(_editorContext!).pop();
@@ -68,7 +74,6 @@ class _DraftScreenState extends State<DraftScreen>
 
   @override
   void didChangeMetrics() {
-    // Handle keyboard closing logic for the editor
     final bottomInset = View.of(context).viewInsets.bottom;
     final isKeyboardVisible = bottomInset > 0;
 
@@ -84,23 +89,21 @@ class _DraftScreenState extends State<DraftScreen>
     _controller.dispose();
     _editorFocusNode.dispose();
     _blinkController.dispose();
-    _revealController.dispose();
+    _revealController.dispose(); // <--- ADD THIS
     super.dispose();
   }
 
-  // --- UI ACTION HANDLERS ---
-
   Future<void> _onGachaPressed() async {
     final gachaProvider = context.read<GachaProvider>();
-    final trimmedText = _controller.text.trim();
-    final canStart = trimmedText.length >= 10;
+  final trimmedText = _controller.text.trim();
+  final canStart = trimmedText.length >= 10;
 
-    if (canStart) {
-      await SoundService().duckBgm();
-      await SoundService().playGachaButton();
-    }
+    
+    await SoundService().duckBgm();
+    await SoundService().playGachaButton();
+    
+    final settings = context.read<SettingsProvider>(); // For localized error
 
-    // Start the blink animation UI-side
     _hasStartedReveal = false;
     _revealController.reset();
     _blinkController.repeat(reverse: true);
@@ -112,12 +115,17 @@ class _DraftScreenState extends State<DraftScreen>
       apiService: context.read<PokemonApiService>(),
       onError: (msg) {
          _blinkController.stop();
+         // If msg is the generic length error, localize it
+         String displayMsg = msg;
+         if (msg.contains("10 characters")) {
+            displayMsg = settings.getText('WARNING_LENGTH');
+         }
+
          ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text(msg), backgroundColor: Colors.redAccent)
+           SnackBar(content: Text(displayMsg), backgroundColor: Colors.redAccent)
          );
       },
     ).then((_) {
-      // Cleanup after success
       if (mounted) {
         _blinkController.stop();
         _controller.clear();
@@ -146,13 +154,11 @@ class _DraftScreenState extends State<DraftScreen>
     }
   }
 
-  // --- BUILD METHOD ---
-
   @override
   Widget build(BuildContext context) {
-    // LISTEN TO STATE
     final gacha = context.watch<GachaProvider>();
     _maybeStartReveal(gacha);
+    final settings = context.watch<SettingsProvider>();
 
     if (gacha.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -178,32 +184,29 @@ class _DraftScreenState extends State<DraftScreen>
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Column(
                 children: [
-                  SizedBox(height: headerHeight, child: _buildDraftHeader()),
+                  SizedBox(height: headerHeight, child: _buildDraftHeader(settings)),
                   const SizedBox(height: 10),
-                  // PASS STATE TO VISUALS
-                  Expanded(flex: 5, child: _buildScreen(gacha)),
+                  Expanded(flex: 5, child: _buildScreen(gacha, settings)),
                   const SizedBox(height: 12),
-                  SizedBox(height: statusHeight, child: _buildStatusLabel(gacha)),
+                  SizedBox(height: statusHeight, child: _buildStatusLabel(gacha, settings)),
                   const SizedBox(height: 12),
-                  // TEXT AREA
                   Expanded(
                     flex: 4,
                     child: LayoutBuilder(
                       builder: (context, boxConstraints) {
                         _lastMessageHeight = boxConstraints.maxHeight;
-                        // Determine text to show (History vs Input)
                         final displayText = (!gacha.isInputMode && gacha.todayDiary != null) 
                             ? gacha.todayDiary!.content 
                             : _controller.text;
                             
-                        return _buildMessageArea(gacha.isInputMode, displayText);
+                        return _buildMessageArea(gacha.isInputMode, displayText, settings);
                       },
                     ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: controlsHeight,
-                    child: _buildControlsRow(dpadSize, gachaSize, gacha.isInputMode, gacha.isGachaAnimating),
+                    child: _buildControlsRow(dpadSize, gachaSize, gacha.isInputMode, gacha.isGachaAnimating, settings),
                   ),
                 ],
               ),
@@ -214,9 +217,8 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  // --- WIDGET HELPERS ---
-
-  Widget _buildScreen(GachaProvider gacha) {
+  Widget _buildScreen(GachaProvider gacha, SettingsProvider settings) {
+    // ... (Container styles unchanged)
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF355A35),
@@ -235,18 +237,22 @@ class _DraftScreenState extends State<DraftScreen>
         child: Center(
           child: FittedBox(
             fit: BoxFit.contain,
-            child: _buildTopVisual(gacha),
+            child: _buildTopVisual(gacha, settings),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTopVisual(GachaProvider gacha) {
-    // 1. SHOW RESULT
+  Widget _buildTopVisual(GachaProvider gacha, SettingsProvider settings) {
     if (gacha.isResultMode && gacha.currentPokemon != null) {
       final image = Image.network(
-        gacha.currentPokemon!.homeSpriteUrl,
+        // Use logic from your PokedexScreen to show Retro vs Modern here too if desired, 
+        // but typically the 'HomeSprite' is the result.
+        // If you want the Gacha reveal to match the art style:
+        settings.isRetroArt 
+          ? (gacha.currentPokemon!.gifUrl ?? gacha.currentPokemon!.homeSpriteUrl) 
+          : gacha.currentPokemon!.homeSpriteUrl,
         fit: BoxFit.contain,
       );
       return SizedBox(
@@ -278,36 +284,23 @@ class _DraftScreenState extends State<DraftScreen>
         ),
       );
     }
-
-    // 2. SHOW ANIMATION
+    // ... (Animation Logic unchanged)
     if (gacha.isGachaAnimating) {
       if (gacha.showLightning) {
-        return Lottie.asset(
-          gacha.currentLightningAnim, // Data from Provider
-          height: 180,
-          fit: BoxFit.contain,
-        );
+        return Lottie.asset(gacha.currentLightningAnim, height: 180, fit: BoxFit.contain);
       }
       return Stack(
         alignment: Alignment.center,
         children: [
-          Lottie.asset(
-            'assets/animations/Pokeball loading animation.json',
-            height: 140,
-            fit: BoxFit.contain,
-          ),
+          Lottie.asset('assets/animations/Pokeball loading animation.json', height: 140, fit: BoxFit.contain),
           AnimatedBuilder(
             animation: _blinkAnimation,
             builder: (context, child) {
               return Opacity(
                 opacity: _blinkAnimation.value,
                 child: Container(
-                  width: 140,
-                  height: 140,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
+                  width: 140, height: 140,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                 ),
               );
             },
@@ -315,14 +308,7 @@ class _DraftScreenState extends State<DraftScreen>
         ],
       );
     }
-
-    // 3. SHOW IDLE
-    return Lottie.asset(
-      'assets/animations/Pokeball loading animation.json',
-      height: 140,
-      fit: BoxFit.contain,
-      animate: false,
-    );
+    return Lottie.asset('assets/animations/Pokeball loading animation.json', height: 140, fit: BoxFit.contain, animate: false);
   }
 
   void _maybeStartReveal(GachaProvider gacha) {
@@ -345,7 +331,7 @@ class _DraftScreenState extends State<DraftScreen>
     });
   }
 
-  Widget _buildDraftHeader() {
+  Widget _buildDraftHeader(SettingsProvider settings) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -360,7 +346,7 @@ class _DraftScreenState extends State<DraftScreen>
           const Icon(Icons.catching_pokemon, color: Colors.white, size: 20),
           const SizedBox(width: 8),
           Text(
-            'DRAFT',
+            settings.getText('DRAFT'), // Localized
             style: GoogleFonts.pressStart2p(fontSize: 12, color: Colors.white),
           ),
         ],
@@ -368,12 +354,18 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  Widget _buildStatusLabel(GachaProvider gacha) {
-    final label = gacha.isGachaAnimating
-        ? 'SCANNING...'
-        : (gacha.isResultMode && gacha.currentPokemon != null)
-            ? gacha.currentPokemon!.englishName.toUpperCase()
-            : 'READY TO ANALYZE';
+  Widget _buildStatusLabel(GachaProvider gacha, SettingsProvider settings) {
+    String label;
+    if (gacha.isGachaAnimating) {
+      label = settings.getText('SCANNING');
+    } else if (gacha.isResultMode && gacha.currentPokemon != null) {
+      // Pokemon Name (Localized)
+      label = settings.isKorean 
+          ? gacha.currentPokemon!.koreanName 
+          : gacha.currentPokemon!.englishName.toUpperCase();
+    } else {
+      label = settings.getText('READY_ANALYZE');
+    }
 
     return Container(
       width: double.infinity,
@@ -384,14 +376,14 @@ class _DraftScreenState extends State<DraftScreen>
         border: Border.all(color: const Color(0xFF202020), width: 2),
       ),
       child: Text(
-        label.toUpperCase(),
+        label,
         textAlign: TextAlign.center,
         style: GoogleFonts.pressStart2p(fontSize: 12, color: Colors.black87),
       ),
     );
   }
 
-  Widget _buildMessageArea(bool isInputMode, String displayText) {
+  Widget _buildMessageArea(bool isInputMode, String displayText, SettingsProvider settings) {
     if (!isInputMode) {
       return _buildSpeechBubble(displayText);
     }
@@ -415,7 +407,7 @@ class _DraftScreenState extends State<DraftScreen>
             textAlignVertical: TextAlignVertical.top,
             style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87),
             decoration: InputDecoration(
-              hintText: 'How are you feeling today? Share your thoughts...'.toUpperCase(),
+              hintText: settings.getText('DRAFT_HINT'), // Localized
               hintStyle: GoogleFonts.pressStart2p(fontSize: 10, color: Colors.grey.shade600),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
@@ -426,6 +418,7 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
+  // ... (_buildSpeechBubble, _buildDpad unchanged)
   Widget _buildSpeechBubble(String text) {
     return Container(
       width: double.infinity,
@@ -446,7 +439,7 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  Widget _buildControlsRow(double dpadSize, double gachaSize, bool isInputMode, bool isAnimating) {
+  Widget _buildControlsRow(double dpadSize, double gachaSize, bool isInputMode, bool isAnimating, SettingsProvider settings) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -455,11 +448,12 @@ class _DraftScreenState extends State<DraftScreen>
           child: _buildDpad(dpadSize),
         ),
         const SizedBox(width: 16),
-        _buildGachaButton(gachaSize, isInputMode, isAnimating),
+        _buildGachaButton(gachaSize, isInputMode, isAnimating, settings),
       ],
     );
   }
-
+  
+  // Dpad Unchanged
   Widget _buildDpad(double dpadSize) {
     const padColor = Color(0xFF2B2B2B);
     final barThickness = (dpadSize * 0.33).clamp(20.0, 30.0);
@@ -502,7 +496,7 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  Widget _buildGachaButton(double gachaSize, bool isInputMode, bool isAnimating) {
+  Widget _buildGachaButton(double gachaSize, bool isInputMode, bool isAnimating, SettingsProvider settings) {
     final isEnabled = isInputMode && !isAnimating;
     final buttonColor = isEnabled ? const Color(0xFFF2C94C) : const Color(0xFFB0B0B0);
     final shadowColor = isEnabled ? Colors.black54 : Colors.black26;
@@ -525,7 +519,7 @@ class _DraftScreenState extends State<DraftScreen>
             ),
             alignment: Alignment.center,
             child: Text(
-              'GACHA!',
+              settings.getText('GACHA'), // Localized
               style: GoogleFonts.pressStart2p(fontSize: fontSize, color: Colors.black),
             ),
           ),
@@ -534,8 +528,9 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  // --- FLOATING EDITOR (Mostly unchanged UI logic) ---
+  // --- FLOATING EDITOR ---
   Future<void> _openFloatingEditor() async {
+    // (Logic unchanged)
     if (_isEditorOpen) return;
     setState(() => _isEditorOpen = true);
 

@@ -1,0 +1,294 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../providers/providers.dart';
+import '../services/sound_service.dart';
+
+class SettingsDialog extends StatelessWidget {
+  const SettingsDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    
+    final pixelStyle = GoogleFonts.pressStart2p(
+      fontSize: 10,
+      color: const Color(0xFF2d3436),
+    );
+
+    const Color mainColor = Color(0xFF63c7c8); // Teal-ish Gameboy color
+    const Color borderColor = Color(0xFF286a6b);
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(16),
+      child: Container(
+        width: 320,
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: mainColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.5),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFe0f2f1), // Light screen bg
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor, width: 2),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: borderColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    settings.getText('SETTINGS'),
+                    style: pixelStyle.copyWith(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 1. Language Section
+              Text(settings.getText('LANGUAGE'), style: pixelStyle),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildLangOption(context, settings, 'ENGLISH', 'en'),
+                  const SizedBox(width: 12),
+                  _buildLangOption(context, settings, '한국어', 'ko'),
+                ],
+              ),
+              
+              const SizedBox(height: 24),
+              const Divider(color: borderColor, thickness: 1),
+              const SizedBox(height: 16),
+
+              // 2. Art Style Section (NEW)
+              Text(settings.getText('ART_STYLE'), style: pixelStyle),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildStyleOption(
+                    context, 
+                    settings, 
+                    settings.getText('MODERN'), 
+                    false, // isRetro = false
+                  ),
+                  const SizedBox(width: 12),
+                  _buildStyleOption(
+                    context, 
+                    settings, 
+                    settings.getText('RETRO'), 
+                    true, // isRetro = true
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
+              const Divider(color: borderColor, thickness: 1),
+              const SizedBox(height: 16),
+
+              // 3. Sound Section
+              Text(settings.getText('SOUND'), style: pixelStyle),
+              const SizedBox(height: 16),
+              
+              // BGM Slider
+              _buildSliderRow(
+                settings.getText('BGM_VOLUME'), 
+                settings.bgmVolume, 
+                (val) => settings.setBgmVolume(val),
+                pixelStyle
+              ),
+              
+              // SFX Slider
+              _buildSliderRow(
+                settings.getText('SFX_VOLUME'), 
+                settings.sfxVolume, 
+                (val) => settings.setSfxVolume(val),
+                pixelStyle
+              ),
+
+              const SizedBox(height: 12),
+              
+              // BGM Selector
+              Text(settings.getText('TRACK'), style: pixelStyle.copyWith(fontSize: 8)),
+              const SizedBox(height: 4),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: borderColor),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: settings.bgmTrack,
+                    isExpanded: true,
+                    style: pixelStyle.copyWith(fontSize: 8),
+                    dropdownColor: Colors.white,
+                    items: SoundService().bgmTracks.map((track) {
+                      final name = track.split('/').last.replaceAll('.mp3', '').toUpperCase();
+                      return DropdownMenuItem(
+                        value: track,
+                        child: Text(name),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) settings.setBgmTrack(val);
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Close Button
+              Center(
+                child: GestureDetector(
+                  onTap: () {
+                     SoundService().playCardSelectSound();
+                     Navigator.of(context).pop();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: borderColor, width: 2),
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2,2))],
+                    ),
+                    child: Text(settings.getText('CLOSE'), style: pixelStyle),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLangOption(BuildContext context, SettingsProvider settings, String label, String code) {
+    final isSelected = settings.languageCode == code;
+    final color = isSelected ? const Color(0xFF286a6b) : Colors.grey[400]!;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          SoundService().playCardSelectSound();
+          settings.setLanguage(code);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.white,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: isSelected ? color : Colors.grey),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.pressStart2p(
+                fontSize: 9,
+                color: isSelected ? Colors.white : Colors.grey,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStyleOption(BuildContext context, SettingsProvider settings, String label, bool isRetroOption) {
+    final isSelected = settings.isRetroArt == isRetroOption;
+    final color = isSelected ? const Color(0xFF286a6b) : Colors.grey[400]!;
+    
+    return Expanded(
+      child: GestureDetector(
+        onTap: () async {
+          SoundService().playCardSelectSound();
+          
+          // 1. Update the setting
+          await settings.setRetroArt(isRetroOption);
+          
+          // 2. Force Pokedex Reload immediately
+          // Using context.read because we are inside a callback
+          if (context.mounted) {
+            await context.read<PokedexProvider>().loadPokedex(
+              isRetro: isRetroOption,
+              forceRefresh: true, // IMPORTANT: Force clear cache
+            );
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? color : Colors.white,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: isSelected ? color : Colors.grey),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: GoogleFonts.pressStart2p(
+                fontSize: 9,
+                color: isSelected ? Colors.white : Colors.grey,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSliderRow(String label, double value, Function(double) onChanged, TextStyle style) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: style.copyWith(fontSize: 8)),
+            Text("${(value * 100).toInt()}%", style: style.copyWith(fontSize: 8)),
+          ],
+        ),
+        SizedBox(
+          height: 30,
+          child: SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: const Color(0xFF286a6b),
+              inactiveTrackColor: Colors.grey[300],
+              thumbColor: const Color(0xFFd63031), // Retro red knob
+              trackHeight: 4,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+            ),
+            child: Slider(
+              value: value,
+              min: 0.0,
+              max: 1.0,
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

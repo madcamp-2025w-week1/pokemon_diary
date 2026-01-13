@@ -73,6 +73,25 @@ class Pokemon {
     );
   }
 
+  factory Pokemon.empty() {
+    return const Pokemon(
+      id: 0,
+      englishName: '',
+      koreanName: '',
+      dexEntryEnglish: '',
+      dexEntryKorean: '',
+      type1: PokemonType.normal,
+      type2: null,
+      isLegendary: false,
+      isMythical: false,
+      height: 0,
+      weight: 0,
+      spriteUrl: null,
+      gifUrl: null,
+      iconUrl: null,
+    );
+  }
+
   String get homeSpriteUrl {
     return spriteUrl ??
         'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/$id.png';

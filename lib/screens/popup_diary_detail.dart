@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pokemon_diary/services/sound_service.dart';
+import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../utils/utils.dart';
+import '../providers/providers.dart';
 
-// --- Diary Detail Dialog (Themed to match Tab2Diary) ---
 class DiaryDetailDialog extends StatefulWidget {
   final Diary diary;
   final Pokemon? pokemon;
@@ -43,7 +44,9 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
-    // Colors & Fonts
+    final settings = context.watch<SettingsProvider>();
+    final isKorean = settings.isKorean;
+
     final theme = UiThemeHelper.getSentimentTheme(widget.diary.sentiment);
     final pixelStyle = GoogleFonts.pressStart2p(
       color: const Color(0xFF2d3436),
@@ -51,9 +54,11 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
       height: 1.5,
     );
 
-    final pokemonName = widget.pokemon?.englishName.toUpperCase() ?? "UNKNOWN";
+    // Display Name Logic
+    final pokemonName = widget.pokemon != null 
+        ? (isKorean ? widget.pokemon!.koreanName : widget.pokemon!.englishName.toUpperCase()) 
+        : "UNKNOWN";
     
-    // Extract colors
     final outerColor = theme['outer']!;
     final borderColor = theme['border']!;
     final innerColor = theme['inner']!;
@@ -71,54 +76,37 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
           decoration: BoxDecoration(
             color: outerColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white, width: 3), // Outer White Rim
+            border: Border.all(color: Colors.white, width: 3), 
             boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
+              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
             ],
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: Stack(
               children: [
-                // 1. Background Fill (Inner/Header Color)
                 Positioned.fill(child: Container(color: innerColor)),
-
-                // 2. Paper Content Area (Bottom 3/4ths)
                 Positioned(
-                  top: 50,
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
+                  top: 50, bottom: 0, left: 0, right: 0,
                   child: Container(color: paperColor),
                 ),
-
-                // 3. Stripes Overlay
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05)),
-                  ),
+                  child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
                 ),
 
-                // 4. Content Layout
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: borderColor, width: 2), // Colored Theme Border
+                    border: Border.all(color: borderColor, width: 2), 
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // --- Header Row ---
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // Date Badge
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
@@ -130,7 +118,6 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                                 style: pixelStyle.copyWith(color: Colors.white, fontSize: 10),
                               ),
                             ),
-                            // Close Button
                             GestureDetector(
                               onTap: () {
                                 Navigator.of(context).pop();
@@ -150,7 +137,6 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                         ),
                       ),
 
-                      // --- Main Content ---
                       Flexible(
                         child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -159,10 +145,8 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                             children: [
                               const SizedBox(height: 12),
                               
-                              // Sentiment & Pokemon Info
                               Row(
                                 children: [
-                                  // Sentiment Icon/Chip
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
@@ -187,7 +171,7 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          "FEAT. $pokemonName",
+                                          "${settings.getText('FEAT')} $pokemonName", // Localized
                                           style: pixelStyle.copyWith(fontSize: 8, color: Colors.black54),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -199,7 +183,6 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                               
                               const SizedBox(height: 16),
 
-                              // Text Content Box
                               Container(
                                 constraints: const BoxConstraints(minHeight: 100),
                                 padding: const EdgeInsets.all(12),
@@ -210,10 +193,7 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                                 ),
                                 child: Text(
                                   widget.diary.content,
-                                  style: pixelStyle.copyWith(
-                                    fontSize: 11,
-                                    height: 1.6,
-                                  ),
+                                  style: pixelStyle.copyWith(fontSize: 11, height: 1.6),
                                 ),
                               ),
                               const SizedBox(height: 20),
