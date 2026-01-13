@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
+import '../utils/utils.dart';
 
 class Tab2Diary extends StatefulWidget {
   const Tab2Diary({super.key});
@@ -159,7 +160,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _formatDetailTitle(diary), 
+                    "Date ${DateHelper.formatShortDateFromString(diary.date)}", 
                     style: pixelText.copyWith(fontSize: 12), 
                   ),
                 ),
@@ -303,32 +304,12 @@ class _Tab2DiaryState extends State<Tab2Diary> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _sentimentColor(sentiment),
+        color: UiThemeHelper.getSentimentColor(sentiment),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: const Color(0xFF2F3A3A), width: 2),
       ),
       child: Text(sentiment.toUpperCase(), style: pixelText.copyWith(fontSize: 8, color: Colors.white)),
     );
-  }
-
-  Color _sentimentColor(String sentiment) {
-    final normalized = sentiment.trim().toLowerCase();
-    if (normalized == 'joy' || normalized == 'happy') return const Color(0xFFF2C94C);
-    if (normalized == 'angry' || normalized == 'stress') return const Color(0xFFE76F51);
-    if (normalized == 'sad' || normalized == 'depressed') return const Color(0xFF5B7DB1);
-    if (normalized == 'calm' || normalized == 'normal') return const Color(0xFF5DBE87);
-    return const Color(0xFF9FA8A3);
-  }
-
-  String _formatDetailTitle(Diary diary) {
-    final parsed = DateTime.tryParse(diary.date);
-    if (parsed == null) return 'DATE --/--/--';
-    return 'DATE ${_formatShortDate(parsed)}';
-  }
-
-  String _formatShortDate(DateTime parsed) {
-    final year = parsed.year % 100;
-    return '${parsed.month}/${parsed.day}/$year';
   }
 }
 
@@ -474,7 +455,7 @@ class _SentimentDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _sentimentColor(sentiment);
+    final color = UiThemeHelper.getSentimentColor(sentiment);
     return Container(
       width: 12,
       height: 12,
@@ -484,23 +465,6 @@ class _SentimentDot extends StatelessWidget {
         border: Border.all(color: const Color(0xFF2F3A3A), width: 1.5),
       ),
     );
-  }
-
-  Color _sentimentColor(String sentiment) {
-    final normalized = sentiment.trim().toLowerCase();
-    if (normalized == 'joy' || normalized == 'happy') {
-      return const Color(0xFFF2C94C);
-    }
-    if (normalized == 'angry' || normalized == 'stress') {
-      return const Color(0xFFE76F51);
-    }
-    if (normalized == 'sad' || normalized == 'depressed') {
-      return const Color(0xFF5B7DB1);
-    }
-    if (normalized == 'calm' || normalized == 'normal') {
-      return const Color(0xFF5DBE87);
-    }
-    return const Color(0xFF9FA8A3);
   }
 }
 

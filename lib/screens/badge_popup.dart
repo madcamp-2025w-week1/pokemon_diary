@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
+import '../utils/ui_theme_helper.dart';
 
 class BadgeUnlockDialog extends StatefulWidget {
   final PokemonBadge badge;
@@ -38,21 +39,6 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
     super.dispose();
   }
 
-  // --- HELPER: Get Color based on Badge Type ---
-  Color _getBadgeColor(String badgeId) {
-    switch (badgeId.toLowerCase()) {
-      case 'boulder': return const Color(0xFF78909C); // Blue Grey (Rock)
-      case 'cascade': return const Color(0xFF29B6F6); // Light Blue (Water)
-      case 'thunder': return const Color(0xFFFFCA28); // Amber (Electric)
-      case 'rainbow': return const Color(0xFF66BB6A); // Green (Grass/Nature)
-      case 'soul':    return const Color(0xFFEC407A); // Pink (Heart/Soul)
-      case 'marsh':   return const Color(0xFFAB47BC); // Purple (Psychic)
-      case 'volcano': return const Color(0xFFFF7043); // Deep Orange (Fire)
-      case 'earth':   return const Color(0xFF8D6E63); // Brown (Ground)
-      default:        return const Color(0xFFe58e26); // Default Gold
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final pixelStyle = GoogleFonts.pressStart2p(
@@ -65,7 +51,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
     // 1. DETERMINE COLORS
     // If unlocked, use specific type color. If locked, use Grey.
     final baseColor = isUnlocked 
-        ? _getBadgeColor(widget.badge.id) 
+        ? UiThemeHelper.getBadgeColor(widget.badge.id) 
         : const Color(0xFF7f8c8d);
 
     final mainColor = baseColor;
