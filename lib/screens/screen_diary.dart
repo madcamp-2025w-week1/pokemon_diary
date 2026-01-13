@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // Removed
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
@@ -28,15 +28,18 @@ class _DiaryScreenState extends State<DiaryScreen> {
   @override
   Widget build(BuildContext context) {
     final diaryProvider = context.watch<DiaryProvider>();
-    // Need access to PokedexProvider for icon logic (from previous request)
     final pokedexProvider = context.watch<PokedexProvider>();
-    final settings = context.watch<SettingsProvider>(); // WATCH SETTINGS
+    final settings = context.watch<SettingsProvider>(); 
     
     final diaries = diaryProvider.diaries;
 
-    final pixelText = GoogleFonts.pressStart2p(
-      fontSize: 11,
-      color: const Color(0xFF2F3A3A),
+    // [Refactor] Use helper
+    final pixelText = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 11,
+        color: Color(0xFF2F3A3A),
+      ),
+      isKorean: settings.isKorean,
     );
 
     if (diaryProvider.isLoading) {
@@ -128,7 +131,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
           const Icon(Icons.menu_book, color: Colors.white, size: 20),
           const SizedBox(width: 8),
           Text(
-            settings.getText('DIARY_ENTRIES'), // Localized
+            settings.getText('DIARY_ENTRIES'), 
             style: pixelText.copyWith(color: Colors.white, fontSize: 12),
           ),
         ],
@@ -199,9 +202,13 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Widget _buildEmptyDetailPanel(SettingsProvider settings) {
-    final pixelText = GoogleFonts.pressStart2p(
-      fontSize: 11,
-      color: const Color(0xFF2F3A3A),
+    // [Refactor] Use helper
+    final pixelText = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 11,
+        color: Color(0xFF2F3A3A),
+      ),
+      isKorean: settings.isKorean,
     );
 
     return Container(
@@ -222,7 +229,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         ),
         child: Center(
           child: Text(
-            settings.getText('NO_DIARIES'), // Localized
+            settings.getText('NO_DIARIES'), 
             textAlign: TextAlign.center,
             style: pixelText.copyWith(height: 1.5),
           ),
@@ -231,8 +238,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
-  // ... _buildListPanel, _DiaryListItem (Unchanged except using context.read<Settings> if needed, but not critical)
-  // Re-pasting _buildListPanel for completeness to ensure no syntax errors
   Widget _buildListPanel(List<Diary> diaries, TextStyle pixelText) {
     return Container(
       padding: const EdgeInsets.all(8),
@@ -426,18 +431,13 @@ class _DiaryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Get Provider (Using watch to react to Pokedex loading/Settings changes)
     final pokedex = context.watch<PokedexProvider>();
     
-    // 2. Lookup logic
     final pokemon = pokedex.allPokemon.firstWhere(
       (p) => p.id == pokemonId, 
       orElse: () => Pokemon.empty()
     );
 
-    // 3. Use provider data
-    // If we found the pokemon (id != 0), use its helper (which handles iconUrl vs fallback).
-    // If we didn't find it (id == 0), we manually construct the fallback using the requested ID.
     final iconUrl = (pokemon.id != 0) 
         ? pokemon.iconSpriteUrl 
         : 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';

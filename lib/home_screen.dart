@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart'; // ScrollDirection 사용을 위해 추가
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/rendering.dart'; 
 import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
 import 'providers/providers.dart';
 import 'services/sound_service.dart';
-import 'utils/utils.dart';
+import 'utils/utils.dart'; // Imports UiThemeHelper
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,12 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _pageController = PageController(initialPage: _currentIndex);
 
     SoundService().init().then((_) {
-      // Check if widget is still on screen
       if (mounted) {
-        // 1. Get the saved track from SettingsProvider
         final settings = context.read<SettingsProvider>();
-        
-        // 2. Pass it to playBgm
         SoundService().playBgm(settings.bgmTrack);
       }
     });
@@ -74,9 +69,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // 1. WATCH SETTINGS PROVIDER
     final settings = context.watch<SettingsProvider>();
 
-    final pixelStyle = GoogleFonts.pressStart2p(
-      fontSize: 10,
-      color: gbBorder,
+    // [Refactor] Use helper for dynamic font switching
+    final pixelStyle = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 10,
+        color: gbBorder,
+      ),
+      isKorean: settings.isKorean,
     );
 
     return Scaffold(
@@ -133,18 +132,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
         ),
       ),
-      // ★ NotificationListener를 사용하여 스크롤 상태 감지
+      // NotificationListener detects scroll state
       body: NotificationListener<ScrollNotification>(
         onNotification: (notification) {
-          // 사용자가 직접 손가락으로 밀고 있을 때만 로직이 작동하게 함
           return false;
         },
         child: PageView(
           controller: _pageController,
           physics: const BouncingScrollPhysics(),
           onPageChanged: (index) {
-            // ★ [핵심 로직] 사용자가 손가락으로 드래그 중일 때만 소리 재생 (스와이프 대응)
-            // _pageController.position.userScrollDirection이 idle이 아니면 '스와이프' 중인 것임
+            // Play sound only if user is dragging (swiping)
             if (_pageController.position.userScrollDirection != ScrollDirection.idle) {
               if (_currentIndex != index) {
                 SoundService().playTabSound();
@@ -222,8 +219,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // ★ [핵심 로직] 버튼을 눌렀을 때는 즉시 소리 재생 (버튼 클릭 대응)
-          // index가 현재와 다를 때만 재생하여 중복 방지
           if (_currentIndex != index) {
             SoundService().playTabSound();
           }

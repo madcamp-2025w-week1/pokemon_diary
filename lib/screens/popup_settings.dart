@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // Removed
 import 'package:provider/provider.dart';
 import '../providers/providers.dart';
 import '../services/sound_service.dart';
+import '../utils/utils.dart'; // For UiThemeHelper
 
 class SettingsDialog extends StatelessWidget {
   const SettingsDialog({super.key});
@@ -11,12 +12,16 @@ class SettingsDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     
-    final pixelStyle = GoogleFonts.pressStart2p(
-      fontSize: 10,
-      color: const Color(0xFF2d3436),
+    // [Refactor] Use helper
+    final pixelStyle = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 10,
+        color: Color(0xFF2d3436),
+      ),
+      isKorean: settings.isKorean,
     );
 
-    const Color mainColor = Color(0xFF63c7c8); // Teal-ish Gameboy color
+    const Color mainColor = Color(0xFF63c7c8); 
     const Color borderColor = Color(0xFF286a6b);
 
     return Dialog(
@@ -39,7 +44,7 @@ class SettingsDialog extends StatelessWidget {
         ),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFe0f2f1), // Light screen bg
+            color: const Color(0xFFe0f2f1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: borderColor, width: 2),
           ),
@@ -79,7 +84,7 @@ class SettingsDialog extends StatelessWidget {
               const Divider(color: borderColor, thickness: 1),
               const SizedBox(height: 16),
 
-              // 2. Art Style Section (NEW)
+              // 2. Art Style Section
               Text(settings.getText('ART_STYLE'), style: pixelStyle),
               const SizedBox(height: 8),
               Row(
@@ -205,9 +210,13 @@ class SettingsDialog extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              style: GoogleFonts.pressStart2p(
-                fontSize: 9,
-                color: isSelected ? Colors.white : Colors.grey,
+              // [Refactor] Use helper
+              style: UiThemeHelper.getPixelFont(
+                TextStyle(
+                  fontSize: 9,
+                  color: isSelected ? Colors.white : Colors.grey,
+                ),
+                isKorean: settings.isKorean,
               ),
             ),
           ),
@@ -225,15 +234,12 @@ class SettingsDialog extends StatelessWidget {
         onTap: () async {
           SoundService().playCardSelectSound();
           
-          // 1. Update the setting
           await settings.setRetroArt(isRetroOption);
           
-          // 2. Force Pokedex Reload immediately
-          // Using context.read because we are inside a callback
           if (context.mounted) {
             await context.read<PokedexProvider>().loadPokedex(
               isRetro: isRetroOption,
-              forceRefresh: true, // IMPORTANT: Force clear cache
+              forceRefresh: true,
             );
           }
         },
@@ -247,9 +253,13 @@ class SettingsDialog extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              style: GoogleFonts.pressStart2p(
-                fontSize: 9,
-                color: isSelected ? Colors.white : Colors.grey,
+              // [Refactor] Use helper
+              style: UiThemeHelper.getPixelFont(
+                TextStyle(
+                  fontSize: 9,
+                  color: isSelected ? Colors.white : Colors.grey,
+                ),
+                isKorean: settings.isKorean,
               ),
             ),
           ),
@@ -275,7 +285,7 @@ class SettingsDialog extends StatelessWidget {
             data: SliderThemeData(
               activeTrackColor: const Color(0xFF286a6b),
               inactiveTrackColor: Colors.grey[300],
-              thumbColor: const Color(0xFFd63031), // Retro red knob
+              thumbColor: const Color(0xFFd63031),
               trackHeight: 4,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart'; // Ensure this points to your PokemonType enum
 
+// COLORS AND FONTS
 class UiThemeHelper {
   // --- SENTIMENT COLORS (Used in Diary Tab & Draft) ---
   
@@ -156,6 +158,16 @@ class UiThemeHelper {
       case 'volcano': return const Color(0xFFFF7043);
       case 'earth':   return const Color(0xFF8D6E63);
       default:        return const Color(0xFFe58e26);
+    }
+  }
+
+  static TextStyle getPixelFont(TextStyle baseStyle, {bool isKorean = false}) {
+    if (isKorean) {
+      // Custom downloaded font
+      return baseStyle.copyWith(fontFamily: 'DungGeunMo');
+    } else {
+      // Existing Google Font
+      return GoogleFonts.pressStart2p(textStyle: baseStyle);
     }
   }
 }

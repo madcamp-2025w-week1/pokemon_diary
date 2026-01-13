@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // No longer needed directly
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../services/services.dart';
 import '../utils/utils.dart';
-import '../providers/providers.dart'; // Import for SettingsProvider
+import '../providers/providers.dart'; 
 import 'screens.dart';
 
 class PokemonDetailDialog extends StatelessWidget {
@@ -34,10 +34,14 @@ class PokemonDetailDialog extends StatelessWidget {
     final description = isKorean ? pokemon.dexEntryKorean : pokemon.dexEntryEnglish;
     final title = '${displayName.toUpperCase()} #${pokemon.id.toString().padLeft(3, '0')}';
 
-    final pixelStyle = GoogleFonts.pressStart2p(
-      fontSize: 10,
-      color: const Color(0xFF2d3436),
-      height: 1.4,
+    // [Refactor] Use helper
+    final pixelStyle = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 10,
+        color: Color(0xFF2d3436),
+        height: 1.4,
+      ),
+      isKorean: isKorean,
     );
 
     final theme = UiThemeHelper.getTypeTheme(pokemon.type1);
@@ -189,7 +193,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             FutureBuilder<List<String>>(
                               future: _loadCatchDates(),
                               builder: (context, snapshot) {
-                                if (!snapshot.hasData || snapshot.data!.isEmpty) return Text(settings.getText('NO_DATA'));
+                                if (!snapshot.hasData || snapshot.data!.isEmpty) return Text(settings.getText('NO_DATA'), style: pixelStyle);
                                 return SizedBox(
                                   height: 40,
                                   child: ListView.builder(

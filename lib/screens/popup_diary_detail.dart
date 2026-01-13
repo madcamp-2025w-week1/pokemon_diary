@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // Removed
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 
@@ -48,10 +48,15 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
     final isKorean = settings.isKorean;
 
     final theme = UiThemeHelper.getSentimentTheme(widget.diary.sentiment);
-    final pixelStyle = GoogleFonts.pressStart2p(
-      color: const Color(0xFF2d3436),
-      fontSize: 10,
-      height: 1.5,
+    
+    // [Refactor] Use helper
+    final pixelStyle = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        color: Color(0xFF2d3436),
+        fontSize: 10,
+        height: 1.5,
+      ),
+      isKorean: isKorean,
     );
 
     // Display Name Logic
@@ -171,7 +176,7 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          "${settings.getText('FEAT')} $pokemonName", // Localized
+                                          "${settings.getText('FEAT')} $pokemonName", 
                                           style: pixelStyle.copyWith(fontSize: 8, color: Colors.black54),
                                           overflow: TextOverflow.ellipsis,
                                         ),

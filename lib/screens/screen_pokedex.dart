@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // Removed
+import '../utils/utils.dart'; // For UiThemeHelper
 
 import '../models/models.dart';
 import '../providers/providers.dart';
@@ -21,7 +22,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Pass the setting to load correctly on init
       final settings = context.read<SettingsProvider>();
       context.read<PokedexProvider>().loadPokedex(isRetro: settings.isRetroArt);
     });
@@ -31,14 +31,18 @@ class _PokedexScreenState extends State<PokedexScreen> {
   Widget build(BuildContext context) {
     final diaryProvider = context.watch<DiaryProvider>();
     final pokedexProvider = context.watch<PokedexProvider>();
-    final settings = context.watch<SettingsProvider>(); // WATCH SETTINGS
+    final settings = context.watch<SettingsProvider>();
 
     final ownedIds = diaryProvider.diaries.map((d) => d.pokemonId).toSet();
-    final isKorean = settings.isKorean; // USE SETTING
+    final isKorean = settings.isKorean; 
 
-    final pixelText = GoogleFonts.pressStart2p(
-      fontSize: 11,
-      color: const Color(0xFF2F3A3A),
+    // [Refactor] Use helper
+    final pixelText = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 11,
+        color: Color(0xFF2F3A3A),
+      ),
+      isKorean: isKorean,
     );
 
     return Container(
@@ -134,9 +138,8 @@ class _PokedexTile extends StatelessWidget {
         : '???';
     final nameColor = isOwned ? const Color(0xFF1E1E1E) : const Color(0xFF4A4A4A);
 
-    // Image logic (respects what the provider loaded)
     final imageUrl = isOwned 
-        ? (pokemon.gifUrl ?? pokemon.homeSpriteUrl) // Prefer GIF if available/retro
+        ? (pokemon.gifUrl ?? pokemon.homeSpriteUrl) 
         : pokemon.homeSpriteUrl;
 
     Widget imageWidget = CachedNetworkImage(
@@ -166,8 +169,16 @@ class _PokedexTile extends StatelessWidget {
       builder: (context, constraints) {
         final idFontSize = (constraints.maxWidth * 0.10).clamp(8.0, 10.0);
         final nameFontSize = (constraints.maxWidth * 0.01).clamp(8.0, 10.0);
-        final pixelId = GoogleFonts.pressStart2p(fontSize: idFontSize, color: nameColor);
-        final pixelName = GoogleFonts.pressStart2p(fontSize: nameFontSize, color: nameColor);
+        
+        // [Refactor] Use helper
+        final pixelId = UiThemeHelper.getPixelFont(
+            TextStyle(fontSize: idFontSize, color: nameColor),
+            isKorean: isKorean
+        );
+        final pixelName = UiThemeHelper.getPixelFont(
+            TextStyle(fontSize: nameFontSize, color: nameColor),
+            isKorean: isKorean
+        );
 
         final lineColor = const Color(0xFF2B2B2B);
         final bandOuter = isOwned ? const Color(0xFF4F6E3E) : const Color(0xFF3F4A3A);

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // Removed
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../utils/utils.dart';
 import '../services/sound_service.dart';
-import '../providers/providers.dart'; // Import settings
+import '../providers/providers.dart'; 
 
 class BadgeUnlockDialog extends StatefulWidget {
   final PokemonBadge badge;
@@ -46,9 +46,13 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
 
-    final pixelStyle = GoogleFonts.pressStart2p(
-      color: const Color(0xFF2d3436),
-      height: 1.5,
+    // [Refactor] Use helper
+    final pixelStyle = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        color: Color(0xFF2d3436),
+        height: 1.5,
+      ),
+      isKorean: settings.isKorean,
     );
     
     final bool isUnlocked = widget.badge.isUnlocked;

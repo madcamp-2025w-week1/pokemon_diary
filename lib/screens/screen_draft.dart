@@ -1,13 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:google_fonts/google_fonts.dart'; // Kept for other potential uses, but main font is now routed via Helper
 import 'package:lottie/lottie.dart';
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/providers.dart';
 import '../services/services.dart';
-import '../utils/utils.dart'; // Import utils for UiText
+import '../utils/utils.dart'; 
 import 'screens.dart';
 
 class DraftScreen extends StatefulWidget {
@@ -54,7 +54,7 @@ class _DraftScreenState extends State<DraftScreen>
     );
     _blinkAnimation = Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
 
-    // 2. ADD THIS: Initialize Reveal Controller
+    // 2. Initialize Reveal Controller
     _revealController = AnimationController(
       duration: _revealDuration,
       vsync: this,
@@ -101,7 +101,7 @@ class _DraftScreenState extends State<DraftScreen>
     _controller.dispose();
     _editorFocusNode.dispose();
     _blinkController.dispose();
-    _revealController.dispose(); // <--- ADD THIS
+    _revealController.dispose(); 
     super.dispose();
   }
 
@@ -131,7 +131,7 @@ class _DraftScreenState extends State<DraftScreen>
           backgroundColor: Colors.redAccent
         )
       );
-      return; // Stop here so we don't clear text
+      return; 
     }
     
     // If valid, proceed with animation
@@ -149,8 +149,6 @@ class _DraftScreenState extends State<DraftScreen>
       apiService: context.read<PokemonApiService>(),
       isRetro: _settingsProvider.isRetroArt,
       onError: (msg) {
-         // Should not be reached often if we check length above, 
-         // but good for other errors
          _blinkController.stop();
          ScaffoldMessenger.of(context).showSnackBar(
            SnackBar(content: Text(msg), backgroundColor: Colors.redAccent)
@@ -159,7 +157,6 @@ class _DraftScreenState extends State<DraftScreen>
     ).then((_) {
       if (mounted) {
         _blinkController.stop();
-        // Only clear if we successfully switched away from input mode
         if (!gachaProvider.isInputMode) {
            _controller.clear();
            _checkAndShowBadges();
@@ -252,7 +249,6 @@ class _DraftScreenState extends State<DraftScreen>
   }
 
   Widget _buildScreen(GachaProvider gacha, SettingsProvider settings) {
-    // ... (Container styles unchanged)
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF355A35),
@@ -281,9 +277,6 @@ class _DraftScreenState extends State<DraftScreen>
   Widget _buildTopVisual(GachaProvider gacha, SettingsProvider settings) {
     if (gacha.isResultMode && gacha.currentPokemon != null) {
       final image = CachedNetworkImage(
-        // Use logic from your PokedexScreen to show Retro vs Modern here too if desired, 
-        // but typically the 'HomeSprite' is the result.
-        // If you want the Gacha reveal to match the art style:
         imageUrl: gacha.currentPokemon!.gifUrl ?? gacha.currentPokemon!.homeSpriteUrl,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.none,
@@ -325,7 +318,7 @@ class _DraftScreenState extends State<DraftScreen>
         ),
       );
     }
-    // ... (Animation Logic unchanged)
+
     if (gacha.isGachaAnimating) {
       if (gacha.showLightning) {
         return Lottie.asset(gacha.currentLightningAnim, height: 180, fit: BoxFit.contain);
@@ -387,8 +380,12 @@ class _DraftScreenState extends State<DraftScreen>
           const Icon(Icons.catching_pokemon, color: Colors.white, size: 20),
           const SizedBox(width: 8),
           Text(
-            settings.getText('DRAFT'), // Localized
-            style: GoogleFonts.pressStart2p(fontSize: 12, color: Colors.white),
+            settings.getText('DRAFT'),
+            // Already updated
+            style: UiThemeHelper.getPixelFont(
+              const TextStyle(fontSize: 12, color: Colors.white),
+              isKorean: settings.isKorean,
+            ),
           ),
         ],
       ),
@@ -400,7 +397,6 @@ class _DraftScreenState extends State<DraftScreen>
     if (gacha.isGachaAnimating) {
       label = settings.getText('SCANNING');
     } else if (gacha.isResultMode && gacha.currentPokemon != null) {
-      // Pokemon Name (Localized)
       label = settings.isKorean 
           ? gacha.currentPokemon!.koreanName 
           : gacha.currentPokemon!.englishName.toUpperCase();
@@ -419,14 +415,18 @@ class _DraftScreenState extends State<DraftScreen>
       child: Text(
         label,
         textAlign: TextAlign.center,
-        style: GoogleFonts.pressStart2p(fontSize: 12, color: Colors.black87),
+        // Already updated
+        style: UiThemeHelper.getPixelFont(
+              const TextStyle(fontSize: 12, color: Colors.white),
+              isKorean: settings.isKorean,
+            ),
       ),
     );
   }
 
   Widget _buildMessageArea(bool isInputMode, String displayText, SettingsProvider settings) {
     if (!isInputMode) {
-      return _buildSpeechBubble(displayText);
+      return _buildSpeechBubble(displayText, settings);
     }
 
     return Container(
@@ -446,10 +446,18 @@ class _DraftScreenState extends State<DraftScreen>
             maxLines: null,
             expands: true,
             textAlignVertical: TextAlignVertical.top,
-            style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87),
+            // Already updated in your code
+            style: UiThemeHelper.getPixelFont(
+              const TextStyle(fontSize: 12, color: Colors.black87),
+              isKorean: settings.isKorean,
+            ),
             decoration: InputDecoration(
-              hintText: settings.getText('DRAFT_HINT'), // Localized
-              hintStyle: GoogleFonts.pressStart2p(fontSize: 10, color: Colors.grey.shade600),
+              hintText: settings.getText('DRAFT_HINT'),
+              // [FIX] Updated Hint Style to use Helper
+              hintStyle: UiThemeHelper.getPixelFont(
+                TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                isKorean: settings.isKorean
+              ),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
@@ -459,8 +467,8 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  // ... (_buildSpeechBubble, _buildDpad unchanged)
-  Widget _buildSpeechBubble(String text) {
+  // [FIX] Added settings param to pass down isKorean
+  Widget _buildSpeechBubble(String text, SettingsProvider settings) {
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -474,7 +482,11 @@ class _DraftScreenState extends State<DraftScreen>
         child: Text(
           text,
           textAlign: TextAlign.left,
-          style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87, height: 1.4),
+          // [FIX] Updated Text Style to use Helper
+          style: UiThemeHelper.getPixelFont(
+             const TextStyle(fontSize: 11, color: Colors.black87, height: 1.4),
+             isKorean: settings.isKorean
+          ),
         ),
       ),
     );
@@ -494,7 +506,6 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
   
-  // Dpad Unchanged
   Widget _buildDpad(double dpadSize) {
     const padColor = Color(0xFF2B2B2B);
     final barThickness = (dpadSize * 0.33).clamp(20.0, 30.0);
@@ -560,8 +571,12 @@ class _DraftScreenState extends State<DraftScreen>
             ),
             alignment: Alignment.center,
             child: Text(
-              settings.getText('GACHA'), // Localized
-              style: GoogleFonts.pressStart2p(fontSize: fontSize, color: Colors.black),
+              settings.getText('GACHA'), 
+              // [FIX] Updated Text Style to use Helper
+              style: UiThemeHelper.getPixelFont(
+                TextStyle(fontSize: fontSize, color: Colors.black),
+                isKorean: settings.isKorean
+              ),
             ),
           ),
         ),
@@ -571,9 +586,11 @@ class _DraftScreenState extends State<DraftScreen>
 
   // --- FLOATING EDITOR ---
   Future<void> _openFloatingEditor() async {
-    // (Logic unchanged)
     if (_isEditorOpen) return;
     setState(() => _isEditorOpen = true);
+
+    // [FIX] Capture settings before async/modal logic
+    final isKorean = context.read<SettingsProvider>().isKorean;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -603,7 +620,11 @@ class _DraftScreenState extends State<DraftScreen>
                   autofocus: true,
                   focusNode: _editorFocusNode,
                   maxLines: null,
-                  style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87),
+                  // [FIX] Updated Text Style to use Helper
+                  style: UiThemeHelper.getPixelFont(
+                    const TextStyle(fontSize: 11, color: Colors.black87),
+                    isKorean: isKorean
+                  ),
                   decoration: const InputDecoration(border: InputBorder.none),
                 ),
                 Positioned(
