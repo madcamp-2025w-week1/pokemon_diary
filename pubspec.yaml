@@ -105,3 +105,25 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# 1. 앱 아이콘 설정
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  # 안드로이드에서 로고를 더 크게 보이게 하려면 배경을 분리
+  adaptive_icon_background: "#FFFFFF" # 앱 배경색에 맞춰 수정
+  adaptive_icon_foreground: "assets/images/app_icon.png" 
+
+# 2. 스플래시 화면 설정
+flutter_native_splash:
+  color: "#D93838" # 스플래시 배경색
+  image: assets/images/splash_logo.png
+  
+  fill: true                # 화면에 꽉 채울지 여부
+  fullscreen: true          # 상태바까지 덮어서 더 크게 보이게 함
+  
+  android_12:
+    image: assets/images/splash_logo.png
+    icon_background_color: "#D93838"
+    # 안드로이드 12는 시스템 제약이 많아서 이미지 자체의 여백 제거가 필수
