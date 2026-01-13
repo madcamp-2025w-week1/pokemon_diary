@@ -33,7 +33,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _pageController = PageController(initialPage: _currentIndex);
 
     SoundService().init().then((_) {
-      SoundService().playBgm();
+      // Check if widget is still on screen
+      if (mounted) {
+        // 1. Get the saved track from SettingsProvider
+        final settings = context.read<SettingsProvider>();
+        
+        // 2. Pass it to playBgm
+        SoundService().playBgm(settings.bgmTrack);
+      }
     });
   }
 
@@ -110,7 +117,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings, color: gbBorder, size: 24),
-                onPressed: () {},
+                onPressed: () {
+                  SoundService().playCardSelectSound();
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SettingsDialog(), // Calls your new dialog
+                  );
+                },
               ),
               const SizedBox(width: 8),
             ],

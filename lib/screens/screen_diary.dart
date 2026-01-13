@@ -30,6 +30,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
   Widget build(BuildContext context) {
     final diaryProvider = context.watch<DiaryProvider>();
     final diaries = diaryProvider.diaries;
+    
+    // Watch settings to localize
+    final settings = context.watch<SettingsProvider>();
 
     final pixelText = GoogleFonts.pressStart2p(
       fontSize: 11,
@@ -291,15 +294,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
+  // --- HELPER FOR DETAIL PANEL (Also updated) ---
   Widget _buildPokemonIcon(int pokemonId, double size) {
-    final iconUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
-    return Image.network(
-      iconUrl,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => SizedBox(width: size, height: size),
-    );
+    // Also use the specialized widget logic here to ensure detail panel icon matches list icons
+    return _DiaryIcon(pokemonId: pokemonId, size: size);
   }
 
   Widget _buildSentimentBadge(String sentiment, TextStyle pixelText) {
@@ -428,6 +426,7 @@ class _DiaryListItem extends StatelessWidget {
   }
 }
 
+// --- UPDATED DIARY ICON ---
 class _DiaryIcon extends StatelessWidget {
   final int pokemonId;
   final double size;
@@ -436,7 +435,21 @@ class _DiaryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
+    // 1. Get Provider (Using watch to react to Pokedex loading/Settings changes)
+    final pokedex = context.watch<PokedexProvider>();
+    
+    // 2. Lookup logic
+    final pokemon = pokedex.allPokemon.firstWhere(
+      (p) => p.id == pokemonId, 
+      orElse: () => Pokemon.empty()
+    );
+
+    // 3. Use provider data
+    // If we found the pokemon (id != 0), use its helper (which handles iconUrl vs fallback).
+    // If we didn't find it (id == 0), we manually construct the fallback using the requested ID.
+    final iconUrl = (pokemon.id != 0) 
+        ? pokemon.iconSpriteUrl 
+        : 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
 
     return Image.network(
       iconUrl,

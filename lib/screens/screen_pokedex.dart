@@ -22,7 +22,8 @@ class _PokedexScreenState extends State<PokedexScreen> {
     super.initState();
     // Trigger initial load only once
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PokedexProvider>().loadPokedex();
+      final settings = context.read<SettingsProvider>();
+      context.read<PokedexProvider>().loadPokedex(isRetro: settings.isRetroArt);
     });
   }
 
