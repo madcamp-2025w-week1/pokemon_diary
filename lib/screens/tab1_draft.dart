@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
-import '../models/models.dart';
 import '../providers/diary_provider.dart';
 import '../providers/gacha_provider.dart';
 import '../providers/trainer_provider.dart';
