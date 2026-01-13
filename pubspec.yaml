@@ -41,7 +41,7 @@ dependencies:
   provider: any
   http: any
   cached_network_image: any
-  google_translator: any
+  translator: any
   dart_sentiment: any
   google_fonts: any
   shared_preferences: ^2.3.0

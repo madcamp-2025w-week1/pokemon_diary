@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:translator/translator.dart'; // <--- 1. Import Translator
 
 import '../models/models.dart';
 import '../services/sound_service.dart';
@@ -10,11 +11,12 @@ class GachaProvider extends ChangeNotifier {
   // --- Dependencies ---
   final SentimentService _sentimentService = SentimentService();
   final GachaLogic _gachaLogic = GachaLogic();
+  final GoogleTranslator _translator = GoogleTranslator(); // <--- 2. Instantiate Translator
 
   // --- State Variables ---
   bool _isLoading = true;
-  bool _isResultMode = false; // True when showing the Pokemon card
-  bool _isInputMode = true;   // True when showing the text field
+  bool _isResultMode = false;
+  bool _isInputMode = true;
   
   // Animation States
   bool _isGachaAnimating = false;
@@ -26,7 +28,6 @@ class GachaProvider extends ChangeNotifier {
   Diary? _todayDiary;
   Pokemon? _currentPokemon;
 
-  // Queue for badges to show in UI (for popup once obtained for the first time)
   final List<PokemonBadge> _pendingBadges = [];
 
   // --- Getters ---
@@ -43,12 +44,10 @@ class GachaProvider extends ChangeNotifier {
 
   // --- Methods ---
 
-  /// Clears the badge queue after they have been shown
   void clearPendingBadges() {
     _pendingBadges.clear();
   }
 
-  /// Refreshes the current Pokemon data (useful when art style settings change)
   Future<void> refreshCurrentPokemon(PokemonApiService apiService, bool isRetro) async {
     if (_currentPokemon != null) {
       final updated = await apiService.getPokemonById(_currentPokemon!.id, isRetro: isRetro);
@@ -66,7 +65,6 @@ class GachaProvider extends ChangeNotifier {
     }
   }
 
-  /// Checks if the user has already drafted today
   Future<void> loadTodayEntry({
     required DiaryProvider diaryProvider, 
     required PokemonApiService apiService,
@@ -75,19 +73,15 @@ class GachaProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Ensure diary provider is loaded first
     if (diaryProvider.diaries.isEmpty) {
         await diaryProvider.loadDiaries();
     }
 
     final todayKey = _formatDate(DateTime.now());
-    
-    // Check local cache in DiaryProvider instead of querying DB again
     final existing = diaryProvider.diaries.where((entry) => entry.date == todayKey).toList();
 
     if (false/*existing.isNotEmpty*/) {
       final diary = existing.first;
-      // We need to fetch the Pokemon details to display the result card
       final pokemon = await apiService.getPokemonById(diary.pokemonId, isRetro: isRetro);
 
       _todayDiary = diary;
@@ -103,14 +97,13 @@ class GachaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The main action: Analyzes text -> Drafts Pokemon -> Animates -> Saves
   Future<void> performGacha({
     required String text,
     required DiaryProvider diaryProvider,
     required TrainerProvider trainerProvider,
     required PokemonApiService apiService,
     required bool isRetro,
-    required Function(String) onError, // Callback for UI errors (e.g. Snackbars)
+    required Function(String) onError,
   }) async {
     
     if (text.trim().length < 10) {
@@ -123,7 +116,6 @@ class GachaProvider extends ChangeNotifier {
     const scanDuration = Duration(milliseconds: 3400);
     const lightningDuration = Duration(seconds: 2);
 
-    // 1. Start Animation State
     await soundService.duckBgm();
     _isInputMode = false;
     _isResultMode = false;
@@ -132,21 +124,16 @@ class GachaProvider extends ChangeNotifier {
     _isRevealing = false;
     notifyListeners();
 
-    // 2. Perform Logic (Parallel to animation)
-    // We calculate the result early, but wait for animation to reveal it.
     final logicFuture = _performGachaLogic(text, apiService, isRetro: isRetro);
 
-    // Wait for "scanning" phase
     soundService.playPokeballSpin();
     await Future.delayed(scanDuration);
     await soundService.stopPokeballSpin();
 
-    // Retrieve results
     final resultData = await logicFuture;
     final diary = resultData['diary'] as Diary;
     final pokemon = resultData['pokemon'] as Pokemon;
 
-    // 3. Determine Lightning Color based on Rarity
     if (pokemon.isMythical) {
       _currentLightningAnim = 'assets/animations/purple_lightning.json';
     } else if (pokemon.isLegendary) {
@@ -158,8 +145,6 @@ class GachaProvider extends ChangeNotifier {
     _showLightning = true;
     notifyListeners();
 
-    // 4. Reveal Phase (Lightning Animation)
-    // Delay to let the lightning play before showing the card
     soundService.playElectricShock();
     await Future.delayed(lightningDuration);
     _showLightning = false;
@@ -170,32 +155,47 @@ class GachaProvider extends ChangeNotifier {
     _isRevealing = true;
     notifyListeners();
 
-    // 5. Save Data using DbHelper (accessed via Services export)
     await DbHelper.instance.insertDiary(diary);
 
-    // 6. Refresh Providers so other tabs update immediately
     await diaryProvider.refreshDiaries();
     await trainerProvider.refreshData();
 
-    // 7. Check for New Badges
     if (trainerProvider.newlyUnlockedBadges.isNotEmpty) {
       _pendingBadges.addAll(trainerProvider.newlyUnlockedBadges);
       trainerProvider.clearNewBadges();
     }
 
-    // 8. Final State Update (keep reveal in progress)
     notifyListeners();
   }
 
   /// Internal helper to orchestrate the Services
   Future<Map<String, dynamic>> _performGachaLogic(String text, PokemonApiService apiService, {required bool isRetro}) async {
-    final sentiment = await _sentimentService.analyzeSentiment(text);
+    
+    // --- 3. Translation Logic ---
+    String textForAnalysis = text;
+    
+    // Regex to detect Korean characters (Hangul Syllables)
+    if (RegExp(r'[가-힣]').hasMatch(text)) {
+      try {
+        final translation = await _translator.translate(text, to: 'en');
+        textForAnalysis = translation.text;
+        debugPrint(textForAnalysis);
+      } catch (e) {
+        debugPrint("Translation failed: $e");
+        // Fallback: Proceed with original text (or handle error as needed)
+      }
+    }
+    // -----------------------------
+
+    // Analyze the (potentially translated) text
+    final sentiment = await _sentimentService.analyzeSentiment(textForAnalysis);
+    
     final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
     final pokemon = await apiService.getPokemonById(pokemonId, isRetro: isRetro);
 
     final diary = Diary(
       date: _formatDate(DateTime.now()),
-      content: text,
+      content: text, // Save the ORIGINAL text, not the translated one
       sentiment: sentiment,
       pokemonId: pokemonId,
     );
@@ -203,7 +203,6 @@ class GachaProvider extends ChangeNotifier {
     return {'diary': diary, 'pokemon': pokemon!};
   }
 
-  // Helper for DB Date Format (YYYY-MM-DD)
   String _formatDate(DateTime date) {
     return date.toIso8601String().split('T').first;
   }
