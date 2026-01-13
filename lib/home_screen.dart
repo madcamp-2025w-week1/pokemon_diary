@@ -5,7 +5,7 @@ import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
-import 'screens/trainer_card.dart';
+import 'screens/popup_trainer_card.dart';
 import 'services/sound_service.dart';
 
 class HomeScreen extends StatefulWidget {

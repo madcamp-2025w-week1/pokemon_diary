@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
-import '../screens/pokemon_detail_screen.dart';
+import 'popup_pokemon_detail.dart';
 import '../services/services.dart';
 
 class Tab3Pokedex extends StatelessWidget {

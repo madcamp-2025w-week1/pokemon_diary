@@ -7,7 +7,7 @@ import '../providers/diary_provider.dart';
 import '../providers/gacha_provider.dart';
 import '../providers/trainer_provider.dart';
 import '../services/services.dart';
-import 'badge_popup.dart';
+import 'popup_badge.dart';
 
 class Tab1Draft extends StatefulWidget {
   const Tab1Draft({super.key});

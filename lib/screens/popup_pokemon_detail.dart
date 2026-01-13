@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pokemon_diary/screens/diary_detail_dialog.dart';
+import 'package:pokemon_diary/screens/popup_diary_detail.dart';
 
 import '../models/models.dart';
 import '../services/services.dart';
