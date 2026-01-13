@@ -15,7 +15,6 @@ class DiaryScreen extends StatefulWidget {
 }
 
 class _DiaryScreenState extends State<DiaryScreen> {
-  // Kept at 84 for the compact look
   static const double _itemExtent = 72; 
   final ScrollController _scrollController = ScrollController();
   int _selectedIndex = 0;
@@ -29,6 +28,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
   @override
   Widget build(BuildContext context) {
     final diaryProvider = context.watch<DiaryProvider>();
+    // Need access to PokedexProvider for icon logic (from previous request)
+    final pokedexProvider = context.watch<PokedexProvider>();
+    final settings = context.watch<SettingsProvider>(); // WATCH SETTINGS
+    
     final diaries = diaryProvider.diaries;
 
     final pixelText = GoogleFonts.pressStart2p(
@@ -46,12 +49,12 @@ class _DiaryScreenState extends State<DiaryScreen> {
           color: const Color(0xFF2B6FD3),
           child: Column(
             children: [
-              _buildHeader(pixelText),
+              _buildHeader(pixelText, settings),
               const SizedBox(height: 10),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: _buildEmptyDetailPanel(),
+                  child: _buildEmptyDetailPanel(settings),
                 ),
               ),
               const SizedBox(height: 12),
@@ -77,7 +80,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         color: const Color(0xFF2B6FD3),
         child: Column(
           children: [
-            _buildHeader(pixelText),
+            _buildHeader(pixelText, settings),
             const SizedBox(height: 10),
             Expanded(
               child: Padding(
@@ -86,7 +89,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   children: [
                     Expanded(
                       flex: 3, 
-                      child: _buildDetailPanel(selectedDiary, pixelText),
+                      child: _buildDetailPanel(selectedDiary, pixelText, pokedexProvider, settings),
                     ),
                     const SizedBox(height: 12),
                     Expanded(
@@ -104,7 +107,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
-  Widget _buildHeader(TextStyle pixelText) {
+  Widget _buildHeader(TextStyle pixelText, SettingsProvider settings) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -125,7 +128,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
           const Icon(Icons.menu_book, color: Colors.white, size: 20),
           const SizedBox(width: 8),
           Text(
-            'DIARY ENTRIES',
+            settings.getText('DIARY_ENTRIES'), // Localized
             style: pixelText.copyWith(color: Colors.white, fontSize: 12),
           ),
         ],
@@ -133,7 +136,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
-  Widget _buildDetailPanel(Diary diary, TextStyle pixelText) {
+  Widget _buildDetailPanel(Diary diary, TextStyle pixelText, PokedexProvider pokedex, SettingsProvider settings) {
     return Container(
       width: double.infinity, 
       padding: const EdgeInsets.all(10),
@@ -161,7 +164,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    "Date ${DateHelper.formatShortDateFromString(diary.date)}", 
+                    "${settings.getText('DATE_LABEL')} ${DateHelper.formatShortDateFromString(diary.date)}", 
                     style: pixelText.copyWith(fontSize: 12), 
                   ),
                 ),
@@ -173,9 +176,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: CustomPaint(
-                      painter: LinedPaperPainter(),
-                    ),
+                    child: CustomPaint(painter: LinedPaperPainter()),
                   ),
                   Positioned.fill(
                     child: Padding(
@@ -197,7 +198,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
-  Widget _buildEmptyDetailPanel() {
+  Widget _buildEmptyDetailPanel(SettingsProvider settings) {
     final pixelText = GoogleFonts.pressStart2p(
       fontSize: 11,
       color: const Color(0xFF2F3A3A),
@@ -210,9 +211,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         color: const Color(0xFFE5D98C),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF8E7B2C), width: 3),
-        boxShadow: const [
-          BoxShadow(color: Color(0xFF1D3E6B), offset: Offset(2, 2), blurRadius: 0),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0xFF1D3E6B), offset: Offset(2, 2), blurRadius: 0)],
       ),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -223,7 +222,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
         ),
         child: Center(
           child: Text(
-            'NO DIARIES YET. GO DRAFT YOUR FIRST POKEMON!',
+            settings.getText('NO_DIARIES'), // Localized
             textAlign: TextAlign.center,
             style: pixelText.copyWith(height: 1.5),
           ),
@@ -232,6 +231,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
     );
   }
 
+  // ... _buildListPanel, _DiaryListItem (Unchanged except using context.read<Settings> if needed, but not critical)
+  // Re-pasting _buildListPanel for completeness to ensure no syntax errors
   Widget _buildListPanel(List<Diary> diaries, TextStyle pixelText) {
     return Container(
       padding: const EdgeInsets.all(8),
@@ -292,14 +293,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Widget _buildPokemonIcon(int pokemonId, double size) {
-    final iconUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
-    return Image.network(
-      iconUrl,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      errorBuilder: (context, error, stackTrace) => SizedBox(width: size, height: size),
-    );
+    return _DiaryIcon(pokemonId: pokemonId, size:size);
   }
 
   Widget _buildSentimentBadge(String sentiment, TextStyle pixelText) {
@@ -355,11 +349,7 @@ class _DiaryListItem extends StatelessWidget {
                     width: isSelected ? 2 : 1,
                   ),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFF1D3E6B),
-                      offset: Offset(1, 1),
-                      blurRadius: 0,
-                    ),
+                    BoxShadow(color: Color(0xFF1D3E6B), offset: Offset(1, 1), blurRadius: 0),
                   ],
                 ),
                 child: Column(
@@ -436,7 +426,21 @@ class _DiaryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconUrl = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
+    // 1. Get Provider (Using watch to react to Pokedex loading/Settings changes)
+    final pokedex = context.watch<PokedexProvider>();
+    
+    // 2. Lookup logic
+    final pokemon = pokedex.allPokemon.firstWhere(
+      (p) => p.id == pokemonId, 
+      orElse: () => Pokemon.empty()
+    );
+
+    // 3. Use provider data
+    // If we found the pokemon (id != 0), use its helper (which handles iconUrl vs fallback).
+    // If we didn't find it (id == 0), we manually construct the fallback using the requested ID.
+    final iconUrl = (pokemon.id != 0) 
+        ? pokemon.iconSpriteUrl 
+        : 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-viii/icons/$pokemonId.png';
 
     return Image.network(
       iconUrl,

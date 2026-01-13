@@ -34,6 +34,9 @@ class PokemonDiaryApp extends StatelessWidget {
         ChangeNotifierProvider<PokedexProvider>(
           create: (_) => PokedexProvider(),
         ),
+        ChangeNotifierProvider<SettingsProvider>(
+          create: (_) => SettingsProvider(),
+        ),
       ],
       child: MaterialApp(
         title: 'Pokemon Emotion Diary',

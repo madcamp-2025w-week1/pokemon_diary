@@ -20,23 +20,22 @@ class _PokedexScreenState extends State<PokedexScreen> {
   @override
   void initState() {
     super.initState();
-    // Trigger initial load only once
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PokedexProvider>().loadPokedex();
+      // Pass the setting to load correctly on init
+      final settings = context.read<SettingsProvider>();
+      context.read<PokedexProvider>().loadPokedex(isRetro: settings.isRetroArt);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Watch both providers
     final diaryProvider = context.watch<DiaryProvider>();
     final pokedexProvider = context.watch<PokedexProvider>();
-    
-    // 2. Calculate Owned IDs locally (Derived State)
-    // This runs every time 'diaryProvider' updates, ensuring the list is fresh.
-    final ownedIds = diaryProvider.diaries.map((d) => d.pokemonId).toSet();
+    final settings = context.watch<SettingsProvider>(); // WATCH SETTINGS
 
-    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final ownedIds = diaryProvider.diaries.map((d) => d.pokemonId).toSet();
+    final isKorean = settings.isKorean; // USE SETTING
+
     final pixelText = GoogleFonts.pressStart2p(
       fontSize: 11,
       color: const Color(0xFF2F3A3A),
@@ -46,7 +45,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
       color: const Color(0xFF7F9B6F),
       child: Column(
         children: [
-          _buildHeader(pixelText),
+          _buildHeader(pixelText, settings),
           const SizedBox(height: 10),
           Expanded(
             child: Padding(
@@ -78,8 +77,6 @@ class _PokedexScreenState extends State<PokedexScreen> {
                           ),
                           itemBuilder: (context, index) {
                             final pokemon = pokedexProvider.allPokemon[index];
-                            
-                            // 3. Check ownership using the local Set
                             final isOwned = ownedIds.contains(pokemon.id);
                             
                             return _PokedexTile(
@@ -98,7 +95,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     );
   }
 
-  Widget _buildHeader(TextStyle pixelText) {
+  Widget _buildHeader(TextStyle pixelText, SettingsProvider settings) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -112,14 +109,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
         children: [
           const Icon(Icons.grid_view, color: Colors.white, size: 20),
           const SizedBox(width: 8),
-          Text('POKEDEX', style: pixelText.copyWith(color: Colors.white, fontSize: 12)),
+          Text(settings.getText('POKEDEX'), style: pixelText.copyWith(color: Colors.white, fontSize: 12)),
         ],
       ),
     );
   }
 }
 
-// ... _PokedexTile class remains the same ...
 class _PokedexTile extends StatelessWidget {
   final Pokemon pokemon;
   final bool isOwned;
@@ -138,8 +134,11 @@ class _PokedexTile extends StatelessWidget {
         : '???';
     final nameColor = isOwned ? const Color(0xFF1E1E1E) : const Color(0xFF4A4A4A);
 
-    // Image Logic
-    final imageUrl = isOwned ? pokemon.showdownGifUrl : pokemon.homeSpriteUrl;
+    // Image logic (respects what the provider loaded)
+    final imageUrl = isOwned 
+        ? (pokemon.gifUrl ?? pokemon.homeSpriteUrl) // Prefer GIF if available/retro
+        : pokemon.homeSpriteUrl;
+
     Widget imageWidget = CachedNetworkImage(
       imageUrl: imageUrl,
       fit: BoxFit.contain,
@@ -154,7 +153,6 @@ class _PokedexTile extends StatelessWidget {
       errorWidget: (context, url, error) => const Icon(Icons.error),
     );
 
-    // Silhouette if not owned
     if (!isOwned) {
       imageWidget = ColorFiltered(
         colorFilter: const ColorFilter.mode(Colors.black, BlendMode.srcIn),
@@ -171,7 +169,6 @@ class _PokedexTile extends StatelessWidget {
         final pixelId = GoogleFonts.pressStart2p(fontSize: idFontSize, color: nameColor);
         final pixelName = GoogleFonts.pressStart2p(fontSize: nameFontSize, color: nameColor);
 
-        // Uses Theme Colors Helper
         final lineColor = const Color(0xFF2B2B2B);
         final bandOuter = isOwned ? const Color(0xFF4F6E3E) : const Color(0xFF3F4A3A);
         final innerFill = isOwned ? const Color(0xFFF7F1E3) : const Color(0xFF6E7A67);

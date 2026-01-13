@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pokemon_diary/services/sound_service.dart';
+import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../services/services.dart';
 import '../utils/utils.dart';
+import '../providers/providers.dart'; // Import for SettingsProvider
 import 'screens.dart';
 
-// --- Pokemon Detail Dialog (Unchanged Type-Themed Version) ---
 class PokemonDetailDialog extends StatelessWidget {
   final Pokemon pokemon;
 
@@ -26,7 +27,9 @@ class PokemonDetailDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+    final settings = context.watch<SettingsProvider>();
+    final isKorean = settings.isKorean;
+
     final displayName = isKorean ? pokemon.koreanName : pokemon.englishName;
     final description = isKorean ? pokemon.dexEntryKorean : pokemon.dexEntryEnglish;
     final title = '${displayName.toUpperCase()} #${pokemon.id.toString().padLeft(3, '0')}';
@@ -37,14 +40,13 @@ class PokemonDetailDialog extends StatelessWidget {
       height: 1.4,
     );
 
-    // --- APPLY THEME ---
     final theme = UiThemeHelper.getTypeTheme(pokemon.type1);
     final pokedexOuter = theme['outer']!;
     final pokedexInner = theme['inner']!;
     final headerColor = theme['header']!;
 
-    const Color borderDark = Color(0xFF1B2D3A);   // Keep borders dark/consistent
-    const Color contentBg = Color(0xFFF7F1E3);    // Cream (Paper/Screen)
+    const Color borderDark = Color(0xFF1B2D3A);   
+    const Color contentBg = Color(0xFFF7F1E3);    
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -52,7 +54,7 @@ class PokemonDetailDialog extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
-          color: pokedexOuter, // Dynamic Type Color
+          color: pokedexOuter,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
@@ -68,26 +70,15 @@ class PokemonDetailDialog extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           child: Stack(
             children: [
-              // 1. Dynamic Background Color
               Positioned.fill(child: Container(color: pokedexInner)), 
-              
-              // 2. Content Area (Cream)
               Positioned(
-                top: 50,
-                left: 0,
-                right: 0,
-                height: 280,
+                top: 50, left: 0, right: 0, height: 280,
                 child: Container(color: contentBg.withOpacity(0.95)),
               ),
-              
-              // 3. Stripes
               Positioned.fill(
-                child: CustomPaint(
-                  painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05)),
-                ),
+                child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
               ),
 
-              // 4. Main Content
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
@@ -105,11 +96,14 @@ class PokemonDetailDialog extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: headerColor, // Dynamic Tag Color
+                              color: headerColor, 
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(color: Colors.black.withOpacity(0.2)),
                             ),
-                            child: Text("POKEDEX", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
+                            child: Text(
+                              settings.getText('POKEDEX'), 
+                              style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)
+                            ),
                           ),
                           GestureDetector(
                             onTap: () {
@@ -133,7 +127,6 @@ class PokemonDetailDialog extends StatelessWidget {
                             Text(title, style: pixelStyle.copyWith(fontSize: 16, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                             const SizedBox(height: 16),
                             
-                            // Image Box
                             Center(
                               child: Container(
                                 width: 180, height: 180,
@@ -145,25 +138,18 @@ class PokemonDetailDialog extends StatelessWidget {
                                 padding: const EdgeInsets.all(16),
                                 child: CachedNetworkImage(
                                   imageUrl: pokemon.gifUrl!,
-                                  // 1. Use imageBuilder to customize how the image is rendered
                                   imageBuilder: (context, imageProvider) => Image(
                                     image: imageProvider,
                                     fit: BoxFit.contain,
-                                    // 2. This is the key setting. It forces "Nearest Neighbor" scaling.
                                     filterQuality: FilterQuality.none, 
                                   ),
-                                  // Keep your existing placeholder
-                                  placeholder: (context, url) => const Center(
-                                    child: CircularProgressIndicator(color: borderDark)
-                                  ),
-                                  // It's good practice to add an error widget too, just in case
+                                  placeholder: (context, url) => const Center(child: CircularProgressIndicator(color: borderDark)),
                                   errorWidget: (context, url, error) => const Icon(Icons.error, color: borderDark),
                                 )
                               ),
                             ),
                             const SizedBox(height: 16),
                             
-                            // Type Chips
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -176,16 +162,16 @@ class PokemonDetailDialog extends StatelessWidget {
                             ),
                             const SizedBox(height: 12),
                             
-                            // Height/Weight Box
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               decoration: BoxDecoration(color: borderDark.withOpacity(0.9), borderRadius: BorderRadius.circular(4)),
-                              child: Text('HT: ${pokemon.height.toStringAsFixed(1)}m | WT: ${pokemon.weight.toStringAsFixed(1)}kg',
-                                  style: pixelStyle.copyWith(color: Colors.white, fontSize: 10), textAlign: TextAlign.center),
+                              child: Text(
+                                '${settings.getText('HT')}: ${pokemon.height.toStringAsFixed(1)}m | ${settings.getText('WT')}: ${pokemon.weight.toStringAsFixed(1)}kg',
+                                style: pixelStyle.copyWith(color: Colors.white, fontSize: 10), textAlign: TextAlign.center
+                              ),
                             ),
                             const SizedBox(height: 16),
                             
-                            // Description Box
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
@@ -197,15 +183,13 @@ class PokemonDetailDialog extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             
-                            // Dates Label
-                            Text("DATES CAUGHT", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
+                            Text(settings.getText('DATES_CAUGHT'), style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
                             Container(height: 2, color: Colors.white.withOpacity(0.5), margin: const EdgeInsets.symmetric(vertical: 4)),
                             
-                            // Dates List
                             FutureBuilder<List<String>>(
                               future: _loadCatchDates(),
                               builder: (context, snapshot) {
-                                if (!snapshot.hasData || snapshot.data!.isEmpty) return const Text("NO DATA");
+                                if (!snapshot.hasData || snapshot.data!.isEmpty) return Text(settings.getText('NO_DATA'));
                                 return SizedBox(
                                   height: 40,
                                   child: ListView.builder(
@@ -218,7 +202,6 @@ class PokemonDetailDialog extends StatelessWidget {
                                         child: InkWell( 
                                           onTap: () async {
                                             SoundService().playCardSelectSound();
-                                            
                                             final diaries = await DbHelper.instance.getDiaries();
                                             final targetDiary = diaries.firstWhere((d) => d.date == dateStr && d.pokemonId == pokemon.id);
                                             if (context.mounted) {

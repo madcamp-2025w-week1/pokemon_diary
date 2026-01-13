@@ -3,9 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../services/sound_service.dart';
-
-import '../providers/trainer_provider.dart';
-import '../models/models.dart'; // Ensure PokemonBadge is exported here
+import '../providers/providers.dart';
+import '../models/models.dart';
 import '../utils/utils.dart';
 import 'screens.dart';
 
@@ -20,10 +19,10 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch the provider to get real-time badge updates
     final trainerProvider = context.watch<TrainerProvider>();
+    final settings = context.watch<SettingsProvider>();
 
-    String displayDebut = "LOADING...";
+    String displayDebut = settings.getText('LOADING');
     if (trainerProvider.debutDate != "???" && trainerProvider.debutDate != "NOT STARTED") {
       try {
         final date = DateTime.parse(trainerProvider.debutDate);
@@ -43,10 +42,10 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
           gender: trainerProvider.gender,
           debutDate: displayDebut,
           streak: trainerProvider.streak,
-          // PASS THE REAL BADGES HERE
           badges: trainerProvider.badges, 
-          onEditName: () => _showEditNameDialog(context, trainerProvider),
-          onEditGender: () => _showGenderDialog(context, trainerProvider),
+          settings: settings, 
+          onEditName: () => _showEditNameDialog(context, trainerProvider, settings),
+          onEditGender: () => _showGenderDialog(context, trainerProvider, settings),
           onSave: () {
             Navigator.of(context).pop();
           },
@@ -55,12 +54,12 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
     );
   }
 
-  void _showEditNameDialog(BuildContext context, TrainerProvider provider) {
+  void _showEditNameDialog(BuildContext context, TrainerProvider provider, SettingsProvider settings) {
     TextEditingController controller = TextEditingController(text: provider.name);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Change Name"),
+        title: Text(settings.getText('CHANGE_NAME')),
         content: TextField(controller: controller),
         actions: [
           TextButton(
@@ -75,30 +74,30 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
     );
   }
 
-  void _showGenderDialog(BuildContext context, TrainerProvider provider) {
+  void _showGenderDialog(BuildContext context, TrainerProvider provider, SettingsProvider settings) {
     showDialog(
       context: context,
       builder: (context) => SimpleDialog(
-        title: const Text("Select Gender"),
+        title: Text(settings.getText('SELECT_GENDER')),
         children: [
           SimpleDialogOption(
             onPressed: () {
-              provider.updateGender("MALE");
+              provider.updateGender("MALE"); // Internal value stays ENGLISH
               Navigator.pop(context);
             },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text("MALE"),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(settings.getText("MALE")), // Display localized
             ),
           ),
           SimpleDialogOption(
             onPressed: () {
-              provider.updateGender("FEMALE");
+              provider.updateGender("FEMALE"); // Internal value stays ENGLISH
               Navigator.pop(context);
             },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text("FEMALE"),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(settings.getText("FEMALE")), // Display localized
             ),
           ),
         ],
@@ -113,6 +112,7 @@ class TrainerCardDialog extends StatelessWidget {
   final String debutDate;
   final int streak;
   final List<PokemonBadge> badges; 
+  final SettingsProvider settings; 
   final VoidCallback onEditName;
   final VoidCallback onEditGender;
   final VoidCallback onSave;
@@ -124,6 +124,7 @@ class TrainerCardDialog extends StatelessWidget {
     required this.debutDate,
     required this.streak,
     required this.badges,
+    required this.settings,
     required this.onEditName,
     required this.onEditGender,
     required this.onSave,
@@ -141,9 +142,13 @@ class TrainerCardDialog extends StatelessWidget {
     const Color borderDark = Color(0xFF286a6b);
     const Color cardBgLight = Color(0xFF86c096);
 
+    // Image logic checks the internal English string "MALE"/"FEMALE"
     final String imagePath = gender == "MALE"
         ? 'assets/images/red.png'
         : 'assets/images/misty.png';
+    
+    // Display logic translates it (e.g., "MALE" -> "남성")
+    final String displayGender = settings.getText(gender);
 
     return Container(
       width: 340,
@@ -165,31 +170,16 @@ class TrainerCardDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           children: [
-            // 1. BASE BACKGROUND
             Container(color: cardBgLight),
-
-            // 2. WHITE STRIP
             Column(
               children: [
                 const SizedBox(height: 48),
-                Container(
-                  height: 124,
-                  width: double.infinity,
-                  color: Colors.white.withOpacity(0.9),
-                ),
+                Container(height: 124, width: double.infinity, color: Colors.white.withOpacity(0.9)),
               ],
             ),
-
-            // 3. GLOBAL STRIPES
             Positioned.fill(
-              child: CustomPaint(
-                painter: StripePainter(
-                  stripeColor: Colors.black.withOpacity(0.05),
-                ),
-              ),
+              child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
             ),
-
-            // 4. CONTENT LAYER
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
@@ -200,7 +190,6 @@ class TrainerCardDialog extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- HEADER ---
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                       child: Align(
@@ -213,50 +202,43 @@ class TrainerCardDialog extends StatelessWidget {
                             border: Border.all(color: Colors.black.withOpacity(0.2)),
                           ),
                           child: Text(
-                            "TRAINER CARD",
+                            settings.getText('TRAINER_CARD'), 
                             style: pixelStyle.copyWith(color: Colors.white, fontSize: 12),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24), // Reduced slightly
+                    const SizedBox(height: 24),
 
-                    // --- MAIN INFO ROW ---
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4), // Reduced vertical padding
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Left Info
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _buildInfoRow("NAME", trainerName, pixelStyle, onTap: onEditName),
+                                _buildInfoRow(settings.getText('NAME'), trainerName, pixelStyle, onTap: onEditName),
                                 const SizedBox(height: 4),
-                                _buildInfoRow("GENDER", gender, pixelStyle, onTap: onEditGender),
+                                // Pass the TRANSLATED gender here
+                                _buildInfoRow(settings.getText('GENDER'), displayGender, pixelStyle, onTap: onEditGender),
                                 const SizedBox(height: 4),
-                                Text("DEBUT: $debutDate", style: pixelStyle),
+                                Text("${settings.getText('DEBUT')}: $debutDate", style: pixelStyle),
                                 const SizedBox(height: 4),
-                                Text("STREAK: $streak DAYS", style: pixelStyle),
+                                Text("${settings.getText('STREAK_LABEL')}: $streak ${settings.getText('DAYS')}", style: pixelStyle),
                               ],
                             ),
                           ),
-                          // Right Avatar
                           Container(
-                            width: 72,
-                            height: 80, // Slightly shorter to save space
+                            width: 72, height: 80,
                             margin: const EdgeInsets.only(left: 8),
                             decoration: BoxDecoration(
                               color: const Color(0xFFa8dcb2).withOpacity(0.8),
                               border: Border.all(color: borderDark, width: 2),
                             ),
-                            child: Image.asset(
-                              imagePath,
-                              fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => const Icon(Icons.person, size: 40, color: borderDark),
-                            ),
+                            child: Image.asset(imagePath, fit: BoxFit.contain),
                           ),
                         ],
                       ),
@@ -269,21 +251,14 @@ class TrainerCardDialog extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Spacer(),
-                            // --- BADGES SECTION ---
-                            Text("BADGES", style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
-                            Container(
-                              height: 2,
-                              color: Colors.white.withOpacity(0.5),
-                              margin: const EdgeInsets.only(bottom: 4), // Reduced margin
-                            ),
+                            Text(settings.getText('BADGES'), style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
+                            Container(height: 2, color: Colors.white.withOpacity(0.5), margin: const EdgeInsets.only(bottom: 4)),
                             
-                            // *** COMPACT BADGE DISPLAY ***
                             SizedBox(
                               width: double.infinity,
                               child: Wrap(
                                 alignment: WrapAlignment.spaceBetween,
-                                spacing: 8, // Tighter spacing
-                                runSpacing: 4, // Tighter row spacing
+                                spacing: 8, runSpacing: 4,
                                 children: badges.map((badge) {
                                   return GestureDetector(
                                     onTap: () {
@@ -297,31 +272,22 @@ class TrainerCardDialog extends StatelessWidget {
                                       );
                                     },
                                     child: Opacity(
-                                      // Keep the card icon dimmed if locked
                                       opacity: badge.isUnlocked ? 1.0 : 0.3,
                                       child: Container(
                                         padding: const EdgeInsets.all(3),
                                         decoration: badge.isUnlocked ? BoxDecoration(
                                           shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(color: Colors.white.withOpacity(0.6), blurRadius: 6)
-                                          ]
+                                          boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.6), blurRadius: 6)]
                                         ) : null,
-                                        child: Icon(
-                                          badge.icon, 
-                                          color: badge.isUnlocked ? Colors.white : Colors.black, 
-                                          size: 16
-                                        ),
+                                        child: Icon(badge.icon, color: badge.isUnlocked ? Colors.white : Colors.black, size: 16),
                                       ),
                                     ),
                                   );
                                 }).toList(),
                               ),
                             ),
-                            
                             const SizedBox(height: 8),
 
-                            // --- FOOTER BUTTON ---
                             Center(
                               child: GestureDetector(
                                 onTap: () {
@@ -334,11 +300,9 @@ class TrainerCardDialog extends StatelessWidget {
                                     color: Colors.white.withOpacity(0.8),
                                     borderRadius: BorderRadius.circular(4),
                                     border: Border.all(color: borderDark),
-                                    boxShadow: const [
-                                      BoxShadow(color: Colors.black12, offset: Offset(2, 2))
-                                    ]
+                                    boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2, 2))]
                                   ),
-                                  child: Text("SAVE/CLOSE", style: pixelStyle.copyWith(fontSize: 10)),
+                                  child: Text(settings.getText('SAVE_CLOSE'), style: pixelStyle.copyWith(fontSize: 10)),
                                 ),
                               ),
                             ),

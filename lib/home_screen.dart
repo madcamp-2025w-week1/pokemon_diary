@@ -33,7 +33,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _pageController = PageController(initialPage: _currentIndex);
 
     SoundService().init().then((_) {
-      SoundService().playBgm();
+      // Check if widget is still on screen
+      if (mounted) {
+        // 1. Get the saved track from SettingsProvider
+        final settings = context.read<SettingsProvider>();
+        
+        // 2. Pass it to playBgm
+        SoundService().playBgm(settings.bgmTrack);
+      }
     });
   }
 
@@ -64,6 +71,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    // 1. WATCH SETTINGS PROVIDER
+    final settings = context.watch<SettingsProvider>();
+
     final pixelStyle = GoogleFonts.pressStart2p(
       fontSize: 10,
       color: gbBorder,
@@ -110,7 +120,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             actions: [
               IconButton(
                 icon: const Icon(Icons.settings, color: gbBorder, size: 24),
-                onPressed: () {},
+                onPressed: () {
+                  SoundService().playCardSelectSound();
+                  showDialog(
+                    context: context,
+                    builder: (context) => const SettingsDialog(), 
+                  );
+                },
               ),
               const SizedBox(width: 8),
             ],
@@ -154,11 +170,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
-              _buildRetroTab(0, Icons.menu_book, 'DIARY', pixelStyle),
+              // 2. USE LOCALIZED STRINGS FROM SETTINGS PROVIDER
+              _buildRetroTab(0, Icons.menu_book, settings.getText('DIARY'), pixelStyle),
               const SizedBox(width: 10),
-              _buildRetroTab(1, Icons.edit_note, 'DRAFT', pixelStyle),
+              _buildRetroTab(1, Icons.edit_note, settings.getText('DRAFT'), pixelStyle),
               const SizedBox(width: 10),
-              _buildRetroTab(2, Icons.grid_view, 'POKEDEX', pixelStyle),
+              _buildRetroTab(2, Icons.grid_view, settings.getText('POKEDEX'), pixelStyle),
             ],
           ),
         ),
