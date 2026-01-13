@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pokemon_diary/providers/gacha_provider.dart';
+import 'package:pokemon_diary/providers/pokedex_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'home_screen.dart';
 import 'providers/diary_provider.dart';
 import 'providers/trainer_provider.dart';
+import 'providers/pokedex_provider.dart';
 import 'services/services.dart';
 
 void main() async {
@@ -32,6 +34,9 @@ class PokemonDiaryApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<GachaProvider>(
           create: (_) => GachaProvider(),
+        ),
+        ChangeNotifierProvider<PokedexProvider>(
+          create: (_) => PokedexProvider(),
         ),
       ],
       child: MaterialApp(

@@ -173,7 +173,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                 children: [
                   Positioned.fill(
                     child: CustomPaint(
-                      painter: _LinedPaperPainter(),
+                      painter: LinedPaperPainter(),
                     ),
                   ),
                   Positioned.fill(
@@ -466,21 +466,4 @@ class _SentimentDot extends StatelessWidget {
       ),
     );
   }
-}
-
-class _LinedPaperPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFFCCE0EA)
-      ..strokeWidth = 1;
-
-    const lineGap = 24.0; 
-    for (double y = 0; y < size.height; y += lineGap) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

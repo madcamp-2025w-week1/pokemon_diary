@@ -265,17 +265,3 @@ class PokemonDetailDialog extends StatelessWidget {
     );
   }
 }
-
-class StripePainter extends CustomPainter {
-  final Color stripeColor;
-  StripePainter({required this.stripeColor});
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = stripeColor;
-    for (double i = 0; i < size.height; i += 8.0) {
-      canvas.drawRect(Rect.fromLTWH(0, i, size.width, 4.0), paint);
-    }
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

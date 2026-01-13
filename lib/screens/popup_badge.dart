@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
-import '../utils/ui_theme_helper.dart';
+import '../utils/utils.dart';
 
 class BadgeUnlockDialog extends StatefulWidget {
   final PokemonBadge badge;
@@ -227,22 +227,4 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
       ),
     );
   }
-}
-
-class StripePainter extends CustomPainter {
-  final Color stripeColor;
-
-  StripePainter({required this.stripeColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = stripeColor;
-    const stripeHeight = 4.0;
-    for (double i = 0; i < size.height; i += stripeHeight * 2) {
-      canvas.drawRect(Rect.fromLTWH(0, i, size.width, stripeHeight), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
