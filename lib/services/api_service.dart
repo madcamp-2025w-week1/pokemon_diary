@@ -12,11 +12,15 @@ class PokemonApiService {
   static const String _retroSpritePath = 'assets/data/pokemon_sprites_retro.csv'; // Ensure this file exists!
 
   List<Pokemon>? _cache;
+  bool? _isCacheRetro; // To track the style of the cached data
 
   /// Added optional parameters to control style and forcing a refresh
   Future<List<Pokemon>> getAllPokemon({bool isRetro = false, bool forceRefresh = false}) async {
-    // Return cache if available and we aren't forcing a refresh
-    if (_cache != null && !forceRefresh) return _cache!;
+    // Determine if the requested style is different from the cached one.
+    final bool styleChanged = _isCacheRetro != null && _isCacheRetro != isRetro;
+
+    // Return cache if available, not forcing refresh, and style is the same
+    if (_cache != null && !forceRefresh && !styleChanged) return _cache!;
 
     // 1. Determine which sprite file to use
     final spritePath = isRetro ? _retroSpritePath : _modernSpritePath;
@@ -32,6 +36,7 @@ class PokemonApiService {
 
     if (coreDataMap.isEmpty) {
       _cache = [];
+      _isCacheRetro = isRetro;
       return _cache!;
     }
 
@@ -50,14 +55,14 @@ class PokemonApiService {
     }
 
     _cache = pokemonList;
+    _isCacheRetro = isRetro; // Update the cache style tracker
     return pokemonList;
   }
   
   // ... (rest of the file: getPokemonById, _loadCsvAsIdMap remains the same)
-  Future<Pokemon?> getPokemonById(int id) async {
-      // If we call this directly, it might use the old cache. 
-      // Usually better to ensure getAllPokemon is called with correct flags first.
-      final allPokemon = await getAllPokemon(); 
+  Future<Pokemon?> getPokemonById(int id, {bool isRetro = false}) async {
+      // The getAllPokemon method will now handle refreshing if the style has changed.
+      final allPokemon = await getAllPokemon(isRetro: isRetro); 
       try {
         return allPokemon.firstWhere((pokemon) => pokemon.id == id);
       } catch (_) {

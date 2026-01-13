@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
@@ -34,11 +35,17 @@ class _DraftScreenState extends State<DraftScreen>
   BuildContext? _editorContext;
   double _lastMessageHeight = 0;
   bool _wasKeyboardVisible = false;
+  bool _lastIsRetro = false;
+  late SettingsProvider _settingsProvider;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    
+    _settingsProvider = context.read<SettingsProvider>();
+    _lastIsRetro = _settingsProvider.isRetroArt;
+    _settingsProvider.addListener(_onSettingsChanged);
 
     // 1. Existing Blink Controller
     _blinkController = AnimationController(
@@ -62,7 +69,11 @@ class _DraftScreenState extends State<DraftScreen>
       final diaryProvider = context.read<DiaryProvider>();
       final apiService = context.read<PokemonApiService>();
       
-      context.read<GachaProvider>().loadTodayEntry(diaryProvider, apiService);
+      context.read<GachaProvider>().loadTodayEntry(
+        diaryProvider: diaryProvider, 
+        apiService: apiService,
+        isRetro: _settingsProvider.isRetroArt,
+      );
     });
 
     _editorFocusNode.addListener(() {
@@ -85,12 +96,26 @@ class _DraftScreenState extends State<DraftScreen>
 
   @override
   void dispose() {
+    _settingsProvider.removeListener(_onSettingsChanged);
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _editorFocusNode.dispose();
     _blinkController.dispose();
     _revealController.dispose(); // <--- ADD THIS
     super.dispose();
+  }
+
+  void _onSettingsChanged() {
+    if (!mounted) return;
+    if (_settingsProvider.isRetroArt != _lastIsRetro) {
+      setState(() {
+        _lastIsRetro = _settingsProvider.isRetroArt;
+      });
+      context.read<GachaProvider>().refreshCurrentPokemon(
+        context.read<PokemonApiService>(),
+        _lastIsRetro
+      );
+    }
   }
 
   Future<void> _onGachaPressed() async {
@@ -122,6 +147,7 @@ class _DraftScreenState extends State<DraftScreen>
       diaryProvider: context.read<DiaryProvider>(),
       trainerProvider: context.read<TrainerProvider>(),
       apiService: context.read<PokemonApiService>(),
+      isRetro: _settingsProvider.isRetroArt,
       onError: (msg) {
          // Should not be reached often if we check length above, 
          // but good for other errors
@@ -254,14 +280,21 @@ class _DraftScreenState extends State<DraftScreen>
 
   Widget _buildTopVisual(GachaProvider gacha, SettingsProvider settings) {
     if (gacha.isResultMode && gacha.currentPokemon != null) {
-      final image = Image.network(
+      final image = CachedNetworkImage(
         // Use logic from your PokedexScreen to show Retro vs Modern here too if desired, 
         // but typically the 'HomeSprite' is the result.
         // If you want the Gacha reveal to match the art style:
-        settings.isRetroArt 
-          ? (gacha.currentPokemon!.gifUrl ?? gacha.currentPokemon!.homeSpriteUrl) 
-          : gacha.currentPokemon!.homeSpriteUrl,
+        imageUrl: gacha.currentPokemon!.gifUrl ?? gacha.currentPokemon!.homeSpriteUrl,
         fit: BoxFit.contain,
+        filterQuality: FilterQuality.none,
+        memCacheHeight: 200,
+        placeholder: (context, url) => Center(
+        child: SizedBox(
+          width: 20, height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey[300]),
+          ),
+        ),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
       );
       return SizedBox(
         height: 160,

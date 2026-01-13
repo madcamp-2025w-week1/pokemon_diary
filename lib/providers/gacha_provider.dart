@@ -48,6 +48,17 @@ class GachaProvider extends ChangeNotifier {
     _pendingBadges.clear();
   }
 
+  /// Refreshes the current Pokemon data (useful when art style settings change)
+  Future<void> refreshCurrentPokemon(PokemonApiService apiService, bool isRetro) async {
+    if (_currentPokemon != null) {
+      final updated = await apiService.getPokemonById(_currentPokemon!.id, isRetro: isRetro);
+      if (updated != null) {
+        _currentPokemon = updated;
+        notifyListeners();
+      }
+    }
+  }
+
   void finishReveal() {
     if (_isRevealing) {
       _isRevealing = false;
@@ -56,7 +67,11 @@ class GachaProvider extends ChangeNotifier {
   }
 
   /// Checks if the user has already drafted today
-  Future<void> loadTodayEntry(DiaryProvider diaryProvider, PokemonApiService apiService) async {
+  Future<void> loadTodayEntry({
+    required DiaryProvider diaryProvider, 
+    required PokemonApiService apiService,
+    required bool isRetro,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
@@ -70,10 +85,10 @@ class GachaProvider extends ChangeNotifier {
     // Check local cache in DiaryProvider instead of querying DB again
     final existing = diaryProvider.diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (false /*existing.isNotEmpty*/) {
+    if (false/*existing.isNotEmpty*/) {
       final diary = existing.first;
       // We need to fetch the Pokemon details to display the result card
-      final pokemon = await apiService.getPokemonById(diary.pokemonId);
+      final pokemon = await apiService.getPokemonById(diary.pokemonId, isRetro: isRetro);
 
       _todayDiary = diary;
       _currentPokemon = pokemon;
@@ -94,6 +109,7 @@ class GachaProvider extends ChangeNotifier {
     required DiaryProvider diaryProvider,
     required TrainerProvider trainerProvider,
     required PokemonApiService apiService,
+    required bool isRetro,
     required Function(String) onError, // Callback for UI errors (e.g. Snackbars)
   }) async {
     
@@ -118,7 +134,7 @@ class GachaProvider extends ChangeNotifier {
 
     // 2. Perform Logic (Parallel to animation)
     // We calculate the result early, but wait for animation to reveal it.
-    final logicFuture = _performGachaLogic(text, apiService);
+    final logicFuture = _performGachaLogic(text, apiService, isRetro: isRetro);
 
     // Wait for "scanning" phase
     soundService.playPokeballSpin();
@@ -172,10 +188,10 @@ class GachaProvider extends ChangeNotifier {
   }
 
   /// Internal helper to orchestrate the Services
-  Future<Map<String, dynamic>> _performGachaLogic(String text, PokemonApiService apiService) async {
+  Future<Map<String, dynamic>> _performGachaLogic(String text, PokemonApiService apiService, {required bool isRetro}) async {
     final sentiment = await _sentimentService.analyzeSentiment(text);
     final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
-    final pokemon = await apiService.getPokemonById(pokemonId);
+    final pokemon = await apiService.getPokemonById(pokemonId, isRetro: isRetro);
 
     final diary = Diary(
       date: _formatDate(DateTime.now()),
@@ -184,7 +200,7 @@ class GachaProvider extends ChangeNotifier {
       pokemonId: pokemonId,
     );
 
-    return {'diary': diary, 'pokemon': pokemon};
+    return {'diary': diary, 'pokemon': pokemon!};
   }
 
   // Helper for DB Date Format (YYYY-MM-DD)
