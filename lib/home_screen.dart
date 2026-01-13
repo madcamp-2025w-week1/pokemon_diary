@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart'; // ScrollDirection 사용을 위해 추가
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pokemon_diary/providers/trainer_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'screens/screens.dart';
-import 'screens/popup_trainer_card.dart';
+import 'providers/providers.dart';
 import 'services/sound_service.dart';
 
 class HomeScreen extends StatefulWidget {
