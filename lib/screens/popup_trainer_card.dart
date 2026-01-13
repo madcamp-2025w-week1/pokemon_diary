@@ -4,6 +4,7 @@ import 'package:pokemon_diary/screens/popup_badge.dart';
 import 'package:provider/provider.dart';
 import '../providers/trainer_provider.dart';
 import '../models/models.dart'; // Ensure PokemonBadge is exported here
+import '../utils/utils.dart';
 
 class TrainerCardPage extends StatefulWidget {
   const TrainerCardPage({super.key});
@@ -14,15 +15,6 @@ class TrainerCardPage extends StatefulWidget {
 
 class _TrainerCardPageState extends State<TrainerCardPage> {
 
-  String _formatDate(DateTime date) {
-    const months = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'
-    ];
-    final month = months[date.month - 1];
-    return '$month ${date.day}, ${date.year}';
-  }
-
   @override
   Widget build(BuildContext context) {
     // Watch the provider to get real-time badge updates
@@ -32,7 +24,7 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
     if (trainerProvider.debutDate != "???" && trainerProvider.debutDate != "NOT STARTED") {
       try {
         final date = DateTime.parse(trainerProvider.debutDate);
-        displayDebut = _formatDate(date);
+        displayDebut = DateHelper.formatFullDate(date);
       } catch (_) {
         displayDebut = trainerProvider.debutDate;
       }
