@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'screens/screens.dart';
 import 'providers/providers.dart';
 import 'services/sound_service.dart';
+import 'utils/utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -101,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ],
               ),
               child: Text(
-                _formatDate(DateTime.now()).toUpperCase(),
+                DateHelper.formatFullDate(DateTime.now()).toUpperCase(),
                 style: pixelStyle.copyWith(fontSize: 10, letterSpacing: 1),
               ),
             ),
@@ -252,14 +253,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-    final String dayName = weekdays[date.weekday % 7];
-    final String monthName = months[date.month - 1];
-    return "$dayName, ${date.day} $monthName ${date.year}";
   }
 }
 
