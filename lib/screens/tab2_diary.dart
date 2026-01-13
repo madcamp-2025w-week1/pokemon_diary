@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
+import '../services/sound_service.dart';
 
 class Tab2Diary extends StatefulWidget {
   const Tab2Diary({super.key});
@@ -252,6 +253,7 @@ class _Tab2DiaryState extends State<Tab2Diary> {
                   setState(() {
                     _selectedIndex = clamped;
                   });
+                  SoundService().playCardSelectSound();
                 }
               }
               return false;

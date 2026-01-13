@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../models/models.dart';
+import '../services/sound_service.dart';
 
 class BadgeUnlockDialog extends StatefulWidget {
   final PokemonBadge badge;
@@ -213,7 +215,10 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
 
                       // Close Button
                       GestureDetector(
-                        onTap: widget.onClose,
+                        onTap: () {
+                          SoundService().playCardSelectSound();
+                          widget.onClose();
+                        },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 16),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
