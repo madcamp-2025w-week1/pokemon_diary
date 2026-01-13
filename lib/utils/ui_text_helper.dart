@@ -51,6 +51,30 @@ class UiText {
     'AWESOME': {'en': 'AWESOME!', 'ko': '멋져요!'},
     'KEEP_GOING': {'en': 'KEEP GOING', 'ko': '계속하세요'},
 
+    // --- BADGE NAMES ---
+    'BADGE_BOULDER_NAME': {'en': 'Boulder Badge', 'ko': '회색배지'},
+    'BADGE_CASCADE_NAME': {'en': 'Cascade Badge', 'ko': '블루배지'},
+    'BADGE_THUNDER_NAME': {'en': 'Thunder Badge', 'ko': '오렌지배지'},
+    'BADGE_RAINBOW_NAME': {'en': 'Rainbow Badge', 'ko': '무지개배지'},
+    'BADGE_SOUL_NAME': {'en': 'Soul Badge', 'ko': '핑크배지'},
+    'BADGE_MARSH_NAME': {'en': 'Marsh Badge', 'ko': '골드배지'},
+    'BADGE_VOLCANO_NAME': {'en': 'Volcano Badge', 'ko': '진홍색배지'},
+    'BADGE_EARTH_NAME': {'en': 'Earth Badge', 'ko': '그린배지'},
+
+    // --- BADGE DESCRIPTIONS ---
+    'BADGE_BOULDER_DESC': {'en': 'Log entries on 7 different days', 'ko': '7일 동안 일기 작성'},
+    'BADGE_CASCADE_DESC': {'en': 'Log Joy, Sad, Angry, and Calm', 'ko': '기쁨, 슬픔, 화남, 평온 모두 기록'},
+    'BADGE_THUNDER_DESC': {'en': '3-day streak of High Energy (Joy)', 'ko': '3일 연속 기쁨 기록'},
+    'BADGE_RAINBOW_DESC': {'en': 'Catch 10 unique Pokemon types', 'ko': '10가지 다른 타입 포켓몬 수집'},
+    'BADGE_SOUL_DESC': {'en': 'Write a long entry (>500 chars)', 'ko': '500자 이상의 긴 일기 작성'},
+    'BADGE_MARSH_DESC': {'en': 'Achieve a 30-day writing streak', 'ko': '30일 연속 일기 작성 달성'},
+    'BADGE_VOLCANO_DESC': {'en': 'Log 5 Angry entries', 'ko': '화남 일기 5회 작성'},
+    'BADGE_EARTH_DESC': {'en': 'Log 50 total entries', 'ko': '총 일기 50회 작성'},
+
+    // --- GENDER ---
+    'MALE': {'en': 'MALE', 'ko': '남성'},
+    'FEMALE': {'en': 'FEMALE', 'ko': '여성'},
+
     // --- Common / Settings ---
     'SETTINGS': {'en': 'SETTINGS', 'ko': '설정'},
     'CLOSE': {'en': 'CLOSE', 'ko': '닫기'},

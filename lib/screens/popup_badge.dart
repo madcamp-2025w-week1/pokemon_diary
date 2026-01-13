@@ -58,6 +58,9 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
     final innerColor = isUnlocked ? baseColor.withOpacity(0.15) : const Color(0xFFbdc3c7);
     final iconColor = mainColor;
 
+    final badgeName = settings.getText(widget.badge.name).toUpperCase();
+    final badgeDesc = settings.getText(widget.badge.description);
+
     final headerText = isUnlocked ? settings.getText('ACHIEVEMENT') : settings.getText('LOCKED');
     final buttonText = isUnlocked ? settings.getText('AWESOME') : settings.getText('KEEP_GOING');
 
@@ -133,7 +136,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
                       Opacity(
                         opacity: isUnlocked ? 1.0 : 0.6,
                         child: Text(
-                          widget.badge.name.toUpperCase(),
+                          badgeName,
                           style: pixelStyle.copyWith(fontSize: 12, fontWeight: FontWeight.bold),
                           textAlign: TextAlign.center,
                         ),
@@ -144,7 +147,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
                         child: Opacity(
                           opacity: isUnlocked ? 1.0 : 0.7,
                           child: Text(
-                            widget.badge.description,
+                            badgeDesc,
                             style: pixelStyle.copyWith(fontSize: 10, color: Colors.black87),
                             textAlign: TextAlign.center,
                           ),

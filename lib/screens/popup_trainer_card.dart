@@ -20,7 +20,7 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
   @override
   Widget build(BuildContext context) {
     final trainerProvider = context.watch<TrainerProvider>();
-    final settings = context.watch<SettingsProvider>(); // LOCALIZATION
+    final settings = context.watch<SettingsProvider>();
 
     String displayDebut = settings.getText('LOADING');
     if (trainerProvider.debutDate != "???" && trainerProvider.debutDate != "NOT STARTED") {
@@ -43,7 +43,7 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
           debutDate: displayDebut,
           streak: trainerProvider.streak,
           badges: trainerProvider.badges, 
-          settings: settings, // PASS SETTINGS
+          settings: settings, 
           onEditName: () => _showEditNameDialog(context, trainerProvider, settings),
           onEditGender: () => _showGenderDialog(context, trainerProvider, settings),
           onSave: () {
@@ -82,22 +82,22 @@ class _TrainerCardPageState extends State<TrainerCardPage> {
         children: [
           SimpleDialogOption(
             onPressed: () {
-              provider.updateGender("MALE");
+              provider.updateGender("MALE"); // Internal value stays ENGLISH
               Navigator.pop(context);
             },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text("MALE"),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(settings.getText("MALE")), // Display localized
             ),
           ),
           SimpleDialogOption(
             onPressed: () {
-              provider.updateGender("FEMALE");
+              provider.updateGender("FEMALE"); // Internal value stays ENGLISH
               Navigator.pop(context);
             },
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: Text("FEMALE"),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(settings.getText("FEMALE")), // Display localized
             ),
           ),
         ],
@@ -112,7 +112,7 @@ class TrainerCardDialog extends StatelessWidget {
   final String debutDate;
   final int streak;
   final List<PokemonBadge> badges; 
-  final SettingsProvider settings; // ADDED
+  final SettingsProvider settings; 
   final VoidCallback onEditName;
   final VoidCallback onEditGender;
   final VoidCallback onSave;
@@ -142,9 +142,13 @@ class TrainerCardDialog extends StatelessWidget {
     const Color borderDark = Color(0xFF286a6b);
     const Color cardBgLight = Color(0xFF86c096);
 
+    // Image logic checks the internal English string "MALE"/"FEMALE"
     final String imagePath = gender == "MALE"
         ? 'assets/images/red.png'
         : 'assets/images/misty.png';
+    
+    // Display logic translates it (e.g., "MALE" -> "남성")
+    final String displayGender = settings.getText(gender);
 
     return Container(
       width: 340,
@@ -198,7 +202,7 @@ class TrainerCardDialog extends StatelessWidget {
                             border: Border.all(color: Colors.black.withOpacity(0.2)),
                           ),
                           child: Text(
-                            settings.getText('TRAINER_CARD'), // Localized
+                            settings.getText('TRAINER_CARD'), 
                             style: pixelStyle.copyWith(color: Colors.white, fontSize: 12),
                           ),
                         ),
@@ -218,7 +222,8 @@ class TrainerCardDialog extends StatelessWidget {
                               children: [
                                 _buildInfoRow(settings.getText('NAME'), trainerName, pixelStyle, onTap: onEditName),
                                 const SizedBox(height: 4),
-                                _buildInfoRow(settings.getText('GENDER'), gender, pixelStyle, onTap: onEditGender),
+                                // Pass the TRANSLATED gender here
+                                _buildInfoRow(settings.getText('GENDER'), displayGender, pixelStyle, onTap: onEditGender),
                                 const SizedBox(height: 4),
                                 Text("${settings.getText('DEBUT')}: $debutDate", style: pixelStyle),
                                 const SizedBox(height: 4),
