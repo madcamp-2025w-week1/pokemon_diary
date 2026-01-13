@@ -27,11 +27,11 @@ class SoundService {
     await _bgmPlayer.setVolume(0.4);
 
     await _tabSfxPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _tabSfxPlayer.setVolume(1.0);
+    await _tabSfxPlayer.setVolume(0.1);
     await _tabSfxPlayer.setSource(AssetSource('sounds/sfx_card_select.wav'));
 
     await _cardSfxPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _cardSfxPlayer.setVolume(1.0);
+    await _cardSfxPlayer.setVolume(0.1);
     await _cardSfxPlayer.setSource(AssetSource('sounds/sfx_card_select.wav'));
   }
 
