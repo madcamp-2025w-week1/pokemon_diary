@@ -148,6 +148,7 @@ class _PokedexTile extends StatelessWidget {
     Widget imageWidget = CachedNetworkImage(
       imageUrl: imageUrl,
       fit: BoxFit.contain,
+      filterQuality: FilterQuality.none, 
       memCacheHeight: 200,
       placeholder: (context, url) => Center(
         child: SizedBox(
