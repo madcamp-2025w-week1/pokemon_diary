@@ -95,14 +95,23 @@ class _DraftScreenState extends State<DraftScreen>
 
   Future<void> _onGachaPressed() async {
     final gachaProvider = context.read<GachaProvider>();
-  final trimmedText = _controller.text.trim();
-  final canStart = trimmedText.length >= 10;
-
+    final trimmedText = _controller.text.trim();
     
+    // Check length BEFORE starting animations/sounds
+    if (trimmedText.length < 10) {
+      final settings = context.read<SettingsProvider>();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(settings.getText('WARNING_LENGTH')), 
+          backgroundColor: Colors.redAccent
+        )
+      );
+      return; // Stop here so we don't clear text
+    }
+    
+    // If valid, proceed with animation
     await SoundService().duckBgm();
     await SoundService().playGachaButton();
-    
-    final settings = context.read<SettingsProvider>(); // For localized error
 
     _hasStartedReveal = false;
     _revealController.reset();
@@ -114,22 +123,21 @@ class _DraftScreenState extends State<DraftScreen>
       trainerProvider: context.read<TrainerProvider>(),
       apiService: context.read<PokemonApiService>(),
       onError: (msg) {
+         // Should not be reached often if we check length above, 
+         // but good for other errors
          _blinkController.stop();
-         // If msg is the generic length error, localize it
-         String displayMsg = msg;
-         if (msg.contains("10 characters")) {
-            displayMsg = settings.getText('WARNING_LENGTH');
-         }
-
          ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text(displayMsg), backgroundColor: Colors.redAccent)
+           SnackBar(content: Text(msg), backgroundColor: Colors.redAccent)
          );
       },
     ).then((_) {
       if (mounted) {
         _blinkController.stop();
-        _controller.clear();
-        _checkAndShowBadges();
+        // Only clear if we successfully switched away from input mode
+        if (!gachaProvider.isInputMode) {
+           _controller.clear();
+           _checkAndShowBadges();
+        }
       }
     });
   }

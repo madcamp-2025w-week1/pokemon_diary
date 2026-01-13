@@ -102,7 +102,17 @@ class SoundService {
   }
 
   Future<void> duckBgm() async {
-    await _bgmPlayer.setVolume(_bgmLoweredVolume);
+    // FIX: If volume is off (or very low), don't set it to the fixed 0.15
+    if (_bgmVolume <= 0) return;
+
+    // Ensure we don't make it LOUDER if the user set volume to 0.1
+    // We take the smaller of the two values: the 'duck' target or the current user setting.
+    double targetVolume = _bgmLoweredVolume;
+    if (_bgmVolume < targetVolume) {
+      targetVolume = _bgmVolume;
+    }
+
+    await _bgmPlayer.setVolume(targetVolume);
   }
 
   Future<void> restoreBgm() async {
