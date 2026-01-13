@@ -49,7 +49,7 @@ class SoundService {
     await _cardSfxPlayer.setSource(AssetSource('sounds/sfx_card_select.wav'));
 
     await _pokeballSpinPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _pokeballSpinPlayer.setVolume(0.5);
+    await _pokeballSpinPlayer.setVolume(1.0);
     await _pokeballSpinPlayer.setSource(AssetSource('sounds/sfx_pokeball_spin.wav'));
     _pokeballSpinDuration =
         await _pokeballSpinPlayer.getDuration() ?? _pokeballSpinDuration;
