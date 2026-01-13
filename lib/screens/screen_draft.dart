@@ -3,11 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 
-import '../providers/diary_provider.dart';
-import '../providers/gacha_provider.dart';
-import '../providers/trainer_provider.dart';
+import '../providers/providers.dart';
 import '../services/services.dart';
-import 'popup_badge.dart';
+import 'screens.dart';
 
 class Tab1Draft extends StatefulWidget {
   const Tab1Draft({super.key});

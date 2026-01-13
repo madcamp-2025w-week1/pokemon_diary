@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pokemon_diary/screens/popup_diary_detail.dart';
 
 import '../models/models.dart';
 import '../services/services.dart';
 import '../utils/utils.dart';
+import 'screens.dart';
 
 // --- Pokemon Detail Dialog (Unchanged Type-Themed Version) ---
 class PokemonDetailDialog extends StatelessWidget {

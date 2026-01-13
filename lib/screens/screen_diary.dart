@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
-import '../providers/diary_provider.dart';
+import '../providers/providers.dart';
 import '../utils/utils.dart';
 
 class Tab2Diary extends StatefulWidget {

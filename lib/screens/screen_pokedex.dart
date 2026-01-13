@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pokemon_diary/screens/popup_pokemon_detail.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/models.dart';
 import '../providers/pokedex_provider.dart';
 import '../providers/diary_provider.dart';
+import '../screens/popup_pokemon_detail.dart';
 
 class Tab3Pokedex extends StatefulWidget {
   const Tab3Pokedex({super.key});
@@ -20,7 +20,7 @@ class _Tab3PokedexState extends State<Tab3Pokedex> {
   @override
   void initState() {
     super.initState();
-    // 1. Trigger initial load only once
+    // Trigger initial load only once
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PokedexProvider>().loadPokedex();
     });
@@ -28,13 +28,13 @@ class _Tab3PokedexState extends State<Tab3Pokedex> {
 
   @override
   Widget build(BuildContext context) {
-    // 2. Watch DiaryProvider to keep "Owned" list in sync
+    // 1. Watch both providers
     final diaryProvider = context.watch<DiaryProvider>();
     final pokedexProvider = context.watch<PokedexProvider>();
     
-    // Sync the owned list whenever diaries change
-    // (It's safe to call this in build because the provider checks for equality before notifying)
-    pokedexProvider.updateOwnedList(diaryProvider.diaries);
+    // 2. Calculate Owned IDs locally (Derived State)
+    // This runs every time 'diaryProvider' updates, ensuring the list is fresh.
+    final ownedIds = diaryProvider.diaries.map((d) => d.pokemonId).toSet();
 
     final isKorean = Localizations.localeOf(context).languageCode == 'ko';
     final pixelText = GoogleFonts.pressStart2p(
@@ -66,7 +66,6 @@ class _Tab3PokedexState extends State<Tab3Pokedex> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFF1B2D3A), width: 2),
                   ),
-                  // 3. Use Consumer or direct access (already watched above)
                   child: pokedexProvider.isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : GridView.builder(
@@ -79,7 +78,9 @@ class _Tab3PokedexState extends State<Tab3Pokedex> {
                           ),
                           itemBuilder: (context, index) {
                             final pokemon = pokedexProvider.allPokemon[index];
-                            final isOwned = pokedexProvider.isOwned(pokemon.id);
+                            
+                            // 3. Check ownership using the local Set
+                            final isOwned = ownedIds.contains(pokemon.id);
                             
                             return _PokedexTile(
                               pokemon: pokemon,
@@ -118,6 +119,7 @@ class _Tab3PokedexState extends State<Tab3Pokedex> {
   }
 }
 
+// ... _PokedexTile class remains the same ...
 class _PokedexTile extends StatelessWidget {
   final Pokemon pokemon;
   final bool isOwned;
@@ -169,7 +171,7 @@ class _PokedexTile extends StatelessWidget {
         final pixelId = GoogleFonts.pressStart2p(fontSize: idFontSize, color: nameColor);
         final pixelName = GoogleFonts.pressStart2p(fontSize: nameFontSize, color: nameColor);
 
-        // Uses Theme Colors Helper if you implemented it, otherwise hardcoded for now
+        // Uses Theme Colors Helper
         final lineColor = const Color(0xFF2B2B2B);
         final bandOuter = isOwned ? const Color(0xFF4F6E3E) : const Color(0xFF3F4A3A);
         final innerFill = isOwned ? const Color(0xFFF7F1E3) : const Color(0xFF6E7A67);

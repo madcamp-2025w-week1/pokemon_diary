@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pokemon_diary/screens/popup_badge.dart'; 
 import 'package:provider/provider.dart';
+
 import '../providers/trainer_provider.dart';
 import '../models/models.dart'; // Ensure PokemonBadge is exported here
 import '../utils/utils.dart';
+import 'screens.dart';
 
 class TrainerCardPage extends StatefulWidget {
   const TrainerCardPage({super.key});
