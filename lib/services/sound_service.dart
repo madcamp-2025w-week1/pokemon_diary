@@ -5,9 +5,12 @@ class SoundService {
   factory SoundService() => _instance;
   SoundService._internal();
 
+  Future<void>? _initFuture;
+
   final AudioPlayer _bgmPlayer = AudioPlayer();
   final AudioPlayer _tabSfxPlayer = AudioPlayer();
   final AudioPlayer _cardSfxPlayer = AudioPlayer();
+  final AudioPlayer _gachaButtonPlayer = AudioPlayer();
   final AudioPlayer _pokeballSpinPlayer = AudioPlayer();
   final AudioPlayer _electricShockPlayer = AudioPlayer();
   final AudioPlayer _pokemonOutPlayer = AudioPlayer();
@@ -18,12 +21,19 @@ class SoundService {
   Duration _pokeballSpinDuration = const Duration(milliseconds: 1200);
   Duration _electricShockDuration = const Duration(milliseconds: 900);
   Duration _pokemonOutDuration = const Duration(milliseconds: 1200);
+  Duration _gachaButtonDuration = const Duration(milliseconds: 600);
 
   Duration get pokeballSpinDuration => _pokeballSpinDuration;
   Duration get electricShockDuration => _electricShockDuration;
   Duration get pokemonOutDuration => _pokemonOutDuration;
+  Duration get gachaButtonDuration => _gachaButtonDuration;
 
-  Future<void> init() async {
+  Future<void> init() {
+    _initFuture ??= _initInternal();
+    return _initFuture!;
+  }
+
+  Future<void> _initInternal() async {
     await AudioPlayer.global.setAudioContext(AudioContext(
       android: AudioContextAndroid(
         isSpeakerphoneOn: false,
@@ -48,8 +58,14 @@ class SoundService {
     await _cardSfxPlayer.setVolume(1.0);
     await _cardSfxPlayer.setSource(AssetSource('sounds/sfx_card_select.wav'));
 
+    await _gachaButtonPlayer.setPlayerMode(PlayerMode.lowLatency);
+    await _gachaButtonPlayer.setVolume(0.5);
+    await _gachaButtonPlayer.setSource(AssetSource('sounds/sfx_gacha_button.wav'));
+    _gachaButtonDuration =
+        await _gachaButtonPlayer.getDuration() ?? _gachaButtonDuration;
+
     await _pokeballSpinPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _pokeballSpinPlayer.setVolume(1.0);
+    await _pokeballSpinPlayer.setVolume(0.5);
     await _pokeballSpinPlayer.setSource(AssetSource('sounds/sfx_pokeball_spin.wav'));
     _pokeballSpinDuration =
         await _pokeballSpinPlayer.getDuration() ?? _pokeballSpinDuration;
@@ -86,6 +102,15 @@ class SoundService {
 
   Future<void> playCardSelectSound() async {
     await _playSfx(_cardSfxPlayer, 'sounds/sfx_card_select.wav');
+  }
+
+  Future<void> playGachaButton() async {
+    await init();
+    await _playSfx(
+      _gachaButtonPlayer,
+      'sounds/sfx_gacha_button.wav',
+      maxWait: _gachaButtonDuration,
+    );
   }
 
   Future<void> playPokeballSpin() async {

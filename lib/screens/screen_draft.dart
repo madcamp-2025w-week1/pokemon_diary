@@ -90,9 +90,16 @@ class _DraftScreenState extends State<DraftScreen>
 
   // --- UI ACTION HANDLERS ---
 
-  void _onGachaPressed() {
+  Future<void> _onGachaPressed() async {
     final gachaProvider = context.read<GachaProvider>();
-    
+    final trimmedText = _controller.text.trim();
+    final canStart = trimmedText.length >= 10;
+
+    if (canStart) {
+      await SoundService().duckBgm();
+      await SoundService().playGachaButton();
+    }
+
     // Start the blink animation UI-side
     _hasStartedReveal = false;
     _revealController.reset();
