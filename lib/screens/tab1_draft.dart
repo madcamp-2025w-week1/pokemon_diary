@@ -1,15 +1,14 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
-import 'package:pokemon_diary/providers/trainer_provider.dart';
-import 'package:pokemon_diary/screens/badge_popup.dart';
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
 import '../providers/diary_provider.dart';
+import '../providers/gacha_provider.dart';
+import '../providers/trainer_provider.dart';
 import '../services/services.dart';
+import 'badge_popup.dart';
 
 class Tab1Draft extends StatefulWidget {
   const Tab1Draft({super.key});
@@ -20,24 +19,13 @@ class Tab1Draft extends StatefulWidget {
 
 class _Tab1DraftState extends State<Tab1Draft>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+  
+  // Only UI controllers remain here
   final TextEditingController _controller = TextEditingController();
-  final SentimentService _sentimentService = SentimentService();
-  final GachaLogic _gachaLogic = GachaLogic();
-
-  bool _isLoading = true;
-  bool _isResultMode = false;
-  bool _isInputMode = true;
-
-  bool _isGachaAnimating = false;
-  bool _showLightning = false;
-
-  String _currentLightningAnim = 'assets/animations/gray_lightning.json';
-
-  Diary? _todayDiary;
-  Pokemon? _currentPokemon;
-
   late AnimationController _blinkController;
   late Animation<double> _blinkAnimation;
+  
+  // Editor UI State
   bool _isEditorOpen = false;
   final FocusNode _editorFocusNode = FocusNode();
   BuildContext? _editorContext;
@@ -53,11 +41,17 @@ class _Tab1DraftState extends State<Tab1Draft>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _blinkAnimation =
-        Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
+    _blinkAnimation = Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
 
-    _loadTodayEntry();
+    // LOAD DATA ON STARTUP via Provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final diaryProvider = context.read<DiaryProvider>();
+      final apiService = context.read<PokemonApiService>();
+      
+      context.read<GachaProvider>().loadTodayEntry(diaryProvider, apiService);
+    });
 
+    // Close editor if focus lost
     _editorFocusNode.addListener(() {
       if (!_editorFocusNode.hasFocus && _isEditorOpen && _editorContext != null) {
         Navigator.of(_editorContext!).pop();
@@ -67,17 +61,13 @@ class _Tab1DraftState extends State<Tab1Draft>
 
   @override
   void didChangeMetrics() {
+    // Handle keyboard closing logic for the editor
     final bottomInset = View.of(context).viewInsets.bottom;
     final isKeyboardVisible = bottomInset > 0;
 
-    if (_wasKeyboardVisible &&
-        !isKeyboardVisible &&
-        _isEditorOpen &&
-        _editorContext != null &&
-        mounted) {
+    if (_wasKeyboardVisible && !isKeyboardVisible && _isEditorOpen && _editorContext != null && mounted) {
       Navigator.of(_editorContext!).pop();
     }
-
     _wasKeyboardVisible = isKeyboardVisible;
   }
 
@@ -90,260 +80,63 @@ class _Tab1DraftState extends State<Tab1Draft>
     super.dispose();
   }
 
-  Future<void> _openFloatingEditor() async {
-    if (_isEditorOpen) return;
-    setState(() {
-      _isEditorOpen = true;
-    });
+  // --- UI ACTION HANDLERS ---
 
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black54,
-      builder: (context) {
-        _editorContext = context;
-        final viewInsets = MediaQuery.of(context).viewInsets;
-        final maxHeight = MediaQuery.of(context).size.height * 0.7;
-        final minHeight = _lastMessageHeight > 0 ? _lastMessageHeight : 220.0;
-        final constrainedMax = maxHeight < minHeight ? minHeight : maxHeight;
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: viewInsets.bottom + 16,
-          ),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: PopScope(
-              canPop: false,
-              onPopInvokedWithResult: (didPop, result) {
-                if (didPop) return;
-                FocusScope.of(context).unfocus();
-                Navigator.of(context).pop();
-              },
-              child: Container(
-                constraints: BoxConstraints(
-                  minHeight: minHeight,
-                  maxHeight: constrainedMax,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF6EFD8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF202020), width: 2),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black54,
-                      offset: Offset(2, 2),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Stack(
-                  children: [
-                    TextField(
-                      controller: _controller,
-                      autofocus: true,
-                      focusNode: _editorFocusNode,
-                      maxLines: null,
-                      style: GoogleFonts.pressStart2p(
-                        fontSize: 11,
-                        color: Colors.black87,
-                      ),
-                      decoration: InputDecoration(
-                        hintText:
-                            'How are you feeling today? Share your thoughts to find your Pokemon companion...'
-                                .toUpperCase(),
-                        hintStyle: GoogleFonts.pressStart2p(
-                          fontSize: 10,
-                          color: Colors.grey.shade600,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.only(
-                          right: 32,
-                          bottom: 6,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: GestureDetector(
-                        onTap: () => Navigator.of(context).pop(),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF8C2A2A),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: const Color(0xFF202020),
-                              width: 2,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    if (!mounted) return;
-    setState(() {
-      _isEditorOpen = false;
-      _editorContext = null;
-    });
-  }
-
-  Future<void> _loadTodayEntry() async {
-    final todayKey = _formatDate(DateTime.now());
-    final diaries = await DbHelper.instance.getDiaries();
-    final existing = diaries.where((entry) => entry.date == todayKey).toList();
-
-    if (false /*existing.isNotEmpty*/) {
-      final diary = existing.first;
-      if (!mounted) return;
-
-      final apiService = context.read<PokemonApiService>();
-      final pokemon = await apiService.getPokemonById(diary.pokemonId);
-
-      if (!mounted) return;
-      setState(() {
-        _todayDiary = diary;
-        _currentPokemon = pokemon;
-        _isResultMode = true;
-        _isInputMode = false;
-        _isLoading = false;
-      });
-    } else {
-      if (!mounted) return;
-      setState(() {
-        _isResultMode = false;
-        _isInputMode = true;
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _handleGacha() async {
-    final text = _controller.text.trim();
-
-    if (text.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please write at least 10 characters!'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-
-      return;
-    }
-
-    setState(() {
-      _isInputMode = false;
-      _isGachaAnimating = true;
-    });
-
+  void _onGachaPressed() {
+    final gachaProvider = context.read<GachaProvider>();
+    
+    // Start the blink animation UI-side
     _blinkController.repeat(reverse: true);
 
-    final logicFuture = _performGachaLogic(text);
-
-    await Future.delayed(const Duration(milliseconds: 2500));
-
-    final resultData = await logicFuture;
-    final pokemon = resultData['pokemon'] as Pokemon;
-
-    String lightningFile = 'assets/animations/gray_lightning.json';
-    if (pokemon.isMythical) {
-      lightningFile = 'assets/animations/purple_lightning.json';
-    } else if (pokemon.isLegendary) {
-      lightningFile = 'assets/animations/yellow_lightning.json';
-    }
-
-    _blinkController.stop();
-
-    setState(() {
-      _currentLightningAnim = lightningFile;
-      _showLightning = true;
-    });
-
-    if (mounted) {
-      await precacheImage(NetworkImage(pokemon.homeSpriteUrl), context);
-    }
-
-    await Future.delayed(const Duration(milliseconds: 2500));
-
-    final diary = resultData['diary'] as Diary;
-    await DbHelper.instance.insertDiary(diary);
-
-    if (mounted) {
-      // 1. Refresh Diary Provider
-      await context.read<DiaryProvider>().refreshDiaries();
-      
-      // 2. Refresh Trainer Provider (This triggers badge calculation)
-      // Capture provider in variable to use inside loop
-      final trainerProvider = context.read<TrainerProvider>();
-      await trainerProvider.refreshData();
-
-      // 3. CHECK FOR NEW BADGES
-      if (trainerProvider.newlyUnlockedBadges.isNotEmpty) {
-        // Show a dialog for EACH new badge (in case they unlock 2 at once)
-        for (var badge in trainerProvider.newlyUnlockedBadges) {
-          await showDialog(
-            context: context,
-            barrierDismissible: false, // User must click button to close
-            builder: (context) => BadgeUnlockDialog(
-              badge: badge,
-              onClose: () => Navigator.of(context).pop(),
-            ),
-          );
-        }
-        // Clear the list so we don't show them again
-        trainerProvider.clearNewBadges();
+    gachaProvider.performGacha(
+      text: _controller.text,
+      diaryProvider: context.read<DiaryProvider>(),
+      trainerProvider: context.read<TrainerProvider>(),
+      apiService: context.read<PokemonApiService>(),
+      onError: (msg) {
+         _blinkController.stop();
+         ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: Text(msg), backgroundColor: Colors.redAccent)
+         );
+      },
+    ).then((_) {
+      // Cleanup after success
+      if (mounted) {
+        _blinkController.stop();
+        _controller.clear();
+        _checkAndShowBadges();
       }
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _todayDiary = diary;
-      _currentPokemon = pokemon;
-      _isResultMode = true;
-      _isGachaAnimating = false;
-      _showLightning = false;
     });
   }
 
-  Future<Map<String, dynamic>> _performGachaLogic(String text) async {
-    final apiService = context.read<PokemonApiService>();
-    final sentiment = await _sentimentService.analyzeSentiment(text);
-    final pokemonId = await _gachaLogic.draftRandomPokemon(sentiment, apiService);
-    final pokemon = await apiService.getPokemonById(pokemonId);
-
-    final diary = Diary(
-      date: _formatDate(DateTime.now()),
-      content: text,
-      sentiment: sentiment,
-      pokemonId: pokemonId,
-    );
-
-    return {'diary': diary, 'pokemon': pokemon};
+  void _checkAndShowBadges() async {
+    final gachaProvider = context.read<GachaProvider>();
+    final badges = gachaProvider.pendingBadges;
+    
+    if (badges.isNotEmpty) {
+      for (var badge in badges) {
+        if (!mounted) return;
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => BadgeUnlockDialog(
+            badge: badge,
+            onClose: () => Navigator.of(context).pop(),
+          ),
+        );
+      }
+      gachaProvider.clearPendingBadges();
+    }
   }
+
+  // --- BUILD METHOD ---
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    // LISTEN TO STATE
+    final gacha = context.watch<GachaProvider>();
+
+    if (gacha.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
@@ -352,8 +145,7 @@ class _Tab1DraftState extends State<Tab1Draft>
         builder: (context, constraints) {
           const headerHeight = 40.0;
           const statusHeight = 38.0;
-          final controlsHeight =
-              (constraints.maxHeight * 0.16).clamp(90.0, 120.0);
+          final controlsHeight = (constraints.maxHeight * 0.16).clamp(90.0, 120.0);
           final dpadSize = (controlsHeight * 0.75).clamp(60.0, 90.0);
           final gachaSize = (controlsHeight * 0.95).clamp(80.0, 110.0);
 
@@ -363,45 +155,37 @@ class _Tab1DraftState extends State<Tab1Draft>
             child: Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFD93838),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black54,
-                    offset: Offset(4, 4),
-                    blurRadius: 0,
-                  ),
-                ],
+                boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(4, 4))],
               ),
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: Column(
                 children: [
-                  SizedBox(
-                    height: headerHeight,
-                    child: _buildDraftHeader(),
-                  ),
+                  SizedBox(height: headerHeight, child: _buildDraftHeader()),
                   const SizedBox(height: 10),
-                  Expanded(
-                    flex: 5,
-                    child: _buildScreen(),
-                  ),
+                  // PASS STATE TO VISUALS
+                  Expanded(flex: 5, child: _buildScreen(gacha)),
                   const SizedBox(height: 12),
-                  SizedBox(
-                    height: statusHeight,
-                    child: _buildStatusLabel(),
-                  ),
+                  SizedBox(height: statusHeight, child: _buildStatusLabel(gacha)),
                   const SizedBox(height: 12),
+                  // TEXT AREA
                   Expanded(
                     flex: 4,
                     child: LayoutBuilder(
                       builder: (context, boxConstraints) {
                         _lastMessageHeight = boxConstraints.maxHeight;
-                        return _buildMessageArea();
+                        // Determine text to show (History vs Input)
+                        final displayText = (!gacha.isInputMode && gacha.todayDiary != null) 
+                            ? gacha.todayDiary!.content 
+                            : _controller.text;
+                            
+                        return _buildMessageArea(gacha.isInputMode, displayText);
                       },
                     ),
                   ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: controlsHeight,
-                    child: _buildControlsRow(dpadSize, gachaSize),
+                    child: _buildControlsRow(dpadSize, gachaSize, gacha.isInputMode, gacha.isGachaAnimating),
                   ),
                 ],
               ),
@@ -412,7 +196,9 @@ class _Tab1DraftState extends State<Tab1Draft>
     );
   }
 
-  Widget _buildScreen() {
+  // --- WIDGET HELPERS ---
+
+  Widget _buildScreen(GachaProvider gacha) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF355A35),
@@ -431,10 +217,66 @@ class _Tab1DraftState extends State<Tab1Draft>
         child: Center(
           child: FittedBox(
             fit: BoxFit.contain,
-            child: _buildTopVisual(),
+            child: _buildTopVisual(gacha),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTopVisual(GachaProvider gacha) {
+    // 1. SHOW RESULT
+    if (gacha.isResultMode && gacha.currentPokemon != null) {
+      return Image.network(
+        gacha.currentPokemon!.homeSpriteUrl,
+        height: 160,
+        fit: BoxFit.contain,
+      );
+    }
+
+    // 2. SHOW ANIMATION
+    if (gacha.isGachaAnimating) {
+      if (gacha.showLightning) {
+        return Lottie.asset(
+          gacha.currentLightningAnim, // Data from Provider
+          height: 180,
+          fit: BoxFit.contain,
+        );
+      }
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Lottie.asset(
+            'assets/animations/Pokeball loading animation.json',
+            height: 140,
+            fit: BoxFit.contain,
+          ),
+          AnimatedBuilder(
+            animation: _blinkAnimation,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _blinkAnimation.value,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      );
+    }
+
+    // 3. SHOW IDLE
+    return Lottie.asset(
+      'assets/animations/Pokeball loading animation.json',
+      height: 140,
+      fit: BoxFit.contain,
+      animate: false,
     );
   }
 
@@ -446,13 +288,7 @@ class _Tab1DraftState extends State<Tab1Draft>
         color: const Color(0xFF8C2A2A),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFF202020), width: 2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xFF202020),
-            offset: Offset(2, 2),
-            blurRadius: 0,
-          ),
-        ],
+        boxShadow: const [BoxShadow(color: Color(0xFF202020), offset: Offset(2, 2))],
       ),
       child: Row(
         children: [
@@ -460,21 +296,18 @@ class _Tab1DraftState extends State<Tab1Draft>
           const SizedBox(width: 8),
           Text(
             'DRAFT',
-            style: GoogleFonts.pressStart2p(
-              fontSize: 12,
-              color: Colors.white,
-            ),
+            style: GoogleFonts.pressStart2p(fontSize: 12, color: Colors.white),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusLabel() {
-    final label = _isGachaAnimating
+  Widget _buildStatusLabel(GachaProvider gacha) {
+    final label = gacha.isGachaAnimating
         ? 'SCANNING...'
-        : _isResultMode && _currentPokemon != null
-            ? _currentPokemon!.englishName.toUpperCase()
+        : (gacha.isResultMode && gacha.currentPokemon != null)
+            ? gacha.currentPokemon!.englishName.toUpperCase()
             : 'READY TO ANALYZE';
 
     return Container(
@@ -488,19 +321,14 @@ class _Tab1DraftState extends State<Tab1Draft>
       child: Text(
         label.toUpperCase(),
         textAlign: TextAlign.center,
-        style: GoogleFonts.pressStart2p(
-          fontSize: 12,
-          color: Colors.black87,
-        ),
+        style: GoogleFonts.pressStart2p(fontSize: 12, color: Colors.black87),
       ),
     );
   }
 
-  Widget _buildMessageArea() {
-    if (!_isInputMode) {
-      return _buildSpeechBubble(
-        _todayDiary?.content ?? _controller.text,
-      );
+  Widget _buildMessageArea(bool isInputMode, String displayText) {
+    if (!isInputMode) {
+      return _buildSpeechBubble(displayText);
     }
 
     return Container(
@@ -520,18 +348,10 @@ class _Tab1DraftState extends State<Tab1Draft>
             maxLines: null,
             expands: true,
             textAlignVertical: TextAlignVertical.top,
-            style: GoogleFonts.pressStart2p(
-              fontSize: 11,
-              color: Colors.black87,
-            ),
+            style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87),
             decoration: InputDecoration(
-              hintText:
-                  'How are you feeling today? Share your thoughts to find your Pokemon companion...'
-                      .toUpperCase(),
-              hintStyle: GoogleFonts.pressStart2p(
-                fontSize: 10,
-                color: Colors.grey.shade600,
-              ),
+              hintText: 'How are you feeling today? Share your thoughts...'.toUpperCase(),
+              hintStyle: GoogleFonts.pressStart2p(fontSize: 10, color: Colors.grey.shade600),
               border: InputBorder.none,
               contentPadding: EdgeInsets.zero,
             ),
@@ -555,17 +375,13 @@ class _Tab1DraftState extends State<Tab1Draft>
         child: Text(
           text,
           textAlign: TextAlign.left,
-          style: GoogleFonts.pressStart2p(
-            fontSize: 11,
-            color: Colors.black87,
-            height: 1.4,
-          ),
+          style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87, height: 1.4),
         ),
       ),
     );
   }
 
-  Widget _buildControlsRow(double dpadSize, double gachaSize) {
+  Widget _buildControlsRow(double dpadSize, double gachaSize, bool isInputMode, bool isAnimating) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -574,7 +390,7 @@ class _Tab1DraftState extends State<Tab1Draft>
           child: _buildDpad(dpadSize),
         ),
         const SizedBox(width: 16),
-        _buildGachaButton(gachaSize),
+        _buildGachaButton(gachaSize, isInputMode, isAnimating),
       ],
     );
   }
@@ -621,10 +437,9 @@ class _Tab1DraftState extends State<Tab1Draft>
     );
   }
 
-  Widget _buildGachaButton(double gachaSize) {
-    final isEnabled = _isInputMode && !_isGachaAnimating;
-    final buttonColor =
-        isEnabled ? const Color(0xFFF2C94C) : const Color(0xFFB0B0B0);
+  Widget _buildGachaButton(double gachaSize, bool isInputMode, bool isAnimating) {
+    final isEnabled = isInputMode && !isAnimating;
+    final buttonColor = isEnabled ? const Color(0xFFF2C94C) : const Color(0xFFB0B0B0);
     final shadowColor = isEnabled ? Colors.black54 : Colors.black26;
     final fontSize = (gachaSize * 0.14).clamp(10.0, 12.0);
 
@@ -632,7 +447,7 @@ class _Tab1DraftState extends State<Tab1Draft>
       child: Align(
         alignment: Alignment.centerRight,
         child: GestureDetector(
-          onTap: isEnabled ? _handleGacha : null,
+          onTap: isEnabled ? _onGachaPressed : null,
           child: Container(
             margin: const EdgeInsets.only(top: 6, right: 10),
             width: gachaSize,
@@ -641,21 +456,12 @@ class _Tab1DraftState extends State<Tab1Draft>
               color: buttonColor,
               shape: BoxShape.circle,
               border: Border.all(color: const Color(0xFF202020), width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: shadowColor,
-                  offset: Offset(3, 3),
-                  blurRadius: 0,
-                ),
-              ],
+              boxShadow: [BoxShadow(color: shadowColor, offset: Offset(3, 3))],
             ),
             alignment: Alignment.center,
             child: Text(
               'GACHA!',
-              style: GoogleFonts.pressStart2p(
-                fontSize: fontSize,
-                color: Colors.black,
-              ),
+              style: GoogleFonts.pressStart2p(fontSize: fontSize, color: Colors.black),
             ),
           ),
         ),
@@ -663,60 +469,63 @@ class _Tab1DraftState extends State<Tab1Draft>
     );
   }
 
-  Widget _buildTopVisual() {
-    if (_isResultMode && _currentPokemon != null) {
-      return Image.network(
-        _currentPokemon!.homeSpriteUrl,
-        height: 160,
-        fit: BoxFit.contain,
-      );
-    }
+  // --- FLOATING EDITOR (Mostly unchanged UI logic) ---
+  Future<void> _openFloatingEditor() async {
+    if (_isEditorOpen) return;
+    setState(() => _isEditorOpen = true);
 
-    if (_isGachaAnimating) {
-      if (_showLightning) {
-        return Lottie.asset(
-          _currentLightningAnim,
-          height: 180,
-          fit: BoxFit.contain,
-        );
-      }
-      return Stack(
-        alignment: Alignment.center,
-        children: [
-          Lottie.asset(
-            'assets/animations/Pokeball loading animation.json',
-            height: 140,
-            fit: BoxFit.contain,
-          ),
-          AnimatedBuilder(
-            animation: _blinkAnimation,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _blinkAnimation.value,
-                child: Container(
-                  width: 140,
-                  height: 140,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        _editorContext = context;
+        final viewInsets = MediaQuery.of(context).viewInsets;
+        final maxHeight = MediaQuery.of(context).size.height * 0.7;
+        final minHeight = _lastMessageHeight > 0 ? _lastMessageHeight : 220.0;
+        final constrainedMax = maxHeight < minHeight ? minHeight : maxHeight;
+        
+        return Padding(
+          padding: EdgeInsets.only(left: 16, right: 16, bottom: viewInsets.bottom + 16),
+          child: Container(
+            constraints: BoxConstraints(minHeight: minHeight, maxHeight: constrainedMax),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6EFD8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFF202020), width: 2),
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Stack(
+              children: [
+                TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  focusNode: _editorFocusNode,
+                  maxLines: null,
+                  style: GoogleFonts.pressStart2p(fontSize: 11, color: Colors.black87),
+                  decoration: const InputDecoration(border: InputBorder.none),
+                ),
+                Positioned(
+                  right: 0, bottom: 0,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8C2A2A),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+                    ),
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ],
-      );
-    }
-
-    return Lottie.asset(
-      'assets/animations/Pokeball loading animation.json',
-      height: 140,
-      fit: BoxFit.contain,
-      animate: false,
+        );
+      },
     );
-  }
 
-  String _formatDate(DateTime date) {
-    return date.toIso8601String().split('T').first;
+    if (mounted) setState(() { _isEditorOpen = false; _editorContext = null; });
   }
 }

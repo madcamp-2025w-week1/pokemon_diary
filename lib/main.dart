@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokemon_diary/providers/gacha_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'home_screen.dart';
@@ -28,6 +29,9 @@ class PokemonDiaryApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<TrainerProvider>(
           create: (_) => TrainerProvider(),
+        ),
+        ChangeNotifierProvider<GachaProvider>(
+          create: (_) => GachaProvider(),
         ),
       ],
       child: MaterialApp(
