@@ -25,8 +25,6 @@ class SoundService {
   final List<String> bgmTracks = [
     'sounds/bgm_main_8bit.mp3',
   ];
-  
-  
 
   Duration _pokeballSpinDuration = const Duration(milliseconds: 1200);
   Duration _electricShockDuration = const Duration(milliseconds: 900);
@@ -66,25 +64,21 @@ class SoundService {
     await _cardSfxPlayer.setSource(AssetSource('sounds/sfx_card_select.wav'));
 
     await _gachaButtonPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _gachaButtonPlayer.setVolume(0.5);
     await _gachaButtonPlayer.setSource(AssetSource('sounds/sfx_gacha_button.wav'));
     _gachaButtonDuration =
         await _gachaButtonPlayer.getDuration() ?? _gachaButtonDuration;
 
     await _pokeballSpinPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _pokeballSpinPlayer.setVolume(0.5);
     await _pokeballSpinPlayer.setSource(AssetSource('sounds/sfx_pokeball_spin.wav'));
     _pokeballSpinDuration =
         await _pokeballSpinPlayer.getDuration() ?? _pokeballSpinDuration;
 
     await _electricShockPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _electricShockPlayer.setVolume(0.5);
     await _electricShockPlayer.setSource(AssetSource('sounds/sfx_electric_shock.wav'));
     _electricShockDuration =
         await _electricShockPlayer.getDuration() ?? _electricShockDuration;
 
     await _pokemonOutPlayer.setPlayerMode(PlayerMode.lowLatency);
-    await _pokemonOutPlayer.setVolume(0.5);
     await _pokemonOutPlayer.setSource(AssetSource('sounds/sfx_pokemon_out.wav'));
     _pokemonOutDuration =
         await _pokemonOutPlayer.getDuration() ?? _pokemonOutDuration;
@@ -96,6 +90,17 @@ class SoundService {
     await _bgmPlayer.setVolume(_bgmVolume);
   }
 
+  Future<void> setSfxVolume(double volume) async {
+    _sfxVolume = volume.clamp(0.0, 1.0);
+    // Apply to all SFX players
+    await _tabSfxPlayer.setVolume(_sfxVolume);
+    await _cardSfxPlayer.setVolume(_sfxVolume);
+    await _gachaButtonPlayer.setVolume(_sfxVolume);
+    await _pokeballSpinPlayer.setVolume(_sfxVolume);
+    await _electricShockPlayer.setVolume(_sfxVolume);
+    await _pokemonOutPlayer.setVolume(_sfxVolume);
+  }
+
   Future<void> duckBgm() async {
     await _bgmPlayer.setVolume(_bgmLoweredVolume);
   }
@@ -104,48 +109,6 @@ class SoundService {
     await _bgmPlayer.setVolume(_bgmVolume);
   }
 
-  Future<void> setSfxVolume(double volume) async {
-    _sfxVolume = volume.clamp(0.0, 1.0);
-    // Apply to all SFX players
-    await _tabSfxPlayer.setVolume(_sfxVolume);
-    await _cardSfxPlayer.setVolume(_sfxVolume);
-  }
-
-  Future<void> playCardSelectSound() async {
-    await _playSfx(_cardSfxPlayer, 'sounds/sfx_card_select.wav');
-  }
-
-  Future<void> playGachaButton() async {
-    await init();
-    await _playSfx(
-      _gachaButtonPlayer,
-      'sounds/sfx_gacha_button.wav',
-      maxWait: _gachaButtonDuration,
-    );
-  }
-
-  Future<void> playPokeballSpin() async {
-    await _playSfx(
-      _pokeballSpinPlayer,
-      'sounds/sfx_pokeball_spin.wav',
-      maxWait: _pokeballSpinDuration,
-    );
-  }
-
-  Future<void> playElectricShock() async {
-    await _playSfx(
-      _electricShockPlayer,
-      'sounds/sfx_electric_shock.wav',
-      maxWait: _electricShockDuration,
-    );
-  }
-
-  Future<void> playPokemonOut() async {
-    await _playSfx(
-      _pokemonOutPlayer,
-      'sounds/sfx_pokemon_out.wav',
-      maxWait: _pokemonOutDuration,
-    );
   // --- BGM Control ---
   Future<void> playBgm(String trackPath) async {
     try {
@@ -184,12 +147,41 @@ class SoundService {
 
   // --- SFX Triggers ---
 
-  Future<void> playTabSound() async {
-    await _playSfx(_tabSfxPlayer, 'sounds/sfx_card_select.wav');
-  }
-
   Future<void> playCardSelectSound() async {
     await _playSfx(_cardSfxPlayer, 'sounds/sfx_card_select.wav');
+  }
+
+  Future<void> playGachaButton() async {
+    await init();
+    await _playSfx(
+      _gachaButtonPlayer,
+      'sounds/sfx_gacha_button.wav',
+    );
+  }
+
+  Future<void> playPokeballSpin() async {
+    await _playSfx(
+      _pokeballSpinPlayer,
+      'sounds/sfx_pokeball_spin.wav',
+    );
+  }
+
+  Future<void> playElectricShock() async {
+    await _playSfx(
+      _electricShockPlayer,
+      'sounds/sfx_electric_shock.wav',
+    );
+  }
+
+  Future<void> playPokemonOut() async {
+    await _playSfx(
+      _pokemonOutPlayer,
+      'sounds/sfx_pokemon_out.wav',
+    );
+  }
+
+  Future<void> playTabSound() async {
+    await _playSfx(_tabSfxPlayer, 'sounds/sfx_card_select.wav');
   }
 
   Future<void> _playSfx(AudioPlayer player, String asset) async {
@@ -204,23 +196,5 @@ class SoundService {
     // 3. Just Play - Do not wait for completion
     // We await the 'start' of playback, but not the 'end' of the file.
     await player.play(AssetSource(asset));
-    
-    // REMOVED: await player.onPlayerComplete.first; 
-    // This prevents the "hanging future" bug if interrupted.
-  }
-
-  Future<void> _playSfx(AudioPlayer player, String asset, {Duration? maxWait}) async {
-    if (player.state == PlayerState.playing) {
-      await player.stop();
-    }
-    await player.play(AssetSource(asset));
-    if (maxWait == null) {
-      await player.onPlayerComplete.first;
-      return;
-    }
-    await Future.any([
-      player.onPlayerComplete.first,
-      Future.delayed(maxWait),
-    ]);
   }
 }

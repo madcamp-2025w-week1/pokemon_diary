@@ -40,11 +40,22 @@ class _DraftScreenState extends State<DraftScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // 1. Existing Blink Controller
     _blinkController = AnimationController(
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     _blinkAnimation = Tween<double>(begin: 0.0, end: 0.8).animate(_blinkController);
+
+    // 2. ADD THIS: Initialize Reveal Controller
+    _revealController = AnimationController(
+      duration: _revealDuration,
+      vsync: this,
+    );
+    _revealAnimation = CurvedAnimation(
+      parent: _revealController, 
+      curve: Curves.easeOut,
+    );
 
     // LOAD DATA ON STARTUP via Provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,6 +89,7 @@ class _DraftScreenState extends State<DraftScreen>
     _controller.dispose();
     _editorFocusNode.dispose();
     _blinkController.dispose();
+    _revealController.dispose(); // <--- ADD THIS
     super.dispose();
   }
 
