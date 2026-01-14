@@ -94,9 +94,9 @@ The output file will be located at:
 -   **Framework:** Flutter (Dart)
 -   **State Management:** Provider
 -   **Local Database:** sqflite
--   **AI Model:** RoBERTa (via Hugging Face API)
--   **Animations:** Lottie
--   **Data Source:** PokeAPI (Sprites & Data)
+-   **AI Model:** RoBERTa (via Hugging Face API) (https://huggingface.co/SamLowe/roberta-base-go_emotions)
+-   **Animations:** Lottie (https://lottiefiles.com/)
+-   **Data Source:** PokeAPI (Sprites & Data) (https://pokeapi.co/)
 
 ## 📄 License
 
