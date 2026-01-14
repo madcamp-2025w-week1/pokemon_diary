@@ -76,9 +76,9 @@ flutter:
     - assets/sounds/
 
   fonts:
-    - family: DungGeunMo
+    - family: Galmuri11
       fonts:
-        - asset: assets/fonts/DungGeunMo.ttf
+        - asset: assets/fonts/Galmuri11-Bold.ttf
 
 # 1. 앱 아이콘 설정
 flutter_launcher_icons:

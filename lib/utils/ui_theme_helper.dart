@@ -164,7 +164,12 @@ class UiThemeHelper {
   static TextStyle getPixelFont(TextStyle baseStyle, {bool isKorean = false}) {
     if (isKorean) {
       // Custom downloaded font
-      return baseStyle.copyWith(fontFamily: 'DungGeunMo');
+      final double size = baseStyle.fontSize ?? 12.0;
+      final double scaledSize = size * 1.2;
+      return baseStyle.copyWith(fontFamily: 'Galmuri11',
+                                fontSize: scaledSize,
+                                );
+
     } else {
       // Existing Google Font
       return GoogleFonts.pressStart2p(textStyle: baseStyle);

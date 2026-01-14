@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+// import 'package:google_fonts/google_fonts.dart'; // Removed
 import 'package:provider/provider.dart';
 
 import '../services/sound_service.dart';
@@ -132,10 +132,14 @@ class TrainerCardDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pixelStyle = GoogleFonts.pressStart2p(
-      fontSize: 10,
-      color: const Color(0xFF2d3436),
-      height: 1.4,
+    // [Refactor] Replaced GoogleFonts with UiThemeHelper
+    final pixelStyle = UiThemeHelper.getPixelFont(
+      const TextStyle(
+        fontSize: 10,
+        color: Color(0xFF2d3436),
+        height: 1.4,
+      ),
+      isKorean: settings.isKorean,
     );
 
     const Color borderLight = Color(0xFF63c7c8);
