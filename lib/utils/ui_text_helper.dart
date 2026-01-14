@@ -25,7 +25,7 @@ class UiText {
     // --- Draft Screen ---
     'SCANNING': {'en': 'SCANNING...', 'ko': '스캔중...'},
     'READY_ANALYZE': {'en': 'READY TO ANALYZE', 'ko': '준비 완료'},
-    'GACHA': {'en': 'GACHA!', 'ko': '가챠!'},
+    'GACHA': {'en': 'GACHA!', 'ko': '뽑기!'},
     'DRAFT_HINT': {
       'en': 'HOW ARE YOU FEELING TODAY? SHARE YOUR THOUGHTS...',
       'ko': '오늘 기분이 어떠신가요? 이야기를 들려주세요...'
