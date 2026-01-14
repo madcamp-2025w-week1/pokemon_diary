@@ -12,7 +12,6 @@ class SettingsDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     
-    // [Refactor] Use helper
     final pixelStyle = UiThemeHelper.getPixelFont(
       const TextStyle(
         fontSize: 10,
@@ -194,6 +193,12 @@ class SettingsDialog extends StatelessWidget {
     final isSelected = settings.languageCode == code;
     final color = isSelected ? const Color(0xFF286a6b) : Colors.grey[400]!;
     
+    // [Fix] Hardcode font choice based on the button's language code,
+    // instead of the global app setting.
+    // 'ko' button -> uses Korean font (isKorean: true)
+    // 'en' button -> uses English font (isKorean: false)
+    final useKoreanFont = (code == 'ko');
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -210,13 +215,13 @@ class SettingsDialog extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              // [Refactor] Use helper
               style: UiThemeHelper.getPixelFont(
                 TextStyle(
                   fontSize: 9,
                   color: isSelected ? Colors.white : Colors.grey,
                 ),
-                isKorean: settings.isKorean,
+                // CHANGED: Use the local flag instead of settings.isKorean
+                isKorean: useKoreanFont, 
               ),
             ),
           ),
@@ -253,7 +258,6 @@ class SettingsDialog extends StatelessWidget {
           child: Center(
             child: Text(
               label,
-              // [Refactor] Use helper
               style: UiThemeHelper.getPixelFont(
                 TextStyle(
                   fontSize: 9,
