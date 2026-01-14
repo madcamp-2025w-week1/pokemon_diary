@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:csv/csv.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/models.dart';
@@ -103,7 +104,7 @@ class PokemonApiService {
       }
       return dataMap;
     } catch (e) {
-      print("Error loading CSV $path: $e");
+      debugPrint("Error loading CSV $path: $e");
       return {};
     }
   }

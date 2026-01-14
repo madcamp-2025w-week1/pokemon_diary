@@ -58,8 +58,8 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
     final bool isUnlocked = widget.badge.isUnlocked;
     final baseColor = isUnlocked ? UiThemeHelper.getBadgeColor(widget.badge.id) : const Color(0xFF7f8c8d);
     final mainColor = baseColor;
-    final borderColor = isUnlocked ? baseColor.withOpacity(0.6) : const Color(0xFF95a5a6);
-    final innerColor = isUnlocked ? baseColor.withOpacity(0.15) : const Color(0xFFbdc3c7);
+    final borderColor = isUnlocked ? baseColor.withValues(alpha: 0.6) : const Color(0xFF95a5a6);
+    final innerColor = isUnlocked ? baseColor.withValues(alpha: 0.15) : const Color(0xFFbdc3c7);
     final iconColor = mainColor;
 
     final badgeName = settings.getText(widget.badge.name).toUpperCase();
@@ -85,7 +85,7 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
             border: Border.all(color: Colors.white, width: 3),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 blurRadius: 10,
                 offset: const Offset(0, 5),
               ),
@@ -103,11 +103,11 @@ class _BadgeUnlockDialogState extends State<BadgeUnlockDialog> with SingleTicker
                 children: [
                   Positioned(
                     top: headerHeight, left: 0, right: 0, height: whiteStripHeight, 
-                    child: Container(color: Colors.white.withOpacity(0.5)),
+                    child: Container(color: Colors.white.withValues(alpha: 0.5)),
                   ),
                   Positioned(
                     top: 0, left: 0, right: 0, height: firstSectionTotalHeight, 
-                    child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
+                    child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withValues(alpha: 0.05))),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.min,

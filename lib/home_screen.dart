@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             border: Border.all(color: gbBorder, width: 2),
             boxShadow: isSelected
                 ? [
-                    BoxShadow(color: Colors.black.withOpacity(0.2), offset: const Offset(1, 1))
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.2), offset: const Offset(1, 1))
                   ]
                 : [
                     const BoxShadow(color: gbBorder, offset: Offset(3, 3), blurRadius: 0)

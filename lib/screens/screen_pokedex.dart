@@ -292,7 +292,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
         },
         child: Container(
           // Active = Light overlay, Inactive = Transparent
-          color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent,
+          color: isActive ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
           alignment: Alignment.center,
           child: Text(
             label,

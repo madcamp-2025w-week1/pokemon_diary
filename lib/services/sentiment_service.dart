@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../api_keys.dart';
 
@@ -27,7 +28,6 @@ class SentimentService {
 
         // Sort by score (confidence) to get the top emotion
         emotions.sort((a, b) => b['score'].compareTo(a['score']));
-        print(emotions[0]['label']);
         return mapEmotionToAvailableEmotions(emotions[0]['label']); // Returns "joy", "sadness", "anger", etc.
       } 
       
@@ -37,13 +37,13 @@ class SentimentService {
         final errorBody = jsonDecode(response.body);
         double waitTime = errorBody['estimated_time'] ?? 10.0;
         
-        print("Model is sleeping. Waking up... Waiting ${waitTime}s");
+        debugPrint("Model is sleeping. Waking up... Waiting ${waitTime}s");
         
         // Wait for the suggested time before retrying
         await Future.delayed(Duration(seconds: waitTime.ceil()));
         continue; // Retry the loop
       } else {
-        print("Error: ${response.statusCode} ${response.body}");
+        debugPrint("Error: ${response.statusCode} ${response.body}");
         return 'calm'; // default emotion
       }
     }

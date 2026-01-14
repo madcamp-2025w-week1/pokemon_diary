@@ -61,7 +61,7 @@ class PokemonDetailDialog extends StatelessWidget {
           border: Border.all(color: Colors.white, width: 2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -75,10 +75,10 @@ class PokemonDetailDialog extends StatelessWidget {
               Positioned.fill(child: Container(color: pokedexInner)), 
               Positioned(
                 top: 50, left: 0, right: 0, height: 280,
-                child: Container(color: contentBg.withOpacity(0.95)),
+                child: Container(color: contentBg.withValues(alpha: 0.95)),
               ),
               Positioned.fill(
-                child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
+                child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withValues(alpha: 0.05))),
               ),
 
               Container(
@@ -100,7 +100,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: headerColor, 
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.black.withOpacity(0.2)),
+                              border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
                             ),
                             child: Text(
                               settings.getText('POKEDEX'), 
@@ -133,7 +133,7 @@ class PokemonDetailDialog extends StatelessWidget {
                               child: Container(
                                 width: 180, height: 180,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: Colors.white.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(color: borderDark, width: 2),
                                 ),
@@ -166,7 +166,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             
                             Container(
                               padding: const EdgeInsets.symmetric(vertical: 6),
-                              decoration: BoxDecoration(color: borderDark.withOpacity(0.9), borderRadius: BorderRadius.circular(4)),
+                              decoration: BoxDecoration(color: borderDark.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(4)),
                               child: Text(
                                 '${settings.getText('HT')}: ${pokemon.height.toStringAsFixed(1)}m | ${settings.getText('WT')}: ${pokemon.weight.toStringAsFixed(1)}kg',
                                 style: pixelStyle.copyWith(color: Colors.white, fontSize: 10), textAlign: TextAlign.center
@@ -177,7 +177,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: contentBg.withOpacity(0.8),
+                                color: contentBg.withValues(alpha: 0.8),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(color: borderDark),
                               ),
@@ -186,7 +186,7 @@ class PokemonDetailDialog extends StatelessWidget {
                             const SizedBox(height: 16),
                             
                             Text(settings.getText('DATES_CAUGHT'), style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
-                            Container(height: 2, color: Colors.white.withOpacity(0.5), margin: const EdgeInsets.symmetric(vertical: 4)),
+                            Container(height: 2, color: Colors.white.withValues(alpha: 0.5), margin: const EdgeInsets.symmetric(vertical: 4)),
                             
                             FutureBuilder<List<String>>(
                               future: _loadCatchDates(),
@@ -254,7 +254,7 @@ class PokemonDetailDialog extends StatelessWidget {
       decoration: BoxDecoration(
         color: UiThemeHelper.getTypeColor(type),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: Colors.black.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1.5),
         boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2, 2))],
       ),
       child: Text(

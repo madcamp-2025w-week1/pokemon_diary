@@ -163,7 +163,7 @@ class TrainerCardDialog extends StatelessWidget {
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -178,11 +178,11 @@ class TrainerCardDialog extends StatelessWidget {
             Column(
               children: [
                 const SizedBox(height: 48),
-                Container(height: 124, width: double.infinity, color: Colors.white.withOpacity(0.9)),
+                Container(height: 124, width: double.infinity, color: Colors.white.withValues(alpha: 0.9)),
               ],
             ),
             Positioned.fill(
-              child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
+              child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withValues(alpha: 0.05))),
             ),
             Container(
               decoration: BoxDecoration(
@@ -203,7 +203,7 @@ class TrainerCardDialog extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFF70a0e0),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.black.withOpacity(0.2)),
+                            border: Border.all(color: Colors.black.withValues(alpha: 0.2)),
                           ),
                           child: Text(
                             settings.getText('TRAINER_CARD'), 
@@ -239,7 +239,7 @@ class TrainerCardDialog extends StatelessWidget {
                             width: 72, height: 80,
                             margin: const EdgeInsets.only(left: 8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFa8dcb2).withOpacity(0.8),
+                              color: const Color(0xFFa8dcb2).withValues(alpha: 0.8),
                               border: Border.all(color: borderDark, width: 2),
                             ),
                             child: Image.asset(imagePath, fit: BoxFit.contain),
@@ -256,7 +256,7 @@ class TrainerCardDialog extends StatelessWidget {
                           children: [
                             const Spacer(),
                             Text(settings.getText('BADGES'), style: pixelStyle.copyWith(color: Colors.white, fontSize: 10)),
-                            Container(height: 2, color: Colors.white.withOpacity(0.5), margin: const EdgeInsets.only(bottom: 4)),
+                            Container(height: 2, color: Colors.white.withValues(alpha: 0.5), margin: const EdgeInsets.only(bottom: 4)),
                             
                             SizedBox(
                               width: double.infinity,
@@ -281,7 +281,7 @@ class TrainerCardDialog extends StatelessWidget {
                                         padding: const EdgeInsets.all(3),
                                         decoration: badge.isUnlocked ? BoxDecoration(
                                           shape: BoxShape.circle,
-                                          boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.6), blurRadius: 6)]
+                                          boxShadow: [BoxShadow(color: Colors.white.withValues(alpha: 0.6), blurRadius: 6)]
                                         ) : null,
                                         child: Icon(badge.icon, color: badge.isUnlocked ? Colors.white : Colors.black, size: 16),
                                       ),
@@ -301,7 +301,7 @@ class TrainerCardDialog extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8),
+                                    color: Colors.white.withValues(alpha: 0.8),
                                     borderRadius: BorderRadius.circular(4),
                                     border: Border.all(color: borderDark),
                                     boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2, 2))]

@@ -140,7 +140,6 @@ class UiThemeHelper {
       case PokemonType.flying:
         return {'outer': const Color(0xFF0288D1), 'inner': const Color(0xFF81D4FA), 'header': const Color(0xFF0277BD)};
       case PokemonType.normal:
-      default:
         return {'outer': const Color(0xFF2F4D63), 'inner': const Color(0xFF5B7A62), 'header': const Color(0xFF4F6E74)};
     }
   }

@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/material.dart';
 
 class SoundService {
   static final SoundService _instance = SoundService._internal();
@@ -158,10 +159,10 @@ Future<void> playBgm(String trackFilename) async {
       await _bgmPlayer.setVolume(_bgmVolume);
       await _bgmPlayer.resume();
     } catch (e) {
-      print("Error playing BGM: $e");
+      debugPrint("Error playing BGM: $e");
       // ★ 에러 발생 시 기본 BGM으로 폴백 시도 (재귀 호출 방지 조건 추가 권장)
       if (trackFilename != defaultTrack) {
-        print("Falling back to default track.");
+        debugPrint("Falling back to default track.");
         playBgm(defaultTrack);
       }
     }

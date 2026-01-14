@@ -83,7 +83,7 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: Colors.white, width: 3), 
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 10, offset: const Offset(0, 5)),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 10, offset: const Offset(0, 5)),
             ],
           ),
           child: ClipRRect(
@@ -96,7 +96,7 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                   child: Container(color: paperColor),
                 ),
                 Positioned.fill(
-                  child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withOpacity(0.05))),
+                  child: CustomPaint(painter: StripePainter(stripeColor: Colors.black.withValues(alpha: 0.05))),
                 ),
 
                 Container(
@@ -192,7 +192,7 @@ class _DiaryDetailDialogState extends State<DiaryDetailDialog> with SingleTicker
                                 constraints: const BoxConstraints(minHeight: 100),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.5),
+                                  color: Colors.white.withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(color: borderColor, width: 1.5),
                                 ),

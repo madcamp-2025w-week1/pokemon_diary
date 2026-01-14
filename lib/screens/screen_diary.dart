@@ -207,9 +207,9 @@ class _DiaryScreenState extends State<DiaryScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.white.withOpacity(0.4)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
               ),
               child: Row(
                 children: [
@@ -273,7 +273,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Row(
@@ -339,14 +339,14 @@ class _DiaryScreenState extends State<DiaryScreen> {
                   } else if (isCurrentMonth) {
                     bgColor = cellColor; // Default
                   } else {
-                    bgColor = Colors.white.withOpacity(0.4); // Outside Month
+                    bgColor = Colors.white.withValues(alpha: 0.4); // Outside Month
                   }
 
                   return GestureDetector(
                     onTap: hasEntry ? () {
                       SoundService().playCardSelectSound();
                       setState(() {
-                        _selectedIndex = diaryIndex!;
+                        _selectedIndex = diaryIndex;
                       });
                     } : null,
                     child: Container(
@@ -374,7 +374,7 @@ class _DiaryScreenState extends State<DiaryScreen> {
                                child: Padding(
                                  padding: const EdgeInsets.only(top: 6),
                                  child: _DiaryIcon(
-                                   pokemonId: diaries[diaryIndex!].pokemonId,
+                                   pokemonId: diaries[diaryIndex].pokemonId,
                                    size: 20
                                  ),
                                ),
@@ -798,7 +798,7 @@ class _MonthYearPickerDialogState extends State<_MonthYearPickerDialog> {
                     decoration: BoxDecoration(
                       color: const Color(0xFF3B79DB), // Button Blue
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 2),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 2),
                       boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(2, 2))],
                     ),
                     alignment: Alignment.center,
