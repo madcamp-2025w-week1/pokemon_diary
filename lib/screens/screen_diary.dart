@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// import 'package:google_fonts/google_fonts.dart'; // Removed
 import 'package:provider/provider.dart';
 
 import '../models/models.dart';
@@ -33,7 +32,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
     
     final diaries = diaryProvider.diaries;
 
-    // [Refactor] Use helper
     final pixelText = UiThemeHelper.getPixelFont(
       const TextStyle(
         fontSize: 11,
@@ -171,7 +169,8 @@ class _DiaryScreenState extends State<DiaryScreen> {
                     style: pixelText.copyWith(fontSize: 12), 
                   ),
                 ),
-                _buildSentimentBadge(diary.sentiment, pixelText),
+                // [Refactor] Passed settings to translate sentiment
+                _buildSentimentBadge(diary.sentiment, pixelText, settings),
               ],
             ),
             const SizedBox(height: 8),
@@ -202,7 +201,6 @@ class _DiaryScreenState extends State<DiaryScreen> {
   }
 
   Widget _buildEmptyDetailPanel(SettingsProvider settings) {
-    // [Refactor] Use helper
     final pixelText = UiThemeHelper.getPixelFont(
       const TextStyle(
         fontSize: 11,
@@ -301,7 +299,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
     return _DiaryIcon(pokemonId: pokemonId, size:size);
   }
 
-  Widget _buildSentimentBadge(String sentiment, TextStyle pixelText) {
+  // [Refactor] Added settings parameter for localization
+  Widget _buildSentimentBadge(String sentiment, TextStyle pixelText, SettingsProvider settings) {
+    final localizedSentiment = settings.getText(sentiment.toUpperCase());
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -309,7 +310,10 @@ class _DiaryScreenState extends State<DiaryScreen> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: const Color(0xFF2F3A3A), width: 2),
       ),
-      child: Text(sentiment.toUpperCase(), style: pixelText.copyWith(fontSize: 8, color: Colors.white)),
+      child: Text(
+        localizedSentiment.toUpperCase(), 
+        style: pixelText.copyWith(fontSize: 8, color: Colors.white)
+      ),
     );
   }
 }

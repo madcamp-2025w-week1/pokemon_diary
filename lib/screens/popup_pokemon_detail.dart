@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:google_fonts/google_fonts.dart'; // No longer needed directly
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +33,6 @@ class PokemonDetailDialog extends StatelessWidget {
     final description = isKorean ? pokemon.dexEntryKorean : pokemon.dexEntryEnglish;
     final title = '${displayName.toUpperCase()} #${pokemon.id.toString().padLeft(3, '0')}';
 
-    // [Refactor] Use helper
     final pixelStyle = UiThemeHelper.getPixelFont(
       const TextStyle(
         fontSize: 10,
@@ -157,10 +155,10 @@ class PokemonDetailDialog extends StatelessWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _buildPixelTypeChip(pokemon.type1, pixelStyle),
+                                _buildPixelTypeChip(context, pokemon.type1, pixelStyle),
                                 if (pokemon.type2 != null) ...[
                                   const SizedBox(width: 8),
-                                  _buildPixelTypeChip(pokemon.type2!, pixelStyle),
+                                  _buildPixelTypeChip(context, pokemon.type2!, pixelStyle),
                                 ],
                               ],
                             ),
@@ -245,7 +243,12 @@ class PokemonDetailDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildPixelTypeChip(PokemonType type, TextStyle baseStyle) {
+  // [Refactor] Added context to access settings for translation
+  Widget _buildPixelTypeChip(BuildContext context, PokemonType type, TextStyle baseStyle) {
+    final settings = context.read<SettingsProvider>();
+    final typeKey = 'TYPE_${type.name.toUpperCase()}';
+    final localizedName = settings.getText(typeKey);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -254,7 +257,14 @@ class PokemonDetailDialog extends StatelessWidget {
         border: Border.all(color: Colors.black.withOpacity(0.3), width: 1.5),
         boxShadow: const [BoxShadow(color: Colors.black12, offset: Offset(2, 2))],
       ),
-      child: Text(type.name.toUpperCase(), style: baseStyle.copyWith(color: Colors.white, fontSize: 10, shadows: [const Shadow(offset: Offset(1, 1), color: Colors.black26)])),
+      child: Text(
+        localizedName.toUpperCase(), 
+        style: baseStyle.copyWith(
+          color: Colors.white, 
+          fontSize: 10, 
+          shadows: [const Shadow(offset: Offset(1, 1), color: Colors.black26)]
+        )
+      ),
     );
   }
 }

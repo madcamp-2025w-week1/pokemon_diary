@@ -14,6 +14,12 @@ class UiText {
     },
     'DATE_LABEL': {'en': 'Date', 'ko': '날짜'},
 
+    // --- Sentiments (Emotions) ---
+    'JOY': {'en': 'JOY', 'ko': '기쁨'},
+    'SAD': {'en': 'SAD', 'ko': '슬픔'},
+    'ANGRY': {'en': 'ANGRY', 'ko': '화남'},
+    'CALM': {'en': 'CALM', 'ko': '평온'},
+
     // --- Draft Screen ---
     'SCANNING': {'en': 'SCANNING...', 'ko': '스캔중...'},
     'READY_ANALYZE': {'en': 'READY TO ANALYZE', 'ko': '준비 완료'},
@@ -44,6 +50,26 @@ class UiText {
     'WT': {'en': 'WT', 'ko': '몸무게'},
     'DATES_CAUGHT': {'en': 'DATES CAUGHT', 'ko': '만난 날짜들'},
     'NO_DATA': {'en': 'NO DATA', 'ko': '데이터 없음'},
+
+    // --- Pokemon Types ---
+    'TYPE_NORMAL': {'en': 'NORMAL', 'ko': '노말'},
+    'TYPE_FIRE': {'en': 'FIRE', 'ko': '불꽃'},
+    'TYPE_WATER': {'en': 'WATER', 'ko': '물'},
+    'TYPE_GRASS': {'en': 'GRASS', 'ko': '풀'},
+    'TYPE_ELECTRIC': {'en': 'ELECTRIC', 'ko': '전기'},
+    'TYPE_ICE': {'en': 'ICE', 'ko': '얼음'},
+    'TYPE_FIGHTING': {'en': 'FIGHTING', 'ko': '격투'},
+    'TYPE_POISON': {'en': 'POISON', 'ko': '독'},
+    'TYPE_GROUND': {'en': 'GROUND', 'ko': '땅'},
+    'TYPE_FLYING': {'en': 'FLYING', 'ko': '비행'},
+    'TYPE_PSYCHIC': {'en': 'PSYCHIC', 'ko': '에스퍼'},
+    'TYPE_BUG': {'en': 'BUG', 'ko': '벌레'},
+    'TYPE_ROCK': {'en': 'ROCK', 'ko': '바위'},
+    'TYPE_GHOST': {'en': 'GHOST', 'ko': '고스트'},
+    'TYPE_DRAGON': {'en': 'DRAGON', 'ko': '드래곤'},
+    'TYPE_STEEL': {'en': 'STEEL', 'ko': '강철'},
+    'TYPE_DARK': {'en': 'DARK', 'ko': '악'},
+    'TYPE_FAIRY': {'en': 'FAIRY', 'ko': '페어리'},
 
     // --- Badges ---
     'ACHIEVEMENT': {'en': 'ACHIEVEMENT!', 'ko': '업적 달성!'},
