@@ -13,6 +13,8 @@ class UiText {
       'ko': '아직 일기가 없습니다.\n첫 포켓몬을 기록해보세요!'
     },
     'DATE_LABEL': {'en': 'Date', 'ko': '날짜'},
+    'LIST_VIEW': {'en': 'LIST', 'ko': '목록'},
+    'CALENDAR_VIEW': {'en': 'CALENDAR', 'ko': '달력'},
 
     // --- Sentiments (Emotions) ---
     'JOY': {'en': 'JOY', 'ko': '기쁨'},
