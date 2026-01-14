@@ -4,6 +4,12 @@ A gamified diary application built with Flutter that analyzes your daily emotion
 
 Record your day, understand your feelings, and complete your Pokedex.
 
+## 📺 Demo Video
+
+[![PokéDiary Demo Video](https://img.youtube.com/vi/Sn5Omxf3rYk/0.jpg)](https://www.youtube.com/watch?v=Sn5Omxf3rYk)
+
+*Click the image above to watch the demo on YouTube.*
+
 ## ✨ Features
 
 - **📝 Smart Diary:** Write your daily thoughts in English or Korean.
@@ -19,7 +25,17 @@ Record your day, understand your feelings, and complete your Pokedex.
 
 ## 🚀 Getting Started
 
-Follow these instructions to get a copy of the project up and running on your local machine.
+You can either install the app directly using the pre-built APK or build it from the source code.
+
+### Option 1: Direct Installation (Recommended for Android Users)
+If you want to try the app immediately:
+1. Go to the [Releases](https://github.com/madcamp-2025w-week1/pokemon_diary/releases/tag/v1.0.0) page.
+2. Download **`PokeDiary_v1.0.0.apk`**.
+3. Open the file on your Android device and install. 
+   *(Note: You may need to allow installation from unknown sources in your device settings.)*
+
+### Option 2: Build from Source
+If you want to run the project on your local machine:
 
 ### Prerequisites
 
@@ -94,13 +110,17 @@ The output file will be located at:
 -   **Framework:** Flutter (Dart)
 -   **State Management:** Provider
 -   **Local Database:** sqflite
--   **AI Model:** RoBERTa (via Hugging Face API) (https://huggingface.co/SamLowe/roberta-base-go_emotions)
--   **Animations:** Lottie (https://lottiefiles.com/)
--   **Data Source:** PokeAPI (Sprites & Data) (https://pokeapi.co/)
+-   **AI Model:** [RoBERTa (via Hugging Face API)](https://huggingface.co/SamLowe/roberta-base-go_emotions)
+-   **Animations:** [Lottie](https://lottiefiles.com/free-animation/pokeball-7gc1qsv2Mz)
+-   **Data Source:** [PokeAPI (Sprites & Data)](https://pokeapi.co/)
+
+## 🗺️ Roadmap (Upcoming Features)
+-   **Push Notifications**: Daily reminders at 9 PM to encourage diary writing.
+-   **Advanced Analytics**: Weekly emotional trends and Pokémon type distribution charts.
 
 ## 📄 License
 
-This project is for educational purposes (MadCamp).
+This project is for educational purposes ([MadCamp](https://madcamp.io/)).
 
 ## 🙏 Acknowledgments
 
