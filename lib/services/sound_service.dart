@@ -14,6 +14,7 @@ class SoundService {
   final AudioPlayer _pokeballSpinPlayer = AudioPlayer();
   final AudioPlayer _electricShockPlayer = AudioPlayer();
   final AudioPlayer _pokemonOutPlayer = AudioPlayer();
+  final AudioPlayer _badgeObtainedPlayer = AudioPlayer();
 
   // Settings State
   double _bgmVolume = 0.4;
@@ -97,6 +98,9 @@ final List<String> bgmTracks = [
     await _pokemonOutPlayer.setSource(AssetSource('sounds/sfx_pokemon_out.wav'));
     _pokemonOutDuration =
         await _pokemonOutPlayer.getDuration() ?? _pokemonOutDuration;
+
+    await _badgeObtainedPlayer.setPlayerMode(PlayerMode.lowLatency);
+    await _badgeObtainedPlayer.setSource(AssetSource('sounds/sfx_electric_shock.wav'));
   }
 
   // --- Volume Control ---
@@ -114,6 +118,7 @@ final List<String> bgmTracks = [
     await _pokeballSpinPlayer.setVolume(_sfxVolume);
     await _electricShockPlayer.setVolume(_sfxVolume);
     await _pokemonOutPlayer.setVolume(_sfxVolume);
+    await _badgeObtainedPlayer.setVolume(_sfxVolume);
   }
 
   Future<void> duckBgm() async {
@@ -219,6 +224,11 @@ Future<void> playBgm(String trackFilename) async {
       _pokemonOutPlayer,
       'sounds/sfx_pokemon_out.wav',
     );
+  }
+
+  Future<void> playBadgeSound() async {
+    await _playSfx(_badgeObtainedPlayer, 
+                  'sounds/sfx_badge_obtained.wav'); 
   }
 
   Future<void> playTabSound() async {

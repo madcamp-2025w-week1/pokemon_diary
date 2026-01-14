@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // Kept for other potential uses, but main font is now routed via Helper
 import 'package:lottie/lottie.dart';
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
@@ -159,7 +158,6 @@ class _DraftScreenState extends State<DraftScreen>
         _blinkController.stop();
         if (!gachaProvider.isInputMode) {
            _controller.clear();
-           _checkAndShowBadges();
         }
       }
     });
@@ -172,6 +170,10 @@ class _DraftScreenState extends State<DraftScreen>
     if (badges.isNotEmpty) {
       for (var badge in badges) {
         if (!mounted) return;
+        
+        await SoundService().playBadgeSound(); 
+        
+
         await showDialog(
           context: context,
           barrierDismissible: false,
@@ -362,6 +364,8 @@ class _DraftScreenState extends State<DraftScreen>
       gacha.finishReveal();
       await soundService.restoreBgm();
       _hasStartedReveal = false;
+
+      _checkAndShowBadges();
     });
   }
 
