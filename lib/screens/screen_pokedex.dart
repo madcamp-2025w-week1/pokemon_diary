@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pokemon_diary/services/sound_service.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:google_fonts/google_fonts.dart'; // Removed
 import '../utils/utils.dart'; // For UiThemeHelper
 
 import '../models/models.dart';
@@ -17,7 +16,10 @@ class PokedexScreen extends StatefulWidget {
 }
 
 class _PokedexScreenState extends State<PokedexScreen> {
-  
+  // State for filtering and sorting
+  bool _showOwnedOnly = false;
+  bool _sortByDate = false;
+
   @override
   void initState() {
     super.initState();
@@ -33,10 +35,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     final pokedexProvider = context.watch<PokedexProvider>();
     final settings = context.watch<SettingsProvider>();
 
-    final ownedIds = diaryProvider.diaries.map((d) => d.pokemonId).toSet();
-    final isKorean = settings.isKorean; 
-
-    // [Refactor] Use helper
+    final isKorean = settings.isKorean;
     final pixelText = UiThemeHelper.getPixelFont(
       const TextStyle(
         fontSize: 11,
@@ -45,11 +44,60 @@ class _PokedexScreenState extends State<PokedexScreen> {
       isKorean: isKorean,
     );
 
+    // 1. Prepare Data
+    final allPokemon = pokedexProvider.allPokemon;
+    final ownedIds = diaryProvider.diaries.map((d) => d.pokemonId).toSet();
+    
+    // Stats
+    final totalCount = allPokemon.length;
+    final obtainedCount = ownedIds.length;
+
+    // 2. Filter & Sort Logic
+    List<Pokemon> displayList = List.from(allPokemon);
+
+    // A. Filter
+    if (_showOwnedOnly) {
+      displayList = displayList.where((p) => ownedIds.contains(p.id)).toList();
+    }
+
+    // B. Sort
+    if (_sortByDate) {
+      final firstCatchMap = <int, DateTime>{};
+      for (var diary in diaryProvider.diaries) {
+        final date = DateTime.tryParse(diary.date);
+        if (date != null) {
+          if (!firstCatchMap.containsKey(diary.pokemonId) || 
+              date.isBefore(firstCatchMap[diary.pokemonId]!)) {
+            firstCatchMap[diary.pokemonId] = date;
+          }
+        }
+      }
+
+      displayList.sort((a, b) {
+        final dateA = firstCatchMap[a.id];
+        final dateB = firstCatchMap[b.id];
+
+        if (dateA == null && dateB == null) return a.id.compareTo(b.id); 
+        if (dateA == null) return 1; 
+        if (dateB == null) return -1; 
+        
+        final comparison = dateA.compareTo(dateB);
+        return comparison != 0 ? comparison : a.id.compareTo(b.id);
+      });
+    } else {
+      displayList.sort((a, b) => a.id.compareTo(b.id));
+    }
+
     return Container(
       color: const Color(0xFF7F9B6F),
       child: Column(
         children: [
-          _buildHeader(pixelText, settings),
+          // Header with Stats
+          _buildHeader(pixelText, settings, obtainedCount, totalCount),
+          
+          // Filter & Sort Bar
+          _buildFilterBar(pixelText, settings),
+
           const SizedBox(height: 10),
           Expanded(
             child: Padding(
@@ -74,13 +122,13 @@ class _PokedexScreenState extends State<PokedexScreen> {
                       : GridView.builder(
                           padding: EdgeInsets.zero,
                           cacheExtent: 600,
-                          itemCount: pokedexProvider.allPokemon.length,
+                          itemCount: displayList.length,
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             childAspectRatio: 0.78,
                           ),
                           itemBuilder: (context, index) {
-                            final pokemon = pokedexProvider.allPokemon[index];
+                            final pokemon = displayList[index];
                             final isOwned = ownedIds.contains(pokemon.id);
                             
                             return _PokedexTile(
@@ -99,7 +147,7 @@ class _PokedexScreenState extends State<PokedexScreen> {
     );
   }
 
-  Widget _buildHeader(TextStyle pixelText, SettingsProvider settings) {
+  Widget _buildHeader(TextStyle pixelText, SettingsProvider settings, int obtained, int total) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -110,11 +158,151 @@ class _PokedexScreenState extends State<PokedexScreen> {
         boxShadow: const [BoxShadow(color: Color(0xFF1B2D3A), offset: Offset(2, 2))],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.grid_view, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Text(settings.getText('POKEDEX'), style: pixelText.copyWith(color: Colors.white, fontSize: 12)),
+          Row(
+            children: [
+              const Icon(Icons.grid_view, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                settings.getText('POKEDEX'), 
+                style: pixelText.copyWith(color: Colors.white, fontSize: 12)
+              ),
+            ],
+          ),
+          // Obtained Count Capsule
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF2C94C), // Yellowish Gold
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.black26),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.catching_pokemon, size: 12, color: Colors.red),
+                const SizedBox(width: 4),
+                Text(
+                  "$obtained / $total",
+                  style: pixelText.copyWith(
+                    color: const Color(0xFF2d3436), 
+                    fontSize: 10, 
+                    fontWeight: FontWeight.bold
+                  ),
+                ),
+              ],
+            ),
+          )
         ],
+      ),
+    );
+  }
+
+  // [UPDATED] New Contrast Colors for Buttons
+  Widget _buildFilterBar(TextStyle pixelText, SettingsProvider settings) {
+    // Blue-ish for Filter (Contrast with Teal)
+    const Color filterBase = Color(0xFF5B7DB1); // Muted Blue
+    const Color filterBorder = Color(0xFF2C448E); // Darker Blue
+    
+    // Orange-ish for Sort (Complementary to Teal)
+    const Color sortBase = Color(0xFFE76F51); // Muted Orange
+    const Color sortBorder = Color(0xFF8D3B25); // Darker Orange
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      child: Row(
+        children: [
+          // FILTER TOGGLE
+          Expanded(
+            child: Container(
+              height: 32,
+              decoration: BoxDecoration(
+                color: filterBase,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: filterBorder, width: 2),
+                boxShadow: const [BoxShadow(color: filterBorder, offset: Offset(1, 1))],
+              ),
+              child: Row(
+                children: [
+                  _buildToggleButton(
+                    label: settings.getText('FILTER_ALL'),
+                    isActive: !_showOwnedOnly,
+                    onTap: () => setState(() => _showOwnedOnly = false),
+                    pixelText: pixelText,
+                  ),
+                  Container(width: 2, color: filterBorder),
+                  _buildToggleButton(
+                    label: settings.getText('FILTER_OWNED'),
+                    isActive: _showOwnedOnly,
+                    onTap: () => setState(() => _showOwnedOnly = true),
+                    pixelText: pixelText,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // SORT TOGGLE
+          Expanded(
+            child: Container(
+              height: 32,
+              decoration: BoxDecoration(
+                color: sortBase,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: sortBorder, width: 2),
+                boxShadow: const [BoxShadow(color: sortBorder, offset: Offset(1, 1))],
+              ),
+              child: Row(
+                children: [
+                  _buildToggleButton(
+                    label: settings.getText('SORT_DEX'),
+                    isActive: !_sortByDate,
+                    onTap: () => setState(() => _sortByDate = false),
+                    pixelText: pixelText,
+                  ),
+                  Container(width: 2, color: sortBorder),
+                  _buildToggleButton(
+                    label: settings.getText('SORT_DATE'),
+                    isActive: _sortByDate,
+                    onTap: () => setState(() => _sortByDate = true),
+                    pixelText: pixelText,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleButton({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+    required TextStyle pixelText,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (!isActive) {
+            SoundService().playCardSelectSound();
+            onTap();
+          }
+        },
+        child: Container(
+          // Active = Light overlay, Inactive = Transparent
+          color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent,
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: pixelText.copyWith(
+              fontSize: 9,
+              color: isActive ? Colors.white : Colors.white54,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
       ),
     );
   }

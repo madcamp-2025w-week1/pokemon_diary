@@ -13,6 +13,8 @@ class UiText {
       'ko': '아직 일기가 없습니다.\n첫 포켓몬을 기록해보세요!'
     },
     'DATE_LABEL': {'en': 'Date', 'ko': '날짜'},
+    'LIST_VIEW': {'en': 'LIST', 'ko': '목록'},
+    'CALENDAR_VIEW': {'en': 'CALENDAR', 'ko': '달력'},
 
     // --- Sentiments (Emotions) ---
     'JOY': {'en': 'JOY', 'ko': '기쁨'},
@@ -50,6 +52,12 @@ class UiText {
     'WT': {'en': 'WT', 'ko': '몸무게'},
     'DATES_CAUGHT': {'en': 'DATES CAUGHT', 'ko': '만난 날짜들'},
     'NO_DATA': {'en': 'NO DATA', 'ko': '데이터 없음'},
+
+    // --- Pokedex Filters [NEW] ---
+    'FILTER_ALL': {'en': 'ALL', 'ko': '전체'},
+    'FILTER_OWNED': {'en': 'OWNED', 'ko': '보유'},
+    'SORT_DEX': {'en': 'NO.', 'ko': '번호순'},
+    'SORT_DATE': {'en': 'DATE', 'ko': '날짜순'},
 
     // --- Pokemon Types ---
     'TYPE_NORMAL': {'en': 'NORMAL', 'ko': '노말'},
