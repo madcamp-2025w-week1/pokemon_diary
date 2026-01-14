@@ -74,6 +74,7 @@ flutter:
     - assets/images/
     - assets/animations/
     - assets/sounds/
+    - assets/sounds/bgm/
 
   fonts:
     - family: Galmuri11
@@ -100,4 +101,3 @@ flutter_native_splash:
   android_12:
     image: assets/images/splash_logo.png
     icon_background_color: "#D93838"
-    # 안드로이드 12는 시스템 제약이 많아서 이미지 자체의 여백 제거가 필수

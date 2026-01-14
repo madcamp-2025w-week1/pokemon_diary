@@ -21,10 +21,25 @@ class SoundService {
   double _sfxVolume = 0.1;
   String? _currentTrack;
 
-  // Available Tracks
-  final List<String> bgmTracks = [
-    'sounds/bgm_main_8bit.mp3',
+// 1. 기본 트랙 상수 정의
+  static const String defaultTrack = 'Pallete Town.mp3';
+
+// 2. 사용 가능한 BGM 파일명 리스트
+final List<String> bgmTracks = [
+    'Pallete Town.mp3',
+    'Pokémon Center.mp3',
+    'Pewter City.mp3',
+    'Pokémon Gym.mp3',
+    'Vermilion City.mp3',
+    'The Sea.mp3',
+    'Cerulean City.mp3',
+    'Cinnabar Island.mp3',
+    'Sevii Islands.mp3',
+    'Epilogue.mp3'
   ];
+
+  // 3. BGM 폴더 기본 경로
+  static const String _bgmBasePath = 'sounds/bgm/';
 
   Duration _pokeballSpinDuration = const Duration(milliseconds: 1200);
   Duration _electricShockDuration = const Duration(milliseconds: 900);
@@ -120,21 +135,30 @@ class SoundService {
   }
 
   // --- BGM Control ---
-  Future<void> playBgm(String trackPath) async {
+Future<void> playBgm(String trackFilename) async {
     try {
-      // FIX: Compare against our local variable instead of source.path
-      if (_currentTrack == trackPath && _bgmPlayer.state == PlayerState.playing) {
+      // 1. 전체 경로 생성 (sounds/bgm/Pallet Town.mp3)
+      final fullPath = '$_bgmBasePath$trackFilename';
+
+      // 2. 현재 재생 중인 곡과 같으면 무시
+      if (_currentTrack == trackFilename && _bgmPlayer.state == PlayerState.playing) {
         return;
       }
       
-      _currentTrack = trackPath; // Update the tracker
+      _currentTrack = trackFilename; 
       
       await _bgmPlayer.stop();
-      await _bgmPlayer.setSource(AssetSource(trackPath));
+      // AssetSource는 'assets/'를 자동으로 붙여주므로 'sounds/bgm/...'만 넘김
+      await _bgmPlayer.setSource(AssetSource(fullPath));
       await _bgmPlayer.setVolume(_bgmVolume);
       await _bgmPlayer.resume();
     } catch (e) {
       print("Error playing BGM: $e");
+      // ★ 에러 발생 시 기본 BGM으로 폴백 시도 (재귀 호출 방지 조건 추가 권장)
+      if (trackFilename != defaultTrack) {
+        print("Falling back to default track.");
+        playBgm(defaultTrack);
+      }
     }
   }
 

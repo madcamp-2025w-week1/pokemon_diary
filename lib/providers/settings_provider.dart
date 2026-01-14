@@ -9,7 +9,7 @@ class SettingsProvider extends ChangeNotifier {
   String _languageCode = 'en';
   double _bgmVolume = 0.5;
   double _sfxVolume = 0.5;
-  String _bgmTrack = 'sounds/bgm_main_8bit.mp3';
+  String _bgmTrack = SoundService.defaultTrack; 
   bool _isRetroArt = false;
 
   // Getters
@@ -35,6 +35,20 @@ class SettingsProvider extends ChangeNotifier {
     _sfxVolume = prefs.getDouble('setting_sfx_vol') ?? 0.2;
     _bgmTrack = prefs.getString('setting_bgm_track') ?? 'sounds/bgm_main_8bit.mp3';
     _isRetroArt = prefs.getBool('setting_retro_art') ?? false;
+
+    // --- BGM 트랙 로드 및 유효성 검사 ---
+    String? savedTrack = prefs.getString('setting_bgm_track');
+    
+    // 1. 저장된 값이 없거나
+    // 2. 저장된 파일명이 현재 SoundService 리스트에 없다면 (파일이 삭제된 경우 등)
+    // -> 기본값(Pallet Town.mp3)으로 강제 초기화
+    if (savedTrack == null || !SoundService().bgmTracks.contains(savedTrack)) {
+      _bgmTrack = SoundService.defaultTrack;
+      // 잘못된 설정이 있다면 덮어쓰기 (선택 사항)
+      await prefs.setString('setting_bgm_track', _bgmTrack);
+    } else {
+      _bgmTrack = savedTrack;
+    }
 
     // Apply sound settings immediately to the service
     final sound = SoundService();
@@ -72,12 +86,16 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setBgmTrack(String track) async {
-    _bgmTrack = track;
-    await SoundService().playBgm(track); // Preview/Change immediately
+// 트랙 변경 메서드
+  Future<void> setBgmTrack(String trackFilename) async {
+    // 리스트에 있는 유효한 트랙인지 확인
+    if (!SoundService().bgmTracks.contains(trackFilename)) return;
+
+    _bgmTrack = trackFilename;
+    await SoundService().playBgm(trackFilename); // 즉시 미리듣기/변경
     
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('setting_bgm_track', track);
+    await prefs.setString('setting_bgm_track', trackFilename);
     notifyListeners();
   }
 

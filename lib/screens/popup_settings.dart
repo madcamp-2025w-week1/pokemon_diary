@@ -131,7 +131,7 @@ class SettingsDialog extends StatelessWidget {
               const SizedBox(height: 12),
               
               // BGM Selector
-              Text(settings.getText('TRACK'), style: pixelStyle.copyWith(fontSize: 8)),
+Text(settings.getText('TRACK'), style: pixelStyle.copyWith(fontSize: 8)),
               const SizedBox(height: 4),
               Container(
                 width: double.infinity,
@@ -143,19 +143,28 @@ class SettingsDialog extends StatelessWidget {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
+                    // 현재 선택된 값 (SettingsProvider의 _bgmTrack)
                     value: settings.bgmTrack,
                     isExpanded: true,
-                    style: pixelStyle.copyWith(fontSize: 8),
+                    style: pixelStyle.copyWith(fontSize: 8, color: Colors.black),
                     dropdownColor: Colors.white,
-                    items: SoundService().bgmTracks.map((track) {
-                      final name = track.split('/').last.replaceAll('.mp3', '').toUpperCase();
+                    // ★ SoundService의 bgmTracks 리스트를 맵핑
+                    items: SoundService().bgmTracks.map((trackFilename) {
+                      // UI 표시용 이름: 확장자 제거 (.mp3)
+                      final displayName = trackFilename.replaceAll('.mp3', '');
+                      
                       return DropdownMenuItem(
-                        value: track,
-                        child: Text(name),
+                        value: trackFilename, // 실제 값은 파일명 전체 (확장자 포함)
+                        child: Text(
+                          displayName, 
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       );
                     }).toList(),
                     onChanged: (val) {
-                      if (val != null) settings.setBgmTrack(val);
+                      if (val != null) {
+                        settings.setBgmTrack(val);
+                      }
                     },
                   ),
                 ),
