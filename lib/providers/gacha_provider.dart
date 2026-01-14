@@ -80,7 +80,7 @@ class GachaProvider extends ChangeNotifier {
     final todayKey = _formatDate(DateTime.now());
     final existing = diaryProvider.diaries.where((entry) => entry.date == todayKey).toList();
 
-    if (false/*existing.isNotEmpty*/) {
+    if (existing.isNotEmpty) {
       final diary = existing.first;
       final pokemon = await apiService.getPokemonById(diary.pokemonId, isRetro: isRetro);
 
