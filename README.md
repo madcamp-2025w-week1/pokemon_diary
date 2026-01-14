@@ -1,4 +1,4 @@
-# Pokemon Emotion Diary 📔⚡
+# PokéDiary 📔⚡
 
 A gamified diary application built with Flutter that analyzes your daily emotions using AI and rewards you with Pokemon cards!
 
@@ -106,4 +106,4 @@ This project is for educational purposes (MadCamp).
 
 -   **PokeAPI** for the comprehensive Pokemon data and sprites.
 -   **Hugging Face** for the emotion classification models.
--   **Galmuri & DungGeunMo** for the beautiful pixel fonts.
+-   **Galmuri** for the beautiful pixel fonts.
