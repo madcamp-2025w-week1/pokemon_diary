@@ -450,14 +450,13 @@ class _DraftScreenState extends State<DraftScreen>
             maxLines: null,
             expands: true,
             textAlignVertical: TextAlignVertical.top,
-            // Already updated in your code
+            // [UPDATED] Changed to fontSize 10 (was 12) for consistency
             style: UiThemeHelper.getPixelFont(
-              const TextStyle(fontSize: 12, color: Colors.black87),
+              const TextStyle(fontSize: 10, color: Colors.black87, height: 1.5),
               isKorean: settings.isKorean,
             ),
             decoration: InputDecoration(
               hintText: settings.getText('DRAFT_HINT'),
-              // [FIX] Updated Hint Style to use Helper
               hintStyle: UiThemeHelper.getPixelFont(
                 TextStyle(fontSize: 10, color: Colors.grey.shade600),
                 isKorean: settings.isKorean
@@ -471,7 +470,6 @@ class _DraftScreenState extends State<DraftScreen>
     );
   }
 
-  // [FIX] Added settings param to pass down isKorean
   Widget _buildSpeechBubble(String text, SettingsProvider settings) {
     return Container(
       width: double.infinity,
@@ -486,9 +484,9 @@ class _DraftScreenState extends State<DraftScreen>
         child: Text(
           text,
           textAlign: TextAlign.left,
-          // [FIX] Updated Text Style to use Helper
+          // [UPDATED] Changed to fontSize 10 (was 11) and height 1.6 for cleaner reading without lines
           style: UiThemeHelper.getPixelFont(
-             const TextStyle(fontSize: 11, color: Colors.black87, height: 1.4),
+             const TextStyle(fontSize: 10, color: Colors.black87, height: 1.6),
              isKorean: settings.isKorean
           ),
         ),
