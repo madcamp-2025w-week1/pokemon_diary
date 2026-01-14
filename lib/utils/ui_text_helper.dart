@@ -53,6 +53,12 @@ class UiText {
     'DATES_CAUGHT': {'en': 'DATES CAUGHT', 'ko': '만난 날짜들'},
     'NO_DATA': {'en': 'NO DATA', 'ko': '데이터 없음'},
 
+    // --- Pokedex Filters [NEW] ---
+    'FILTER_ALL': {'en': 'ALL', 'ko': '전체'},
+    'FILTER_OWNED': {'en': 'OWNED', 'ko': '보유'},
+    'SORT_DEX': {'en': 'NO.', 'ko': '번호순'},
+    'SORT_DATE': {'en': 'DATE', 'ko': '날짜순'},
+
     // --- Pokemon Types ---
     'TYPE_NORMAL': {'en': 'NORMAL', 'ko': '노말'},
     'TYPE_FIRE': {'en': 'FIRE', 'ko': '불꽃'},
